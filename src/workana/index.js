@@ -80,12 +80,15 @@ const scrapWorkanaProjects = async (req, res) => {
     await query('INSERT INTO workana_projects (title, description, price, link) VALUES ?', [newProjects.map(project => [project.title, project.description, project.price, project.link])]);
   }
 
-  for(let project of newProjects) {
+  // Get inserted projects
+  const insertedProjects = await query('SELECT * FROM workana_projects WHERE link IN (?)', [newProjects.map(project => project.link)]);
+
+  for(let project of insertedProjects) {
 
     // decode project description to send in url
     let description = encodeNewlines(project.description);
 
-    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
+    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: https://api.vasorder.com/send-bid/${project.id}`;
     console.log(text)
     const telegram = await sendTelegramNotification(text, 'andresjosehr');
     console.log(telegram)
@@ -105,12 +108,6 @@ function encodeNewlines(text) {
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
-
-
-
-
-
 
 module.exports = {
   scrapWorkanaProjects
