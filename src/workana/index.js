@@ -83,7 +83,8 @@ const scrapWorkanaProjects = async (req, res) => {
 
   for(let project of newProjects) {
 
-    const description = project.description.replace(/\n/g, '%0A');
+    let description = project.description.replace(/\n/g, '%0A');
+    description = cheerio.load(description, { decodeEntities: true, trim: true }).text();
 
     let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
     console.log(text)
