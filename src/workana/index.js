@@ -80,8 +80,10 @@ const scrapWorkanaProjects = async (req, res) => {
   }
 
   newProjects.forEach(async project => {
-    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${project.description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
+    let text = `WORKANA  Enviar Propuesta: tatatata`;
+
     await sendTelegramNotification(text, 'andresjosehr');
+    
   });
 
 
