@@ -80,7 +80,10 @@ const scrapWorkanaProjects = async (req, res) => {
   }
 
   for(let project of newProjects) {
-    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${project.description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
+
+    const description = project.description.replace(/\n/g, '%0A');
+
+    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
     console.log(text)
     const telegram = await sendTelegramNotification(text, 'andresjosehr');
     console.log(telegram)
