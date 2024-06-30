@@ -79,9 +79,9 @@ const scrapWorkanaProjects = async (req, res) => {
     await query('INSERT INTO workana_projects (title, description, price, link) VALUES ?', [newProjects.map(project => [project.title, project.description, project.price, project.link])]);
   }
 
-  newProjects.forEach(project => {
+  newProjects.forEach(async project => {
     let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${project.description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
-    sendTelegramNotification(text, 'andresjosehr');
+    await sendTelegramNotification(text, 'andresjosehr');
   });
 
 

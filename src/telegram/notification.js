@@ -1,5 +1,5 @@
-function sendTelegramNotification(text, user){
-  fetch(`http://api.callmebot.com/text.php?user=${user}&text=${text}`, {
+async function sendTelegramNotification(text, user){
+  await fetch(`http://api.callmebot.com/text.php?user=${user}&text=${text}`, {
     "headers": {
       "accept": "application/json, text/plain, */*",
       "sec-ch-ua": "\"Chromium\";v=\"104\", \" Not A;Brand\";v=\"99\", \"Microsoft Edge\";v=\"104\"",
