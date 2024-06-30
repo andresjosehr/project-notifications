@@ -5,6 +5,7 @@ const playwright = require('playwright');
 const { query } = require('../../database/index');
 const {sendTelegramNotification} = require('../telegram/notification');
 const {translateToSpanish} = require('../ai/ai');
+const cheerio = require('cheerio');
 
 //import playwright
 const {chromium} = require("playwright-extra");
@@ -51,6 +52,7 @@ const scrapWorkanaProjects = async (req, res) => {
     return projects.map(project => {
       const title = project.querySelector('.project-title span span').getAttribute('title');
       let description = project.querySelector('.project-details p').textContent.replace('  Ver menos', '');
+      description = cheerio.load(description, { decodeEntities: true, trim: true }).text()
       const price = project.querySelector('.budget span span').innerHTML;
       let link = project.querySelector('.project-title a').href;
       // Remove all after "?"
