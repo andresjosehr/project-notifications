@@ -83,7 +83,9 @@ const scrapWorkanaProjects = async (req, res) => {
     let text = `WORKANA  Enviar Propuesta: tatatata`;
 
     console.log('Proyecto:', project.title);
-    await sendTelegramNotification(text, 'andresjosehr');
+    const telegram = await sendTelegramNotification(text, 'andresjosehr');
+
+    console.log('Telegram:', telegram);
     
   });
 
