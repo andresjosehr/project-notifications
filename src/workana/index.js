@@ -57,6 +57,7 @@ const scrapWorkanaProjects = async (req, res) => {
       link = link.split('?')[0];
 
       description = description.split('Categoría: ')[0];
+      description = description.split('Category: ')[0];
       return {
         title: title,
         description: description,
