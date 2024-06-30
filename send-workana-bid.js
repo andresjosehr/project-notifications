@@ -1,4 +1,6 @@
 require('dotenv').config();
+const db = require('./database/index');
+const {query} = require('./database/index');
 const { sendWorkanaBid } = require('./src/workana/send-bid');
 
 async function main() {
