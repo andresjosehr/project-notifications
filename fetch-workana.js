@@ -5,12 +5,22 @@ const {scrapProjects} = require('./src/upwork/index');
 const {scrapWorkanaProjects} = require('./src/workana/index');
 
 
+async function main() {
+  try {
+    await scrapWorkanaProjects();
 
-async function init () {
+    // Cierra la conexión a la base de datos (si aplica)
+    if (db.close) { // Verifica si existe la función close
+      await db.close(); 
+    }
 
-  scrapWorkanaProjects()
-  
+    console.log("Proceso finalizado.");
+    // exit process
+    process.exit(0);
+  } catch (error) {
+    console.error("Error:", error);
+    process.exit(1);
+  }
 }
 
-init();
-
+main(); 

@@ -13,11 +13,27 @@ const stealth = require("puppeteer-extra-plugin-stealth")();
 
 
 const sendWorkanaBid = async (req, res) => {
+
+
+
+  const projectId = process.argv[2];
+  console.log('projectId', projectId);
+
+  // Get project from database
+  const project = await query(`SELECT * FROM workana_projects WHERE id = ${projectId}`);
+
+  // If there is not project, exit
+  if (!project.length) {
+    console.log('No project found');
+    process.exit(1);
+  }
+
+  const projectLink = project[0].link;
   
   chromium.use(stealth);
 
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
   });
 
   // Cargar la sesión existente
@@ -27,7 +43,7 @@ const sendWorkanaBid = async (req, res) => {
   const page = await context.newPage();
 
 
-  const pageUrl = "https://www.workana.com/job/emigracion-de-hosting";
+  const pageUrl = projectLink;
 
   const lastPath = pageUrl.split('/').pop();
 

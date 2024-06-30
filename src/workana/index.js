@@ -17,7 +17,7 @@ const scrapWorkanaProjects = async (req, res) => {
   chromium.use(stealth);
 
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
   });
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -50,21 +50,45 @@ const scrapWorkanaProjects = async (req, res) => {
   const projects = await page.$$eval('.project-item', projects => {
     return projects.map(project => {
       const title = project.querySelector('.project-title span span').getAttribute('title');
-      let projectDetails = project.querySelector('.project-details p').textContent.replace('  Ver menos', '');
+      let description = project.querySelector('.project-details p').textContent.replace('  Ver menos', '');
       const price = project.querySelector('.budget span span').innerHTML;
       let link = project.querySelector('.project-title a').href;
       // Remove all after "?"
       link = link.split('?')[0];
 
+      description = description.split('Categoría: ')[0];
       return {
         title: title,
-        projectDetails: projectDetails,
-        projectDetailsType: typeof projectDetails,
+        description: description,
         price: price,
         link: link
       }
     });
   });
+  
+  
+
+  const workana_projects = await query('SELECT * FROM workana_projects WHERE link IN (?)', [projects.map(project => project.link)]);
+
+  const newProjects = projects.filter(project => {
+    return workana_projects.find(workana_project => workana_project.link === project.link) === undefined;
+  });
+
+  // Insert into database
+  if(newProjects.length > 0) {
+    await query('INSERT INTO workana_projects (title, description, price, link) VALUES ?', [newProjects.map(project => [project.title, project.description, project.price, project.link])]);
+  }
+
+  newProjects.forEach(project => {
+    let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${project.description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
+    sendTelegramNotification(text, 'andresjosehr');
+  });
+
+
+  // Close browser
+  await browser.close();
+
+
 };
 
 
