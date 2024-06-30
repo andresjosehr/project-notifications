@@ -5,7 +5,6 @@ const playwright = require('playwright');
 const { query } = require('../../database/index');
 const {sendTelegramNotification} = require('../telegram/notification');
 const {translateToSpanish} = require('../ai/ai');
-const cheerio = require('cheerio');
 
 //import playwright
 const {chromium} = require("playwright-extra");
@@ -52,7 +51,6 @@ const scrapWorkanaProjects = async (req, res) => {
     return projects.map(project => {
       const title = project.querySelector('.project-title span span').getAttribute('title');
       let description = project.querySelector('.project-details p').textContent.replace('  Ver menos', '');
-      description = cheerio.load(description, { decodeEntities: true, trim: true }).text()
       const price = project.querySelector('.budget span span').innerHTML;
       let link = project.querySelector('.project-title a').href;
       // Remove all after "?"
@@ -83,8 +81,8 @@ const scrapWorkanaProjects = async (req, res) => {
 
   for(let project of newProjects) {
 
-    let description = project.description.replace(/\n/g, '%0A');
-    description = cheerio.load(description, { decodeEntities: true, trim: true }).text();
+    // decode project description to send in url
+    let description = encodeNewlines(project.description);
 
     let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: tatatata`;
     console.log(text)
@@ -95,7 +93,6 @@ const scrapWorkanaProjects = async (req, res) => {
 
   // Close browser
   await browser.close();
-
 
 };
 
