@@ -16,8 +16,8 @@ program
 program
   .command('workana-scrape')
   .description('Ejecutar scraping de proyectos de Workana')
-  .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos', true)
-  .option('-t, --translate', 'Traducir proyectos', true)
+  .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos')
+  .option('-t, --translate', 'Traducir proyectos')
   .action(async (options) => {
     try {
       const app = new NotificationApp();
@@ -44,8 +44,8 @@ program
 program
   .command('upwork-scrape')
   .description('Ejecutar scraping de proyectos de Upwork')
-  .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos', true)
-  .option('-t, --translate', 'Traducir proyectos', true)
+  .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos')
+  .option('-t, --translate', 'Traducir proyectos')
   .action(async (options) => {
     try {
       const app = new NotificationApp();
