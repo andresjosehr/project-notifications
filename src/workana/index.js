@@ -90,7 +90,7 @@ const scrapWorkanaProjects = async (req, res) => {
 
     let text = `WORKANA %0A%0A${project.price}%0A${project.title}%0A%0A${description}%0A%0A${project.link}%0A%0A Enviar Propuesta: https://api.vasorder.com/api/send-bid/${project.id}`;
     console.log(text)
-    const telegram = await sendTelegramNotification(text, 'andresjosehr');
+    // const telegram = await sendTelegramNotification(text, 'andresjosehr');
     console.log(telegram)
   }
 
