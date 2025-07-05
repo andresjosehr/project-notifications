@@ -331,6 +331,197 @@ class Utils {
             loading.remove();
         }
     }
+
+    // Alert helpers
+    static showAlert(message, type = 'info', duration = 5000) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Create alert element
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.innerHTML = `
+            <div class="alert-content">
+                <span class="alert-message">${message}</span>
+                <button class="alert-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </div>
+        `;
+
+        // Add styles for alert
+        alert.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 500px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        `;
+
+        // Add alert styles based on type
+        switch (type) {
+            case 'success':
+                alert.style.backgroundColor = '#d4edda';
+                alert.style.color = '#155724';
+                alert.style.border = '1px solid #c3e6cb';
+                break;
+            case 'error':
+                alert.style.backgroundColor = '#f8d7da';
+                alert.style.color = '#721c24';
+                alert.style.border = '1px solid #f5c6cb';
+                break;
+            case 'warning':
+                alert.style.backgroundColor = '#fff3cd';
+                alert.style.color = '#856404';
+                alert.style.border = '1px solid #ffeaa7';
+                break;
+            case 'info':
+            default:
+                alert.style.backgroundColor = '#d1ecf1';
+                alert.style.color = '#0c5460';
+                alert.style.border = '1px solid #bee5eb';
+                break;
+        }
+
+        // Add alert content styles
+        const alertContent = alert.querySelector('.alert-content');
+        alertContent.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        `;
+
+        // Add close button styles
+        const closeBtn = alert.querySelector('.alert-close');
+        closeBtn.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        `;
+        closeBtn.onmouseover = () => closeBtn.style.opacity = '1';
+        closeBtn.onmouseout = () => closeBtn.style.opacity = '0.7';
+
+        // Add slideIn animation
+        if (!document.querySelector('#alert-styles')) {
+            const style = document.createElement('style');
+            style.id = 'alert-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Add to page
+        document.body.appendChild(alert);
+
+        // Auto remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (alert.parentElement) {
+                            alert.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+
+        return alert;
+    }
+
+    static hideAlert(alertElement) {
+        if (alertElement && alertElement.parentElement) {
+            alertElement.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => {
+                if (alertElement.parentElement) {
+                    alertElement.remove();
+                }
+            }, 300);
+        }
+    }
+
+    static clearAllAlerts() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => this.hideAlert(alert));
+    }
+
+    // Authentication helpers
+    static getAuthToken() {
+        return localStorage.getItem('authToken');
+    }
+
+    static setAuthToken(token) {
+        localStorage.setItem('authToken', token);
+    }
+
+    static removeAuthToken() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userInfo');
+    }
+
+    static isAuthenticated() {
+        const token = this.getAuthToken();
+        return token && token.length > 0;
+    }
+
+    static getUserInfo() {
+        return this.getStorage('userInfo');
+    }
+
+    static setUserInfo(userInfo) {
+        this.setStorage('userInfo', userInfo);
+    }
+
+    static logout() {
+        this.removeAuthToken();
+        window.location.href = '/login.html';
+    }
+
+    static checkAuthRedirect() {
+        if (!this.isAuthenticated()) {
+            const currentPath = window.location.pathname + window.location.search;
+            window.location.href = `/login.html?redirect=${encodeURIComponent(currentPath)}`;
+        }
+    }
+
+    static redirectIfAuthenticated() {
+        if (this.isAuthenticated()) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect') || '/control';
+            window.location.href = redirect;
+        }
+    }
 }
 
 // Export for use in other modules

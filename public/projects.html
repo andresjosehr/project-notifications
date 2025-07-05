@@ -12,7 +12,11 @@
             <div class="header-nav">
                 <a href="users.html" class="nav-link">👥 Usuarios</a>
                 <a href="projects.html" class="nav-link active">📋 Proyectos</a>
-                <a href="#" class="nav-link" onclick="showControlPanel()">⚙️ Control Panel</a>
+                <a href="control.html" class="nav-link">⚙️ Control Panel</a>
+                <div class="header-user">
+                    <span id="currentUser">Cargando...</span>
+                    <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
+                </div>
             </div>
             <h1>📋 Dashboard de Proyectos</h1>
             <p>Sistema de Notificaciones Freelance v2.0 - Gestión de Proyectos</p>
@@ -873,6 +877,31 @@
                 showAlert('error', 'Error enviando propuesta: ' + error.message);
             }
         }
+
+        // Logout function
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                Utils.logout();
+            }
+        }
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            if (!Utils.isAuthenticated()) {
+                Utils.checkAuthRedirect();
+                return;
+            }
+
+            // Display current user info
+            const userInfo = Utils.getUserInfo();
+            if (userInfo) {
+                document.getElementById('currentUser').textContent = userInfo.email;
+            }
+
+            // Load page data
+            loadProjects();
+        });
 
         // Utility functions
         function showAlert(type, message) {

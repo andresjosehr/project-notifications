@@ -22,6 +22,8 @@ CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   workana_email VARCHAR(255) NOT NULL UNIQUE,
   workana_password VARCHAR(255) NOT NULL,
+  system_password VARCHAR(255) NOT NULL,
+  role ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'USER',
   proposal_directives LONGTEXT NOT NULL,
   professional_profile LONGTEXT NOT NULL,
   telegram_user VARCHAR(255) NOT NULL,
@@ -43,5 +45,19 @@ CREATE TABLE user_proposals (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY user_project_unique (user_id,project_id,project_platform),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE access_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  project_id INT NOT NULL,
+  platform ENUM('workana','upwork') NOT NULL,
+  user_id INT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_token (token),
+  INDEX idx_expires (expires_at),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

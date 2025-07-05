@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Sistema Freelance</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-nav">
+                <a href="users.html" class="nav-link">👥 Usuarios</a>
+                <a href="projects.html" class="nav-link">📋 Proyectos</a>
+                <a href="control.html" class="nav-link active">⚙️ Control Panel</a>
+                <div class="header-user">
+                    <span id="currentUser">Cargando...</span>
+                    <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
+                </div>
+            </div>
+            <h1>⚙️ Panel de Control del Sistema</h1>
+            <p>Sistema de Notificaciones Freelance v2.1 - Administración y Monitoreo</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="systemStatus">-</div>
+                <div class="stat-label">Estado Sistema</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="daemonStatus">-</div>
+                <div class="stat-label">Estado Daemon</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="lastExecution">-</div>
+                <div class="stat-label">Última Ejecución</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalExecutions">-</div>
+                <div class="stat-label">Ejecuciones Hoy</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="alert alert-success" id="successAlert"></div>
+            <div class="alert alert-error" id="errorAlert"></div>
+
+            <!-- Daemon Management Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    🔄 Gestión del Daemon
+                    <div class="section-actions">
+                        <button class="btn btn-info btn-small" onclick="refreshDaemonStatus()">
+                            🔄 Actualizar Estado
+                        </button>
+                    </div>
+                </h2>
+                
+                <div class="control-grid">
+                    <div class="control-card">
+                        <h3>🚀 Iniciar Daemon</h3>
+                        <p>Inicia el scraping en modo continuo sin necesidad de cron.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-success" onclick="startDaemon()">
+                                ✅ Iniciar Daemon
+                            </button>
+                        </div>
+                        <div class="control-status" id="daemonStartStatus">
+                            <span class="status-indicator">⏳ No iniciado</span>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>🛑 Detener Daemon</h3>
+                        <p>Detiene el daemon de scraping automático.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-danger" onclick="stopDaemon()">
+                                🛑 Detener Daemon
+                            </button>
+                        </div>
+                        <div class="control-status" id="daemonStopStatus">
+                            <span class="status-indicator">⏳ Sin acción</span>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>📊 Estado del Daemon</h3>
+                        <p>Verifica el estado actual del daemon y las últimas ejecuciones.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-primary" onclick="getDaemonStatus()">
+                                📊 Ver Estado
+                            </button>
+                        </div>
+                        <div class="control-status" id="daemonMonitorStatus">
+                            <span class="status-indicator">⏳ Sin monitorear</span>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>⚙️ Configurar Daemon</h3>
+                        <p>Configura los parámetros del daemon (intervalo, notificaciones, etc.).</p>
+                        <div class="control-actions">
+                            <button class="btn btn-info" onclick="configureDaemon()">
+                                ⚙️ Configurar
+                            </button>
+                        </div>
+                        <div class="control-status" id="daemonConfigStatus">
+                            <span class="status-indicator">⏳ Sin configurar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daemon Status Details -->
+                <div class="section-subsection" id="daemonDetails" style="display: none;">
+                    <h3>📋 Detalles del Estado del Daemon</h3>
+                    <div class="status-details" id="daemonDetailsContent">
+                        <!-- Details will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    🏥 Estado del Sistema
+                    <div class="section-actions">
+                        <button class="btn btn-info btn-small" onclick="checkSystemHealth()">
+                            🔍 Verificar Salud
+                        </button>
+                    </div>
+                </h2>
+                
+                <div class="health-grid" id="healthGrid">
+                    <div class="health-item">
+                        <div class="health-icon">🗄️</div>
+                        <div class="health-info">
+                            <h4>Base de Datos</h4>
+                            <span class="health-status" id="dbStatus">Verificando...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="health-item">
+                        <div class="health-icon">🤖</div>
+                        <div class="health-info">
+                            <h4>Servicio AI</h4>
+                            <span class="health-status" id="aiStatus">Verificando...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="health-item">
+                        <div class="health-icon">📱</div>
+                        <div class="health-info">
+                            <h4>Telegram</h4>
+                            <span class="health-status" id="telegramStatus">Verificando...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="health-item">
+                        <div class="health-icon">🕷️</div>
+                        <div class="health-info">
+                            <h4>Scrapers</h4>
+                            <span class="health-status" id="scrapersStatus">Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Operations Section -->
+            <div class="section">
+                <h2 class="section-title">🛠️ Operaciones Manuales</h2>
+                
+                <div class="control-grid">
+                    <div class="control-card">
+                        <h3>🔄 Scraping Manual</h3>
+                        <p>Ejecuta el scraping de proyectos manualmente.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-primary" onclick="runManualScraping()">
+                                🚀 Ejecutar Scraping
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>🧹 Limpieza de Datos</h3>
+                        <p>Limpia datos antiguos y optimiza la base de datos.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-secondary" onclick="runCleanup()">
+                                🧹 Ejecutar Limpieza
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>📊 Generar Reportes</h3>
+                        <p>Genera reportes de estadísticas del sistema.</p>
+                        <div class="control-actions">
+                            <button class="btn btn-info" onclick="generateReports()">
+                                📊 Generar Reportes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    📝 Logs del Sistema
+                    <div class="section-actions">
+                        <button class="btn btn-secondary btn-small" onclick="refreshLogs()">
+                            🔄 Actualizar Logs
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="clearLogs()">
+                            🗑️ Limpiar Logs
+                        </button>
+                    </div>
+                </h2>
+                
+                <div class="logs-container">
+                    <div class="logs-tabs">
+                        <button class="tab-button active" onclick="showLogTab('daemon')">Daemon Logs</button>
+                        <button class="tab-button" onclick="showLogTab('app')">App Logs</button>
+                        <button class="tab-button" onclick="showLogTab('error')">Error Logs</button>
+                    </div>
+                    
+                    <div class="logs-content">
+                        <div id="daemonLogs" class="log-content active">
+                            <pre id="daemonLogContent">Cargando logs del daemon...</pre>
+                        </div>
+                        <div id="appLogs" class="log-content">
+                            <pre id="appLogContent">Cargando logs de la aplicación...</pre>
+                        </div>
+                        <div id="errorLogs" class="log-content">
+                            <pre id="errorLogContent">Cargando logs de errores...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirmar Acción</h2>
+                <span class="close" onclick="closeConfirmModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">¿Estás seguro de que quieres realizar esta acción?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="confirmAction()">
+                        ✅ Confirmar
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeConfirmModal()">
+                        ❌ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/control.js"></script>
+    <script>
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            if (!Utils.isAuthenticated()) {
+                Utils.checkAuthRedirect();
+                return;
+            }
+
+            // Display current user info
+            const userInfo = Utils.getUserInfo();
+            if (userInfo) {
+                document.getElementById('currentUser').textContent = userInfo.email;
+            }
+
+            // Load control panel data
+            loadControlData();
+            checkSystemHealth();
+            refreshLogs();
+        });
+
+        // Logout function
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                Utils.logout();
+            }
+        }
+
+        // Load control panel data
+        async function loadControlData() {
+            try {
+                await Promise.all([
+                    refreshDaemonStatus(),
+                    loadSystemStats()
+                ]);
+            } catch (error) {
+                console.error('Error loading control data:', error);
+            }
+        }
+
+        // Load system statistics
+        async function loadSystemStats() {
+            try {
+                const result = await api.getSystemStats();
+                if (result.success) {
+                    updateSystemStats(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading system stats:', error);
+            }
+        }
+
+        // Update system statistics display
+        function updateSystemStats(stats) {
+            document.getElementById('systemStatus').textContent = stats.overall?.healthy ? '✅ Saludable' : '❌ Con problemas';
+            document.getElementById('daemonStatus').textContent = stats.daemon?.active ? '✅ Activo' : '❌ Inactivo';
+            document.getElementById('lastExecution').textContent = stats.daemon?.lastExecution || 'N/A';
+            document.getElementById('totalExecutions').textContent = stats.daemon?.todayExecutions || '0';
+        }
+    </script>
+</body>
+</html> 
