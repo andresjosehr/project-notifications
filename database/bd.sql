@@ -1,56 +1,47 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Versión del servidor:         8.0.42-0ubuntu0.24.04.1 - (Ubuntu)
--- SO del servidor:              Linux
--- HeidiSQL Versión:             12.10.0.7000
--- --------------------------------------------------------
+CREATE TABLE projects (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title LONGTEXT,
+  description LONGTEXT,
+  price LONGTEXT,
+  skills LONGTEXT,
+  link VARCHAR(255),
+  platform ENUM('workana','upwork') NOT NULL,
+  client_name VARCHAR(255),
+  client_country VARCHAR(100),
+  client_rating DECIMAL(3,2),
+  payment_verified BOOLEAN DEFAULT FALSE,
+  is_featured BOOLEAN DEFAULT FALSE,
+  is_max_project BOOLEAN DEFAULT FALSE,
+  date VARCHAR(50),
+  time_ago VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  workana_email VARCHAR(255) NOT NULL UNIQUE,
+  workana_password VARCHAR(255) NOT NULL,
+  proposal_directives LONGTEXT NOT NULL,
+  professional_profile LONGTEXT NOT NULL,
+  telegram_user VARCHAR(255) NOT NULL,
+  workana_session_data LONGTEXT,
+  session_expires_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE
+);
 
--- Volcando estructura para tabla projects.upwork_projects
-CREATE TABLE IF NOT EXISTS `upwork_projects` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci,
-  `description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci,
-  `date` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `time_ago` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `link` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1383 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
-
--- La exportación de datos fue deseleccionada.
-
--- Volcando estructura para tabla projects.workana_projects
-CREATE TABLE IF NOT EXISTS `workana_projects` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci,
-  `description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci,
-  `price` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci,
-  `skills` longtext COLLATE utf8mb4_spanish_ci,
-  `link` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=435849 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
-
--- La exportación de datos fue deseleccionada.
-
--- ALTER TABLE statements para agregar nuevos campos a workana_projects
-ALTER TABLE `workana_projects` ADD COLUMN `client_name` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL AFTER `skills`;
-ALTER TABLE `workana_projects` ADD COLUMN `client_country` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL AFTER `client_name`;
-ALTER TABLE `workana_projects` ADD COLUMN `client_rating` DECIMAL(3,2) DEFAULT NULL AFTER `client_country`;
-ALTER TABLE `workana_projects` ADD COLUMN `payment_verified` BOOLEAN DEFAULT FALSE AFTER `client_rating`;
-ALTER TABLE `workana_projects` ADD COLUMN `is_featured` BOOLEAN DEFAULT FALSE AFTER `payment_verified`;
-ALTER TABLE `workana_projects` ADD COLUMN `is_max_project` BOOLEAN DEFAULT FALSE AFTER `is_featured`;
-ALTER TABLE `workana_projects` ADD COLUMN `proposal_sent_at` DATETIME DEFAULT NULL AFTER `is_max_project`;
-
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
-/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+CREATE TABLE user_proposals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  project_id INT NOT NULL,
+  project_platform ENUM('workana','upwork') NOT NULL DEFAULT 'workana',
+  proposal_sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  proposal_content LONGTEXT,
+  status ENUM('sent','accepted','rejected','pending') DEFAULT 'sent',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY user_project_unique (user_id,project_id,project_platform),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

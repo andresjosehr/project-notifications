@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-This is a freelance project notification system v2.0 that monitors Workana and Upwork for new projects, generates AI-powered proposals, and sends Telegram notifications. The system is built with Node.js and uses a modular architecture.
+This is a freelance project notification system v2.0 that monitors Workana and Upwork for new projects, generates AI-powered proposals, and sends Telegram notifications. The system is built with Node.js and uses a modular architecture with multi-user support and unified database structure.
 
 ## Common Commands
 
@@ -117,6 +117,8 @@ LOG_LEVEL=DEBUG npm start
 - **Dependency Injection**: Services injected into controllers
 - **🆕 Command Pattern**: Commander.js for structured CLI commands
 - **🆕 REST API**: Express server with RESTful endpoints
+- **🆕 Multi-user Architecture**: User-specific configurations and proposal tracking
+- **🆕 Unified Data Model**: Single table for projects across all platforms
 
 ### Platform Support
 - **Workana**: 
@@ -151,8 +153,16 @@ LOG_LEVEL=DEBUG npm start
 
 ## Database Schema
 The system uses MySQL with these main tables:
-- `workana_projects` - Workana project data
-- `upwork_projects` - Upwork project data
+- `projects` - Unified table for all projects with platform identification (workana/upwork)
+- `users` - Multi-user support with individual configurations
+- `user_proposals` - Tracks proposals sent by each user to specific projects
+
+### Key Schema Changes in v2.0:
+- **Unified Project Table**: Combined `workana_projects` and `upwork_projects` into single `projects` table
+- **Platform Column**: Added `platform` ENUM('workana','upwork') for platform identification
+- **Multi-user Support**: New `users` table for independent user configurations
+- **Proposal Tracking**: `user_proposals` table replaces global `proposal_sent_at` column
+- **User-specific Settings**: Each user has their own proposal directives, professional profile, and Telegram notifications
 
 ## Environment Configuration
 Required environment variables:

@@ -1,13 +1,16 @@
 # Sistema de Notificaciones Freelance v2.0
 
-Sistema automatizado de notificaciones para proyectos de freelance con inteligencia artificial integrada. Monitorea constantemente Workana y Upwork en busca de nuevos proyectos, genera propuestas automáticas y envía notificaciones inteligentes vía Telegram.
+Sistema automatizado multiusuario de notificaciones para proyectos de freelance con inteligencia artificial integrada. Monitorea constantemente Workana y Upwork en busca de nuevos proyectos, genera propuestas automáticas personalizadas por usuario y envía notificaciones inteligentes vía Telegram.
 
 ## 🌟 Características Principales
 
 - ✅ **Scraping Inteligente**: Monitoreo automatizado de Workana y Upwork
 - ✅ **IA Integrada**: Generación automática de propuestas personalizadas
-- ✅ **Notificaciones Telegram**: Alertas instantáneas de nuevos proyectos
+- ✅ **Sistema Multiusuario**: Soporte para múltiples usuarios con configuraciones independientes
+- ✅ **Gestión de Propuestas**: Rastreo de propuestas enviadas por usuario y proyecto
+- ✅ **Notificaciones Telegram**: Alertas instantáneas personalizadas por usuario
 - ✅ **Traducción Automática**: Conversión automática al español
+- ✅ **Base de Datos Unificada**: Tabla única para proyectos con identificador de plataforma
 - ✅ **Arquitectura Escalable**: Diseño modular y mantenible
 - ✅ **Logging Avanzado**: Sistema de logs estructurado
 - ✅ **Manejo de Errores**: Sistema robusto de recuperación
@@ -21,11 +24,18 @@ lib/
 ├── database/              # Capa de acceso a datos
 │   ├── connection.js      # Pool de conexiones MySQL
 │   └── repositories/      # Patrón Repository
+│       ├── ProjectRepository.js    # Repositorio de proyectos (tabla unificada)
+│       ├── UserRepository.js       # Repositorio de usuarios
+│       └── UserProposalRepository.js # Repositorio de propuestas por usuario
 ├── models/                # Modelos de datos
+│   ├── Project.js         # Modelo de proyecto (soporta ambas plataformas)
+│   ├── User.js            # Modelo de usuario
+│   └── UserProposal.js    # Modelo de propuesta de usuario
 ├── services/              # Lógica de negocio
 │   ├── AIService.js       # Servicio de IA
 │   ├── NotificationService.js  # Servicio de notificaciones
-│   └── ProjectService.js  # Servicio de proyectos
+│   ├── ProjectService.js  # Servicio de proyectos
+│   └── WorkanaService.js  # Servicio específico de Workana
 ├── scrapers/              # Scrapers modulares
 │   ├── BaseScraper.js     # Clase base abstracta
 │   ├── UpworkScraper.js   # Scraper específico Upwork
@@ -85,23 +95,56 @@ SCRAPING_HEADLESS=true
 
 4. **Configurar base de datos**
 ```sql
--- Crear tablas necesarias
-CREATE TABLE workana_projects (
+-- Ejecutar el script SQL incluido
+mysql -u tu_usuario -p tu_database < database/bd.sql
+
+-- O crear manualmente las tablas principales:
+CREATE TABLE projects (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(500),
-  description TEXT,
-  price VARCHAR(200),
-  link VARCHAR(500) UNIQUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  title LONGTEXT,
+  description LONGTEXT,
+  price LONGTEXT,
+  skills LONGTEXT,
+  link VARCHAR(255),
+  platform ENUM('workana','upwork') NOT NULL,
+  client_name VARCHAR(255),
+  client_country VARCHAR(100),
+  client_rating DECIMAL(3,2),
+  payment_verified BOOLEAN DEFAULT FALSE,
+  is_featured BOOLEAN DEFAULT FALSE,
+  is_max_project BOOLEAN DEFAULT FALSE,
+  date VARCHAR(50),
+  time_ago VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE upwork_projects (
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(500),
-  description TEXT,
-  info TEXT,
-  link VARCHAR(500) UNIQUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  workana_email VARCHAR(255) NOT NULL UNIQUE,
+  workana_password VARCHAR(255) NOT NULL,
+  proposal_directives LONGTEXT NOT NULL,
+  professional_profile LONGTEXT NOT NULL,
+  telegram_user VARCHAR(255) NOT NULL,
+  workana_session_data LONGTEXT,
+  session_expires_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE user_proposals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  project_id INT NOT NULL,
+  project_platform ENUM('workana','upwork') NOT NULL DEFAULT 'workana',
+  proposal_sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  proposal_content LONGTEXT,
+  status ENUM('sent','accepted','rejected','pending') DEFAULT 'sent',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY user_project_unique (user_id,project_id,project_platform),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
