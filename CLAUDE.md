@@ -264,7 +264,6 @@ Structured logging with different levels:
 ## AI Integration
 - Uses Groq API for text generation
 - Automatic proposal generation
-- Translation capabilities
 - Configurable AI models and parameters
 
 ## Error Handling

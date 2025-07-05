@@ -40,7 +40,6 @@ program
   .description('Ejecutar scraping de Workana en modo daemon (sin cron)')
   .option('-i, --interval <minutes>', 'Intervalo entre ejecuciones en minutos', '1')
   .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos', true)
-  .option('-t, --translate', 'Traducir proyectos', true)
   .option('-q, --quiet', 'Modo silencioso (solo errores)', false)
   .option('-m, --max-runtime <hours>', 'Tiempo máximo de ejecución en horas (0 = sin límite)', '0')
   .action(async (options) => {

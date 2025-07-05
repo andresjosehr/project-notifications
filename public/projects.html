@@ -173,12 +173,6 @@
                         </label>
                     </div>
 
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enableTranslation" checked>
-                            Habilitar traducción automática
-                        </label>
-                    </div>
 
                     <div class="form-group">
                         <label>
@@ -647,7 +641,6 @@
         async function startScraping() {
             const platform = document.getElementById('scrapingPlatform').value;
             const notifications = document.getElementById('enableNotifications').checked;
-            const translation = document.getElementById('enableTranslation').checked;
             const parallel = document.getElementById('parallelMode').checked;
 
             const progressContainer = document.getElementById('scrapingProgress');
@@ -660,7 +653,6 @@
                 let result;
                 const options = {
                     notifications,
-                    translate: translation,
                     parallel
                 };
 
