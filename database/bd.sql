@@ -40,6 +40,14 @@ CREATE TABLE IF NOT EXISTS `workana_projects` (
 
 -- La exportación de datos fue deseleccionada.
 
+-- ALTER TABLE statements para agregar nuevos campos a workana_projects
+ALTER TABLE `workana_projects` ADD COLUMN `client_name` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL AFTER `skills`;
+ALTER TABLE `workana_projects` ADD COLUMN `client_country` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL AFTER `client_name`;
+ALTER TABLE `workana_projects` ADD COLUMN `client_rating` DECIMAL(3,2) DEFAULT NULL AFTER `client_country`;
+ALTER TABLE `workana_projects` ADD COLUMN `payment_verified` BOOLEAN DEFAULT FALSE AFTER `client_rating`;
+ALTER TABLE `workana_projects` ADD COLUMN `is_featured` BOOLEAN DEFAULT FALSE AFTER `payment_verified`;
+ALTER TABLE `workana_projects` ADD COLUMN `is_max_project` BOOLEAN DEFAULT FALSE AFTER `is_featured`;
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;

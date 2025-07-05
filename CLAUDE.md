@@ -119,18 +119,21 @@ LOG_LEVEL=DEBUG npm start
 - **🆕 REST API**: Express server with RESTful endpoints
 
 ### Platform Support
-- **Workana**: Complete scraping, proposal generation, notifications, 🆕 login management, 🆕 proposal automation
+- **Workana**: 
+  - **Public scraping**: WorkanaScraper (no login required)
+  - **Authenticated actions**: WorkanaService (login, send proposals)
+  - **Notifications**: AI-powered project notifications
 - **Upwork**: Complete scraping, proposal generation, notifications
 - **Extensible**: Easy to add new platforms by extending `BaseScraper`
 
 ### 🆕 New Components
 
 #### WorkanaService (`lib/services/WorkanaService.js`)
-- Session management with cookie persistence
+- Session management with cookie persistence (24h expiry)
 - Automated login with Playwright
 - Proposal sending with auto-login capability
-- Project extraction and management
 - Browser automation with stealth mode
+- **ONLY for authenticated actions** (login, send proposals)
 
 #### API Server (`lib/server.js`)
 - Express-based REST API
@@ -189,14 +192,14 @@ node cli.js server --port 3000
 - `GET /api/projects/recent?platform=upwork&limit=10` - Recent projects
 - `GET /api/projects/search?query=React&platform=workana&limit=5` - Search projects
 
-#### Scraping Operations
-- `POST /api/workana/scrape` - Execute Workana scraping
-- `POST /api/upwork/scrape` - Execute Upwork scraping
+#### Scraping Operations (Public, no login)
+- `POST /api/workana/scrape` - Execute Workana scraping (uses WorkanaScraper)
+- `POST /api/upwork/scrape` - Execute Upwork scraping (uses UpworkScraper)
 - `POST /api/scrape/single` - Execute single scraping cycle
 
-#### Workana Management
-- `POST /api/workana/login` - Login to Workana and save session
-- `POST /api/workana/proposal` - Send proposal to Workana project
+#### Workana Management (Authenticated)
+- `POST /api/workana/login` - Login to Workana and save session (uses WorkanaService)
+- `POST /api/workana/proposal` - Send proposal to Workana project (uses WorkanaService)
 
 #### Utilities
 - `POST /api/proposal/generate` - Generate AI proposal

@@ -21,7 +21,8 @@ program
   .action(async (options) => {
     try {
       const app = new NotificationApp();
-      await app.initialize();
+      // Inicialización básica sin validación de IA
+      await app.initializeWithoutAIValidation();
       
       logger.info('Iniciando scraping de Workana...');
       const results = await app.runPlatformSpecific('workana', options);
@@ -30,6 +31,8 @@ program
       console.log(`📊 Proyectos procesados: ${results.workana.processed || 0}`);
       console.log(`📊 Proyectos nuevos: ${results.workana.newProjects || 0}`);
       console.log(`📊 Errores: ${results.workana.errors || 0}`);
+
+      process.exit(0);
     } catch (error) {
       logger.errorWithStack('Error en scraping de Workana', error);
       console.error('❌ Error:', error.message);
@@ -64,9 +67,9 @@ program
 // Comando para login en Workana
 program
   .command('workana-login')
-  .description('Iniciar sesión en Workana y guardar las cookies')
-  .option('-u, --username <username>', 'Usuario de Workana')
-  .option('-p, --password <password>', 'Contraseña de Workana')
+  .description('Iniciar sesión en Workana y guardar las cookies (usa credenciales del .env por defecto)')
+  .option('-u, --username <username>', 'Usuario de Workana (opcional, usa WORKANA_USERNAME del .env si no se proporciona)')
+  .option('-p, --password <password>', 'Contraseña de Workana (opcional, usa WORKANA_PASSWORD del .env si no se proporciona)')
   .action(async (options) => {
     try {
       const workanaService = new WorkanaService();
@@ -91,11 +94,11 @@ program
 // Comando para enviar propuesta en Workana
 program
   .command('workana-proposal')
-  .description('Enviar propuesta a un proyecto de Workana')
+  .description('Enviar propuesta a un proyecto de Workana (usa credenciales del .env por defecto)')
   .requiredOption('-i, --project-id <projectId>', 'ID del proyecto')
   .option('-a, --auto-login', 'Iniciar sesión automáticamente si no hay sesión activa', true)
-  .option('-u, --username <username>', 'Usuario de Workana (para auto-login)')
-  .option('-p, --password <password>', 'Contraseña de Workana (para auto-login)')
+  .option('-u, --username <username>', 'Usuario de Workana (opcional, usa WORKANA_USERNAME del .env si no se proporciona)')
+  .option('-p, --password <password>', 'Contraseña de Workana (opcional, usa WORKANA_PASSWORD del .env si no se proporciona)')
   .action(async (options) => {
     try {
       const workanaService = new WorkanaService();
@@ -106,10 +109,6 @@ program
       const hasActiveSession = await workanaService.hasActiveSession();
       
       if (!hasActiveSession && options.autoLogin) {
-        if (!options.username || !options.password) {
-          throw new Error('Se requieren credenciales para auto-login');
-        }
-        
         console.log('🔐 No hay sesión activa, iniciando sesión automáticamente...');
         const loginResult = await workanaService.login(options.username, options.password);
         
