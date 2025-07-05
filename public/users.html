@@ -4,325 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios - Sistema Freelance</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .stats-bar {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 10px;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .main-content {
-            padding: 30px;
-        }
-
-        .section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
-        }
-
-        .form-container {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 0.875rem;
-        }
-
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .users-table th {
-            background: #667eea;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .users-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .users-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-        }
-
-        .text-truncate {
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @media (max-width: 768px) {
-            .form-row {
-                flex-direction: column;
-            }
-            
-            .users-table {
-                font-size: 0.875rem;
-            }
-            
-            .actions {
-                flex-direction: column;
-            }
-            
-            .modal-content {
-                margin: 10% auto;
-                width: 95%;
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="header-nav">
+                <a href="users.html" class="nav-link active">👥 Usuarios</a>
+                <a href="projects.html" class="nav-link">📋 Proyectos</a>
+            </div>
             <h1>🚀 Gestión de Usuarios</h1>
             <p>Sistema de Notificaciones Freelance v2.0 - Configuración Multiusuario</p>
         </div>
@@ -453,10 +143,10 @@
         </div>
     </div>
 
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/components.js"></script>
     <script>
-        // API base URL
-        const API_BASE = '/api';
-        
         // Load initial data
         document.addEventListener('DOMContentLoaded', function() {
             loadUsers();
@@ -466,8 +156,7 @@
         // Load user statistics
         async function loadStats() {
             try {
-                const response = await fetch(`${API_BASE}/users/stats`);
-                const result = await response.json();
+                const result = await api.getUserStats();
                 
                 if (result.success) {
                     document.getElementById('totalUsers').textContent = result.data.total;
@@ -484,10 +173,9 @@
         async function loadUsers() {
             try {
                 const container = document.getElementById('usersTableContainer');
-                container.innerHTML = '<div class="loading">Cargando usuarios...</div>';
+                Utils.showLoading(container, 'Cargando usuarios...');
                 
-                const response = await fetch(`${API_BASE}/users`);
-                const result = await response.json();
+                const result = await api.getUsers();
                 
                 if (result.success) {
                     renderUsersTable(result.data);
@@ -511,7 +199,7 @@
             }
 
             const table = `
-                <table class="users-table">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -565,15 +253,7 @@
             const userData = Object.fromEntries(formData.entries());
             
             try {
-                const response = await fetch(`${API_BASE}/users`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
-                const result = await response.json();
+                const result = await api.createUser(userData);
                 
                 if (result.success) {
                     showAlert('success', 'Usuario creado exitosamente');
@@ -590,8 +270,7 @@
         // Edit user
         async function editUser(userId) {
             try {
-                const response = await fetch(`${API_BASE}/users/${userId}`);
-                const result = await response.json();
+                const result = await api.getUserById(userId);
                 
                 if (result.success) {
                     const user = result.data;
@@ -621,15 +300,7 @@
             const userData = Object.fromEntries(formData.entries());
             
             try {
-                const response = await fetch(`${API_BASE}/users/${userId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
-                const result = await response.json();
+                const result = await api.updateUser(userId, userData);
                 
                 if (result.success) {
                     showAlert('success', 'Usuario actualizado exitosamente');
@@ -646,15 +317,7 @@
         // Toggle user status
         async function toggleUserStatus(userId, newStatus) {
             try {
-                const response = await fetch(`${API_BASE}/users/${userId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ is_active: newStatus })
-                });
-                
-                const result = await response.json();
+                const result = await api.toggleUserStatus(userId, newStatus);
                 
                 if (result.success) {
                     showAlert('success', result.message);
@@ -674,11 +337,7 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE}/users/${userId}`, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
+                const result = await api.deleteUser(userId);
                 
                 if (result.success) {
                     showAlert('success', 'Usuario eliminado exitosamente');
