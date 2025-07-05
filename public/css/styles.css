@@ -880,3 +880,72 @@ textarea {
         padding: 3px 6px;
     }
 }
+
+/* Proposal Modal Styles */
+.proposal-content {
+    max-width: 100%;
+}
+
+.proposal-text {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-left: 4px solid #667eea;
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 5px;
+    display: block;
+}
+
+#proposalUserId {
+    font-size: 0.9rem;
+}
+
+#proposalUserId option {
+    padding: 8px;
+}
+
+.proposal-progress {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e3f2fd;
+    border-radius: 5px;
+    border-left: 4px solid #2196f3;
+}
+
+.proposal-status {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* Checkbox styles */
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+.form-group input[type="checkbox"] + label {
+    display: inline;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* Responsive adjustments for proposal modal */
+@media (max-width: 768px) {
+    .proposal-text {
+        font-size: 0.8rem;
+        padding: 10px;
+    }
+    
+    #proposalUserId {
+        font-size: 0.8rem;
+    }
+}

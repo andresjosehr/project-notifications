@@ -77,6 +77,10 @@ class ApiClient {
         return this.get('/users');
     }
 
+    async getActiveUsers() {
+        return this.get('/users/active');
+    }
+
     async getUserById(id) {
         return this.get(`/users/${id}`);
     }
@@ -152,6 +156,14 @@ class ApiClient {
     // Proposal Management
     async generateProposal(data) {
         return this.post('/proposal/generate', data);
+    }
+
+    async sendProposal(projectId, userId, options = {}) {
+        return this.post('/workana/proposal', {
+            projectId,
+            userId,
+            ...options
+        });
     }
 
     // System

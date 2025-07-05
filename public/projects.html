@@ -203,6 +203,60 @@
         </div>
     </div>
 
+    <!-- Send Proposal Modal -->
+    <div id="sendProposalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 Enviar Propuesta</h2>
+                <span class="close" onclick="closeSendProposalModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-container">
+                    <h3 id="proposalProjectTitle">Enviar propuesta</h3>
+                    <p>Selecciona un usuario para enviar la propuesta desde su cuenta.</p>
+                    
+                    <div class="form-group">
+                        <label for="proposalUserId">Usuario</label>
+                        <select id="proposalUserId" required>
+                            <option value="">Selecciona un usuario...</option>
+                        </select>
+                        <small class="form-help">Solo se muestran usuarios activos con sesión válida</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoLoginProposal" checked>
+                            Iniciar sesión automáticamente si es necesario
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="generateCustomProposal" checked>
+                            Generar propuesta personalizada con IA
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <button class="btn btn-primary" onclick="sendProposal()">
+                            📤 Enviar Propuesta
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeSendProposalModal()">
+                            ❌ Cancelar
+                        </button>
+                    </div>
+
+                    <div id="proposalProgress" class="hidden" style="margin-top: 20px;">
+                        <div class="alert alert-info">
+                            <div id="proposalStatus">Enviando propuesta...</div>
+                            <div class="spinner" style="margin: 10px auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/components.js"></script>
@@ -458,6 +512,9 @@
                                 
                                 <div class="footer-actions">
                                     <a href="${project.link}" target="_blank" rel="noopener noreferrer" class="project-link">Ver en ${Utils.capitalize(project.platform)}</a>
+                                    <button class="btn btn-primary btn-small" onclick="showSendProposalModal(${project.id}, '${Utils.escapeHtml(project.title)}')">
+                                        📤 Enviar Propuesta
+                                    </button>
                                     <button class="btn btn-secondary btn-small" onclick="closeProjectModal()">Cerrar</button>
                                 </div>
                             </div>
@@ -726,6 +783,95 @@
         // Close project modal
         function closeProjectModal() {
             document.getElementById('projectModal').style.display = 'none';
+        }
+
+        // Show send proposal modal
+        async function showSendProposalModal(projectId, projectTitle) {
+            try {
+                // Cargar usuarios activos
+                const result = await api.getActiveUsers();
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                const users = result.data.filter(user => user.isActive);
+                
+                if (users.length === 0) {
+                    showAlert('error', 'No hay usuarios activos disponibles para enviar propuestas');
+                    return;
+                }
+
+                // Actualizar el título del proyecto
+                document.getElementById('proposalProjectTitle').textContent = `Enviar propuesta: ${projectTitle}`;
+                
+                // Llenar el select con usuarios
+                const userSelect = document.getElementById('proposalUserId');
+                userSelect.innerHTML = '<option value="">Selecciona un usuario...</option>';
+                
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.workanaEmail} (${user.telegramUser || 'Sin Telegram'})`;
+                    userSelect.appendChild(option);
+                });
+
+                // Guardar el projectId para usarlo en sendProposal
+                document.getElementById('sendProposalModal').setAttribute('data-project-id', projectId);
+                
+                // Mostrar el modal
+                document.getElementById('sendProposalModal').style.display = 'block';
+                
+            } catch (error) {
+                showAlert('error', 'Error cargando usuarios: ' + error.message);
+            }
+        }
+
+        // Close send proposal modal
+        function closeSendProposalModal() {
+            document.getElementById('sendProposalModal').style.display = 'none';
+            document.getElementById('proposalProgress').classList.add('hidden');
+        }
+
+        // Send proposal
+        async function sendProposal() {
+            const projectId = document.getElementById('sendProposalModal').getAttribute('data-project-id');
+            const userId = document.getElementById('proposalUserId').value;
+            const autoLogin = document.getElementById('autoLoginProposal').checked;
+            const generateCustom = document.getElementById('generateCustomProposal').checked;
+
+            if (!userId) {
+                showAlert('error', 'Por favor selecciona un usuario');
+                return;
+            }
+
+            const progressContainer = document.getElementById('proposalProgress');
+            const statusDiv = document.getElementById('proposalStatus');
+            
+            progressContainer.classList.remove('hidden');
+            statusDiv.textContent = 'Enviando propuesta...';
+
+            try {
+                const result = await api.sendProposal(projectId, userId, {
+                    autoLogin,
+                    generateCustom
+                });
+
+                if (result.success) {
+                    statusDiv.textContent = '✅ Propuesta enviada exitosamente';
+                    showAlert('success', `Propuesta enviada correctamente desde la cuenta de ${result.data.userEmail || 'usuario'}`);
+                    
+                    // Cerrar modal después de 2 segundos
+                    setTimeout(() => {
+                        closeSendProposalModal();
+                        closeProjectModal(); // También cerrar el modal de detalles
+                    }, 2000);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                showAlert('error', 'Error enviando propuesta: ' + error.message);
+            }
         }
 
         // Utility functions
