@@ -67,19 +67,19 @@ program
 // Comando para login en Workana
 program
   .command('workana-login')
-  .description('Iniciar sesión en Workana y guardar las cookies (usa credenciales del .env por defecto)')
-  .option('-u, --username <username>', 'Usuario de Workana (opcional, usa WORKANA_USERNAME del .env si no se proporciona)')
-  .option('-p, --password <password>', 'Contraseña de Workana (opcional, usa WORKANA_PASSWORD del .env si no se proporciona)')
+  .description('Iniciar sesión en Workana usando un usuario de la base de datos')
+  .requiredOption('-i, --user-id <userId>', 'ID del usuario en la base de datos')
   .action(async (options) => {
     try {
       const workanaService = new WorkanaService();
       
-      logger.info('Iniciando sesión en Workana...');
-      const result = await workanaService.login(options.username, options.password);
+      logger.info(`Iniciando sesión en Workana con usuario ID ${options.userId}...`);
+      const result = await workanaService.loginByUserId(parseInt(options.userId));
       
       if (result.success) {
         console.log('✅ Sesión de Workana iniciada y guardada correctamente');
-        console.log(`👤 Usuario: ${result.user || 'N/A'}`);
+        console.log(`👤 Usuario: ${result.userEmail || 'N/A'}`);
+        console.log(`🆔 ID: ${result.userId || 'N/A'}`);
       } else {
         console.error('❌ Error iniciando sesión:', result.error);
         process.exit(1);
@@ -94,23 +94,22 @@ program
 // Comando para enviar propuesta en Workana
 program
   .command('workana-proposal')
-  .description('Enviar propuesta a un proyecto de Workana (usa credenciales del .env por defecto)')
-  .requiredOption('-i, --project-id <projectId>', 'ID del proyecto')
+  .description('Enviar propuesta a un proyecto de Workana usando un usuario de la base de datos')
+  .requiredOption('-p, --project-id <projectId>', 'ID del proyecto')
+  .requiredOption('-i, --user-id <userId>', 'ID del usuario en la base de datos')
   .option('-a, --auto-login', 'Iniciar sesión automáticamente si no hay sesión activa', true)
-  .option('-u, --username <username>', 'Usuario de Workana (opcional, usa WORKANA_USERNAME del .env si no se proporciona)')
-  .option('-p, --password <password>', 'Contraseña de Workana (opcional, usa WORKANA_PASSWORD del .env si no se proporciona)')
   .action(async (options) => {
     try {
       const workanaService = new WorkanaService();
       
-      logger.info(`Enviando propuesta para proyecto ${options.projectId}...`);
+      logger.info(`Enviando propuesta para proyecto ${options.projectId} con usuario ID ${options.userId}...`);
       
       // Verificar si hay sesión activa
       const hasActiveSession = await workanaService.hasActiveSession();
       
       if (!hasActiveSession && options.autoLogin) {
         console.log('🔐 No hay sesión activa, iniciando sesión automáticamente...');
-        const loginResult = await workanaService.login(options.username, options.password);
+        const loginResult = await workanaService.loginByUserId(parseInt(options.userId));
         
         if (!loginResult.success) {
           throw new Error(`Error en auto-login: ${loginResult.error}`);
@@ -118,11 +117,13 @@ program
         console.log('✅ Sesión iniciada correctamente');
       }
       
-      const result = await workanaService.sendProposal(options.projectId, options);
+      const result = await workanaService.sendProposalByUserId(options.projectId, parseInt(options.userId), options);
       
       if (result.success) {
         console.log('✅ Propuesta enviada correctamente');
-        console.log(`📝 Proyecto: ${result.projectTitle || options.projectId}`);
+        console.log(`📝 Proyecto: ${result.title || options.projectId}`);
+        console.log(`👤 Usuario: ${result.userEmail || 'N/A'}`);
+        console.log(`🆔 Usuario ID: ${result.userId || 'N/A'}`);
       } else {
         console.error('❌ Error enviando propuesta:', result.error);
         process.exit(1);

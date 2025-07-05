@@ -47,15 +47,15 @@ npm run upwork:scrape
 # or
 node cli.js upwork-scrape --notifications --translate
 
-# Workana login and session management
+# Workana login and session management (using user ID from database)
 npm run workana:login
 # or
-node cli.js workana-login --username "email" --password "password"
+node cli.js workana-login --user-id 1
 
-# Send Workana proposal with auto-login
+# Send Workana proposal with auto-login (using user ID from database)
 npm run workana:proposal
 # or
-node cli.js workana-proposal --project-id 123456 --username "email" --password "password"
+node cli.js workana-proposal --project-id 123456 --user-id 1
 
 # Enhanced commands
 node cli.js stats --platform workana
