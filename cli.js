@@ -105,7 +105,7 @@ program
       logger.info(`Enviando propuesta para proyecto ${options.projectId} con usuario ID ${options.userId}...`);
       
       // Verificar si hay sesión activa
-      const hasActiveSession = await workanaService.hasActiveSession();
+      const hasActiveSession = await workanaService.hasActiveSession(parseInt(options.userId));
       
       if (!hasActiveSession && options.autoLogin) {
         console.log('🔐 No hay sesión activa, iniciando sesión automáticamente...');
