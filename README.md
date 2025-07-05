@@ -107,7 +107,7 @@ CREATE TABLE upwork_projects (
 
 ## 💻 Uso
 
-### Comandos Principales
+### Comandos Principales (Versión Clásica)
 
 #### Modo Continuo (Recomendado)
 ```bash
@@ -152,6 +152,69 @@ node index.js proposal --projectId 123 --platform workana
 #### Health Check
 ```bash
 npm run health
+```
+
+### 🆕 Nuevos Comandos CLI (Con Commander.js)
+
+#### Servidor API
+```bash
+# Iniciar servidor API con endpoints REST
+npm run server
+# o
+node cli.js server --port 3000
+```
+
+#### Scraping Específico con Notificaciones
+```bash
+# Scraping de Workana con notificaciones
+npm run workana:scrape
+# o
+node cli.js workana-scrape --notifications --translate
+
+# Scraping de Upwork con notificaciones
+npm run upwork:scrape
+# o
+node cli.js upwork-scrape --notifications --translate
+```
+
+#### Gestión de Sesiones Workana
+```bash
+# Iniciar sesión en Workana y guardar cookies
+npm run workana:login
+# o
+node cli.js workana-login --username "tu_email" --password "tu_password"
+```
+
+#### Envío de Propuestas Automatizado
+```bash
+# Enviar propuesta con auto-login
+npm run workana:proposal
+# o
+node cli.js workana-proposal --project-id 123456 --username "tu_email" --password "tu_password"
+
+# Enviar propuesta con sesión existente
+node cli.js workana-proposal --project-id 123456 --no-auto-login
+```
+
+#### Comandos Mejorados
+```bash
+# Estadísticas detalladas
+node cli.js stats --platform workana
+
+# Proyectos recientes
+node cli.js recent --platform upwork --limit 20
+
+# Búsqueda avanzada
+node cli.js search --query "React" --platform workana --limit 10
+
+# Health check completo
+node cli.js health
+
+# Modo continuo
+node cli.js continuous --parallel --notifications --translate
+
+# Ciclo único
+node cli.js single --parallel --notifications --translate
 ```
 
 ### Opciones de Configuración
@@ -238,6 +301,143 @@ Lógica de negocio para proyectos:
 
 ## 🛠️ API de Desarrollo
 
+### 🌐 API REST (Nuevo)
+
+Inicia el servidor API con:
+```bash
+npm run server
+# o
+node cli.js server --port 3000
+```
+
+#### Endpoints Disponibles
+
+##### Health Check
+```bash
+GET /health
+```
+
+##### Estado del Sistema
+```bash
+GET /api/status
+```
+
+##### Estadísticas
+```bash
+GET /api/stats?platform=workana
+```
+
+##### Proyectos Recientes
+```bash
+GET /api/projects/recent?platform=upwork&limit=10
+```
+
+##### Buscar Proyectos
+```bash
+GET /api/projects/search?query=React&platform=workana&limit=5
+```
+
+##### Scraping de Workana
+```bash
+POST /api/workana/scrape
+Content-Type: application/json
+
+{
+  "notifications": true,
+  "translate": true
+}
+```
+
+##### Scraping de Upwork
+```bash
+POST /api/upwork/scrape
+Content-Type: application/json
+
+{
+  "notifications": true,
+  "translate": true
+}
+```
+
+##### Login en Workana
+```bash
+POST /api/workana/login
+Content-Type: application/json
+
+{
+  "username": "tu_email@example.com",
+  "password": "tu_password"
+}
+```
+
+##### Enviar Propuesta Workana
+```bash
+POST /api/workana/proposal
+Content-Type: application/json
+
+{
+  "projectId": "123456",
+  "autoLogin": true,
+  "username": "tu_email@example.com",
+  "password": "tu_password"
+}
+```
+
+##### Ciclo Único
+```bash
+POST /api/scrape/single
+Content-Type: application/json
+
+{
+  "parallel": true,
+  "notifications": true,
+  "translate": true
+}
+```
+
+##### Generar Propuesta
+```bash
+POST /api/proposal/generate
+Content-Type: application/json
+
+{
+  "projectId": "123456",
+  "platform": "workana"
+}
+```
+
+##### Limpiar Datos
+```bash
+POST /api/cleanup
+Content-Type: application/json
+
+{
+  "removeDuplicates": true
+}
+```
+
+#### Respuestas de la API
+
+**Respuesta Exitosa:**
+```json
+{
+  "success": true,
+  "message": "Operación completada",
+  "data": {
+    "newProjects": 5,
+    "notifications": 3
+  }
+}
+```
+
+**Respuesta de Error:**
+```json
+{
+  "success": false,
+  "error": "Descripción del error"
+}
+```
+
 ### Uso Programático
 
 ```javascript
@@ -259,6 +459,36 @@ async function ejemplo() {
   // Generar propuesta
   const proposal = await app.generateProposal(123, 'workana');
 }
+```
+
+### Ejemplo de Uso de API con JavaScript
+
+```javascript
+// Obtener estadísticas
+const response = await fetch('http://localhost:3000/api/stats');
+const stats = await response.json();
+
+// Ejecutar scraping de Workana
+const scrapingResponse = await fetch('http://localhost:3000/api/workana/scrape', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    notifications: true,
+    translate: true
+  })
+});
+
+// Enviar propuesta
+const proposalResponse = await fetch('http://localhost:3000/api/workana/proposal', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    projectId: "123456",
+    autoLogin: true,
+    username: "tu_email@example.com",
+    password: "tu_password"
+  })
+});
 ```
 
 ### Health Check API
