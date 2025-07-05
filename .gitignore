@@ -5,3 +5,4 @@ out.log
 debug.log
 playwright
 data
+logs/*
