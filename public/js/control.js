@@ -445,6 +445,166 @@ async function clearLogs() {
     );
 }
 
+// Download current logs
+async function downloadCurrentLogs() {
+    try {
+        // Get the currently active tab
+        const activeTab = document.querySelector('.tab-button.active');
+        if (!activeTab) {
+            Utils.showAlert('❌ No hay tab activo seleccionado', 'error');
+            return;
+        }
+        
+        const activeTabText = activeTab.textContent.trim();
+        let logType = 'daemon';
+        let fileName = 'daemon_logs.txt';
+        
+        // Determine log type based on active tab
+        if (activeTabText.includes('Daemon')) {
+            logType = 'daemon';
+            fileName = 'daemon_logs.txt';
+        } else if (activeTabText.includes('App')) {
+            logType = 'app';
+            fileName = 'app_logs.txt';
+        } else if (activeTabText.includes('Error')) {
+            logType = 'error';
+            fileName = 'error_logs.txt';
+        }
+        
+        Utils.showAlert('📥 Descargando logs...', 'info');
+        
+        // Get the logs data
+        let result;
+        switch (logType) {
+            case 'daemon':
+                result = await api.getDaemonLogs();
+                break;
+            case 'app':
+                result = await api.getAppLogs();
+                break;
+            case 'error':
+                result = await api.getErrorLogs();
+                break;
+            default:
+                throw new Error('Tipo de log no válido');
+        }
+        
+        if (result.success) {
+            const logContent = result.data || 'No hay logs disponibles';
+            
+            // Create and download the file
+            const blob = new Blob([logContent], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            // Add timestamp to filename
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const finalFileName = `${timestamp}_${fileName}`;
+            
+            link.href = url;
+            link.download = finalFileName;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.URL.revokeObjectURL(url);
+            
+            Utils.showAlert('✅ Logs descargados correctamente', 'success');
+        } else {
+            throw new Error(result.error || 'Error obteniendo logs');
+        }
+    } catch (error) {
+        Utils.showAlert(`❌ Error descargando logs: ${error.message}`, 'error');
+    }
+}
+
+// Download all logs at once
+async function downloadAllLogs() {
+    try {
+        Utils.showAlert('📥 Descargando todos los logs...', 'info');
+        
+        // Get all logs in parallel
+        const [daemonResult, appResult, errorResult] = await Promise.all([
+            api.getDaemonLogs(),
+            api.getAppLogs(),
+            api.getErrorLogs()
+        ]);
+        
+        // Create combined log content
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        let combinedContent = `# Logs del Sistema - ${new Date().toLocaleString()}\n\n`;
+        
+        // Add daemon logs
+        combinedContent += '==========================================\n';
+        combinedContent += '=              DAEMON LOGS              =\n';
+        combinedContent += '==========================================\n\n';
+        if (daemonResult.success) {
+            combinedContent += daemonResult.data || 'No hay logs de daemon disponibles';
+        } else {
+            combinedContent += 'Error obteniendo logs del daemon';
+        }
+        
+        // Add app logs
+        combinedContent += '\n\n==========================================\n';
+        combinedContent += '=               APP LOGS                =\n';
+        combinedContent += '==========================================\n\n';
+        if (appResult.success) {
+            combinedContent += appResult.data || 'No hay logs de aplicación disponibles';
+        } else {
+            combinedContent += 'Error obteniendo logs de la aplicación';
+        }
+        
+        // Add error logs
+        combinedContent += '\n\n==========================================\n';
+        combinedContent += '=              ERROR LOGS               =\n';
+        combinedContent += '==========================================\n\n';
+        if (errorResult.success) {
+            combinedContent += errorResult.data || 'No hay logs de errores disponibles';
+        } else {
+            combinedContent += 'Error obteniendo logs de errores';
+        }
+        
+        // Create and download the file
+        const blob = new Blob([combinedContent], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        const fileName = `${timestamp}_all_logs.txt`;
+        
+        link.href = url;
+        link.download = fileName;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        
+        Utils.showAlert('✅ Todos los logs descargados correctamente', 'success');
+    } catch (error) {
+        Utils.showAlert(`❌ Error descargando todos los logs: ${error.message}`, 'error');
+    }
+}
+
+// Toggle download menu
+function toggleDownloadMenu() {
+    const menu = document.getElementById('downloadMenu');
+    menu.classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdownWrapper = document.querySelector('.dropdown-wrapper');
+    const menu = document.getElementById('downloadMenu');
+    
+    if (menu && !dropdownWrapper.contains(event.target)) {
+        menu.classList.remove('show');
+    }
+});
+
 // Show log tab
 function showLogTab(tabName) {
     // Hide all log contents

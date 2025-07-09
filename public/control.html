@@ -210,6 +210,19 @@
                         <button class="btn btn-secondary btn-small" onclick="refreshLogs()">
                             🔄 Actualizar Logs
                         </button>
+                        <div class="dropdown-wrapper">
+                            <button class="btn btn-success btn-small dropdown-toggle" onclick="toggleDownloadMenu()">
+                                📥 Descargar Logs ▼
+                            </button>
+                            <div class="dropdown-menu" id="downloadMenu">
+                                <button class="dropdown-item" onclick="downloadCurrentLogs()">
+                                    📄 Descargar Tab Actual
+                                </button>
+                                <button class="dropdown-item" onclick="downloadAllLogs()">
+                                    📁 Descargar Todos los Logs
+                                </button>
+                            </div>
+                        </div>
                         <button class="btn btn-warning btn-small" onclick="clearLogs()">
                             🗑️ Limpiar Logs
                         </button>
