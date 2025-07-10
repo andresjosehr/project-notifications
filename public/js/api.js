@@ -338,6 +338,35 @@ class ApiClient {
         window.location.href = '/login.html';
     }
 
+    // Generate proposal only (for review flow)
+    async generateProposal(projectId, userId, options = {}) {
+        return this.post('/proposal/generate', {
+            projectId,
+            userId,
+            ...options
+        });
+    }
+
+    // Send proposal with custom content
+    async sendProposalWithCustomContent(projectId, userId, proposalContent, options = {}) {
+        return this.post('/proposal/send', {
+            projectId,
+            userId,
+            proposalContent,
+            ...options
+        });
+    }
+
+    // Get project by ID
+    async getProjectById(projectId) {
+        return this.get(`/project/${projectId}`);
+    }
+
+    // Get user by ID
+    async getUserById(userId) {
+        return this.get(`/user/${userId}`);
+    }
+
     async generateAccessToken(projectId, platform, userId) {
         return this.post('/auth/generate-access-token', {
             projectId,

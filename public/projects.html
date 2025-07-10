@@ -237,7 +237,7 @@
 
                     <div class="form-row">
                         <button class="btn btn-primary" onclick="sendProposal()">
-                            📤 Enviar Propuesta
+                            📝 Revisar y Enviar Propuesta
                         </button>
                         <button class="btn btn-secondary" onclick="closeSendProposalModal()">
                             ❌ Cancelar
@@ -828,7 +828,7 @@
             document.getElementById('proposalProgress').classList.add('hidden');
         }
 
-        // Send proposal
+        // Send proposal - redirect to review page
         async function sendProposal() {
             const projectId = document.getElementById('sendProposalModal').getAttribute('data-project-id');
             const userId = document.getElementById('proposalUserId').value;
@@ -840,34 +840,20 @@
                 return;
             }
 
-            const progressContainer = document.getElementById('proposalProgress');
-            const statusDiv = document.getElementById('proposalStatus');
-            
-            progressContainer.classList.remove('hidden');
-            statusDiv.textContent = 'Enviando propuesta...';
+            // Close modals
+            closeSendProposalModal();
+            closeProjectModal();
 
-            try {
-                const result = await api.sendProposal(projectId, userId, {
-                    autoLogin,
-                    generateCustom
-                });
+            // Redirect to proposal review page with parameters
+            const params = new URLSearchParams({
+                projectId: projectId,
+                userId: userId,
+                platform: 'workana',
+                autoLogin: autoLogin,
+                generateCustom: generateCustom
+            });
 
-                if (result.success) {
-                    statusDiv.textContent = '✅ Propuesta enviada exitosamente';
-                    showAlert('success', `Propuesta enviada correctamente desde la cuenta de ${result.data.userEmail || 'usuario'}`);
-                    
-                    // Cerrar modal después de 2 segundos
-                    setTimeout(() => {
-                        closeSendProposalModal();
-                        closeProjectModal(); // También cerrar el modal de detalles
-                    }, 2000);
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                statusDiv.textContent = `❌ Error: ${error.message}`;
-                showAlert('error', 'Error enviando propuesta: ' + error.message);
-            }
+            window.location.href = `proposal-review.html?${params.toString()}`;
         }
 
         // Logout function
