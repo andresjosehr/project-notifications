@@ -10,6 +10,7 @@
     <div class="container">
         <div class="header">
             <div class="header-nav">
+                <a href="index.html" class="nav-link">🏠 Inicio</a>
                 <a href="users.html" class="nav-link">👥 Usuarios</a>
                 <a href="projects.html" class="nav-link">📋 Proyectos</a>
                 <a href="control.html" class="nav-link">⚙️ Control Panel</a>
@@ -35,106 +36,100 @@
 
             <!-- Proposal Review Section -->
             <div id="proposalReviewSection" class="section hidden">
-                <!-- Project Information -->
-                <div class="section">
-                    <h2 class="section-title">📋 Información del Proyecto</h2>
-                    <div class="project-info-card">
-                        <div class="project-header">
-                            <h3 class="project-title" id="projectTitle">-</h3>
-                            <div class="project-meta">
-                                <span class="platform-badge platform-workana" id="projectPlatform">Workana</span>
-                                <span class="project-date" id="projectDate">-</span>
-                            </div>
-                        </div>
-                        <div class="project-main-info">
-                            <div class="info-row">
-                                <div class="info-item">
-                                    <span class="info-label">💰 Presupuesto:</span>
-                                    <span class="budget-info" id="projectBudget">-</span>
+                <div class="proposal-layout">
+                    <!-- Project Information Column -->
+                    <div class="project-column">
+                        <div class="section">
+                            <h2 class="section-title">📋 Información del Proyecto</h2>
+                            <div class="project-info-card">
+                                <div class="project-header">
+                                    <h3 class="project-title" id="projectTitle">-</h3>
+                                    <div class="project-meta">
+                                        <span class="platform-badge platform-workana" id="projectPlatform">Workana</span>
+                                        <span class="project-date" id="projectDate">-</span>
+                                    </div>
                                 </div>
-                                <div class="info-item">
-                                    <span class="info-label">📅 Fecha límite:</span>
-                                    <span id="projectDeadline">-</span>
-                                </div>
-                            </div>
-                            <div class="info-row">
-                                <div class="info-item">
-                                    <span class="info-label">🏷️ Categoría:</span>
-                                    <span id="projectCategory">-</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">👤 Usuario:</span>
-                                    <span id="selectedUser">-</span>
+                                <div class="project-description" id="projectDescription" style="margin: 18px 0 10px 0; font-size: 1.05em; color: #333; background: #f4f8ff; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #667eea;"></div>
+                                <div class="project-main-info">
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <span class="info-label">💰 Presupuesto:</span>
+                                            <span class="budget-info" id="projectBudget">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">📅 Fecha límite:</span>
+                                            <span id="projectDeadline">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <span class="info-label">🏷️ Categoría:</span>
+                                            <span id="projectCategory">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">👤 Usuario:</span>
+                                            <span id="selectedUser">-</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Proposal Editor -->
-                <div class="section">
-                    <h2 class="section-title">
-                        ✏️ Editar Propuesta
-                        <div class="section-actions">
-                            <button class="btn btn-info btn-small" onclick="regenerateProposal()">
-                                🔄 Regenerar Propuesta
-                            </button>
-                            <button class="btn btn-secondary btn-small" onclick="resetProposal()">
-                                ↩️ Restaurar Original
-                            </button>
-                        </div>
-                    </h2>
-                    
-                    <div class="form-container">
-                        <div class="form-group">
-                            <label for="proposalContent">
-                                📝 Contenido de la Propuesta
-                                <span class="form-help">Puedes editar el texto de la propuesta antes de enviarla</span>
-                            </label>
-                            <textarea 
-                                id="proposalContent" 
-                                class="proposal-editor"
-                                placeholder="La propuesta se está generando..."
-                                rows="15"
-                            ></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="sendNotification" checked>
-                                📱 Enviar notificación de confirmación por Telegram
-                            </label>
-                        </div>
-                        
-                        <div class="proposal-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Caracteres:</span>
-                                <span id="charCount">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Palabras:</span>
-                                <span id="wordCount">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Líneas:</span>
-                                <span id="lineCount">0</span>
+                    <!-- Proposal Editor Column -->
+                    <div class="proposal-column">
+                        <div class="section">
+                            <h2 class="section-title">
+                                ✏️ Editar Propuesta
+                                <div class="section-actions">
+                                    <button class="btn btn-info btn-small" onclick="regenerateProposal()">
+                                        🔄 Regenerar Propuesta
+                                    </button>
+                                    <button class="btn btn-secondary btn-small" onclick="resetProposal()">
+                                        ↩️ Restaurar Original
+                                    </button>
+                                </div>
+                            </h2>
+                            
+                            <div class="form-container">
+                                <div class="form-group">
+                                    <label for="proposalContent">
+                                        📝 Contenido de la Propuesta
+                                        <span class="form-help">Puedes editar el texto de la propuesta antes de enviarla</span>
+                                    </label>
+                                    <textarea 
+                                        id="proposalContent" 
+                                        class="proposal-editor"
+                                        placeholder="La propuesta se está generando..."
+                                        rows="20"
+                                    ></textarea>
+                                </div>
+                                
+                                <div class="proposal-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Caracteres:</span>
+                                        <span id="charCount">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Palabras:</span>
+                                        <span id="wordCount">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Líneas:</span>
+                                        <span id="lineCount">0</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Action Buttons -->
-                <div class="section">
-                    <div class="proposal-actions">
-                        <button class="btn btn-success btn-large" onclick="sendProposal()">
-                            📤 Enviar Propuesta
-                        </button>
-                        <button class="btn btn-secondary btn-large" onclick="saveAsDraft()">
-                            💾 Guardar como Borrador
-                        </button>
-                        <button class="btn btn-warning btn-large" onclick="goBack()">
-                            ← Volver a Proyectos
-                        </button>
+                        <!-- Action Buttons -->
+                        <div class="section">
+                            <div class="proposal-actions">
+                                <button class="btn btn-success btn-large" onclick="sendProposal()">
+                                    📤 Enviar Propuesta
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,57 +177,19 @@
     <script>
         // Check if user is authenticated
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if this is coming from Telegram (source=telegram in URL)
-            const urlParams = new URLSearchParams(window.location.search);
-            const source = urlParams.get('source');
-            
-            if (source === 'telegram') {
-                // Coming from Telegram - no authentication required
-                document.getElementById('currentUser').textContent = 'Usuario de Telegram';
-                
-                // Hide navigation links since user is not authenticated
-                const headerNav = document.querySelector('.header-nav');
-                if (headerNav) {
-                    const navLinks = headerNav.querySelectorAll('.nav-link');
-                    navLinks.forEach(link => {
-                        if (!link.textContent.includes('Cerrar Sesión')) {
-                            link.style.display = 'none';
-                        }
-                    });
-                    
-                    // Update logout button to go back to Telegram
-                    const logoutBtn = headerNav.querySelector('button');
-                    if (logoutBtn) {
-                        logoutBtn.textContent = '← Volver';
-                        logoutBtn.onclick = () => {
-                            if (confirm('¿Seguro que quieres salir sin enviar la propuesta?')) {
-                                window.close(); // Try to close tab
-                                // Fallback: show message
-                                alert('Puedes cerrar esta pestaña o volver a Telegram');
-                            }
-                        };
-                    }
-                }
-                
-                // Initialize proposal review
-                initializeProposalReview();
-                
-            } else {
-                // Normal authenticated flow
-                if (!Utils.isAuthenticated()) {
-                    Utils.checkAuthRedirect();
-                    return;
-                }
-
-                // Display current user info
-                const userInfo = Utils.getUserInfo();
-                if (userInfo) {
-                    document.getElementById('currentUser').textContent = userInfo.email;
-                }
-
-                // Initialize proposal review
-                initializeProposalReview();
+            if (!Utils.isAuthenticated()) {
+                Utils.checkAuthRedirect();
+                return;
             }
+
+            // Display current user info
+            const userInfo = Utils.getUserInfo();
+            if (userInfo) {
+                document.getElementById('currentUser').textContent = userInfo.email;
+            }
+
+            // Initialize proposal review
+            initializeProposalReview();
         });
 
         // Logout function

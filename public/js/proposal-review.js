@@ -6,30 +6,21 @@ let currentUser = null;
 let originalProposal = '';
 let isGenerating = false;
 let isSending = false;
-let isFromTelegram = false;
 
 // URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const projectId = urlParams.get('projectId');
 const userId = urlParams.get('userId');
 const platform = urlParams.get('platform') || 'workana';
-const source = urlParams.get('source');
 
 // Initialize proposal review
 async function initializeProposalReview() {
     try {
-        // Check if coming from Telegram
-        isFromTelegram = source === 'telegram';
-        
         // Validate required parameters
         if (!projectId || !userId) {
             Utils.showAlert('❌ Faltan parámetros requeridos (projectId, userId)', 'error');
             setTimeout(() => {
-                if (isFromTelegram) {
-                    window.close();
-                } else {
-                    window.location.href = 'projects.html';
-                }
+                window.location.href = 'projects.html';
             }, 3000);
             return;
         }
@@ -61,20 +52,7 @@ async function initializeProposalReview() {
 // Load project data
 async function loadProjectData() {
     try {
-        let result;
-        
-        if (isFromTelegram) {
-            // Use public endpoint for Telegram users
-            result = await fetch(`/api/project/${projectId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(res => res.json());
-        } else {
-            // Use authenticated API for normal users
-            result = await api.getProjectById(projectId);
-        }
+        const result = await api.getProjectById(projectId);
         
         if (result.success && result.data) {
             currentProject = result.data;
@@ -91,20 +69,7 @@ async function loadProjectData() {
 // Load user data
 async function loadUserData() {
     try {
-        let result;
-        
-        if (isFromTelegram) {
-            // Use public endpoint for Telegram users
-            result = await fetch(`/api/user/${userId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(res => res.json());
-        } else {
-            // Use authenticated API for normal users
-            result = await api.getUserById(userId);
-        }
+        const result = await api.getUserById(userId);
         
         if (result.success && result.data) {
             currentUser = result.data;
@@ -124,27 +89,9 @@ async function generateInitialProposal() {
         isGenerating = true;
         updateLoadingStatus('Generando propuesta con IA...');
         
-        let result;
-        
-        if (isFromTelegram) {
-            // Use public endpoint for Telegram users
-            result = await fetch('/api/proposal/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    projectId: projectId,
-                    userId: userId,
-                    platform: platform
-                })
-            }).then(res => res.json());
-        } else {
-            // Use authenticated API for normal users
-            result = await api.generateProposal(projectId, userId, {
-                platform: platform
-            });
-        }
+        const result = await api.generateProposal(projectId, userId, {
+            platform: platform
+        });
         
         if (result.success && result.data) {
             originalProposal = result.data.proposal || result.data.content || '';
@@ -169,10 +116,13 @@ function updateProjectDisplay() {
     if (!currentProject) return;
     
     document.getElementById('projectTitle').textContent = currentProject.title || 'Sin título';
-    document.getElementById('projectDate').textContent = Utils.formatDate(currentProject.created_at);
-    document.getElementById('projectBudget').textContent = currentProject.budget || 'No especificado';
+    document.getElementById('projectDate').textContent = Utils.formatDate(currentProject.createdAt);
+    document.getElementById('projectBudget').textContent = currentProject.price || 'No especificado';
     document.getElementById('projectDeadline').textContent = currentProject.deadline || 'No especificado';
-    document.getElementById('projectCategory').textContent = currentProject.category || 'No especificado';
+    document.getElementById('projectCategory').textContent = currentProject.skills || 'No especificado';
+    
+    // Mostrar descripción del proyecto
+    document.getElementById('projectDescription').textContent = currentProject.description || 'Sin descripción disponible.';
     
     // Update platform badge
     const platformBadge = document.getElementById('projectPlatform');
@@ -342,47 +292,21 @@ async function confirmSend() {
         updateSendingStatus('Preparando envío...', 'Validando datos de la propuesta');
         
         const proposalContent = document.getElementById('proposalContent').value.trim();
-        const sendNotification = document.getElementById('sendNotification').checked;
         
         updateSendingStatus('Enviando propuesta...', 'Conectando con Workana');
         
-        let result;
-        
-        if (isFromTelegram) {
-            // Use public endpoint for Telegram users
-            result = await fetch('/api/proposal/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    projectId: projectId,
-                    userId: userId,
-                    proposalContent: proposalContent,
-                    sendNotification: sendNotification,
-                    platform: platform
-                })
-            }).then(res => res.json());
-        } else {
-            // Use authenticated API for normal users
-            result = await api.sendProposalWithCustomContent(
-                projectId, 
-                userId, 
-                proposalContent, 
-                { sendNotification, platform }
-            );
-        }
+        const result = await api.sendProposalWithCustomContent(
+            projectId, 
+            userId, 
+            proposalContent, 
+            { platform }
+        );
         
         if (result.success) {
             updateSendingStatus('✅ Propuesta enviada exitosamente', 'La propuesta ha sido enviada a Workana');
             
-            // Show success message
-            setTimeout(() => {
-                Utils.showAlert('✅ Propuesta enviada exitosamente a Workana', 'success');
-                
-                // Show options to user
-                showSuccessOptions();
-            }, 2000);
+            // Show success options immediately
+            showSuccessOptions();
             
         } else {
             throw new Error(result.error || 'Error enviando propuesta');
@@ -406,84 +330,26 @@ async function confirmSend() {
 function showSuccessOptions() {
     const sendingState = document.getElementById('sendingState');
     
-    // Add success actions
-    const actionsHtml = `
-        <div class="success-actions" style="margin-top: 30px;">
+    // Replace the entire content with success message and actions
+    const successHtml = `
+        <div class="success-actions">
             <h3>✅ ¡Propuesta Enviada!</h3>
             <p>La propuesta ha sido enviada exitosamente a Workana.</p>
             <div class="proposal-actions">
-                ${isFromTelegram 
-                    ? `<button class="btn btn-success btn-large" onclick="closeWindow()">
-                         📱 Volver a Telegram
-                       </button>`
-                    : `<button class="btn btn-primary btn-large" onclick="goToProjects()">
-                         📋 Ver Todos los Proyectos
-                       </button>
-                       <button class="btn btn-success btn-large" onclick="sendAnotherProposal()">
-                         📤 Enviar Otra Propuesta
-                       </button>
-                       <button class="btn btn-info btn-large" onclick="viewProposalHistory()">
-                         📊 Ver Historial
-                       </button>`
-                }
+                <button class="btn btn-primary btn-large" onclick="goToProjects()">
+                    📋 Ver Todos los Proyectos
+                </button>
+                <button class="btn btn-success btn-large" onclick="sendAnotherProposal()">
+                    📤 Enviar Otra Propuesta
+                </button>
+                <button class="btn btn-info btn-large" onclick="viewProposalHistory()">
+                    📊 Ver Historial
+                </button>
             </div>
         </div>
     `;
     
-    sendingState.innerHTML = sendingState.innerHTML + actionsHtml;
-}
-
-// Save as draft
-async function saveAsDraft() {
-    try {
-        const proposalContent = document.getElementById('proposalContent').value.trim();
-        
-        if (!proposalContent) {
-            Utils.showAlert('❌ No hay contenido para guardar', 'error');
-            return;
-        }
-        
-        // Save to localStorage as draft
-        const draftKey = `draft_${projectId}_${userId}`;
-        const draftData = {
-            projectId: projectId,
-            userId: userId,
-            content: proposalContent,
-            timestamp: new Date().toISOString(),
-            projectTitle: currentProject?.title || 'Sin título'
-        };
-        
-        localStorage.setItem(draftKey, JSON.stringify(draftData));
-        
-        Utils.showAlert('💾 Borrador guardado exitosamente', 'success');
-        
-    } catch (error) {
-        console.error('Error saving draft:', error);
-        Utils.showAlert(`❌ Error guardando borrador: ${error.message}`, 'error');
-    }
-}
-
-// Go back to projects or close window
-function goBack() {
-    if (isFromTelegram) {
-        if (confirm('¿Estás seguro de que quieres salir sin enviar la propuesta?')) {
-            closeWindow();
-        }
-    } else {
-        if (confirm('¿Estás seguro de que quieres volver? Los cambios no guardados se perderán.')) {
-            window.location.href = 'projects.html';
-        }
-    }
-}
-
-// Close window (for Telegram users)
-function closeWindow() {
-    try {
-        window.close();
-    } catch (error) {
-        // Fallback if can't close
-        alert('Puedes cerrar esta pestaña manualmente o volver a Telegram');
-    }
+    sendingState.innerHTML = successHtml;
 }
 
 // Navigation functions

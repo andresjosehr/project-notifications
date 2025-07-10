@@ -1352,6 +1352,23 @@ textarea {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
 }
 
+/* Proposal Layout - Two Column Design */
+.proposal-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.project-column {
+    position: sticky;
+    top: 20px;
+}
+
+.proposal-column {
+    min-width: 0; /* Prevent overflow */
+}
+
 /* Proposal Editor */
 .proposal-editor {
     min-height: 400px;
@@ -1534,6 +1551,15 @@ textarea {
 
 /* Responsive Design for Proposal Review */
 @media (max-width: 768px) {
+    .proposal-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .project-column {
+        position: static;
+    }
+    
     .proposal-actions {
         flex-direction: column;
         align-items: center;
