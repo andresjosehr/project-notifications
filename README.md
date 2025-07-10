@@ -9,7 +9,6 @@ Sistema automatizado multiusuario de notificaciones para proyectos de freelance 
 - ✅ **Sistema Multiusuario**: Soporte para múltiples usuarios con configuraciones independientes
 - ✅ **Gestión de Propuestas**: Rastreo de propuestas enviadas por usuario y proyecto
 - ✅ **Notificaciones Telegram**: Alertas instantáneas personalizadas por usuario
-- ✅ **Traducción Automática**: Conversión automática al español
 - ✅ **Base de Datos Unificada**: Tabla única para proyectos con identificador de plataforma
 - ✅ **Arquitectura Escalable**: Diseño modular y mantenible
 - ✅ **Logging Avanzado**: Sistema de logs estructurado
@@ -324,7 +323,6 @@ LOG_LEVEL=DEBUG npm start
 ### AIService
 Maneja todas las operaciones de inteligencia artificial:
 - Generación de propuestas personalizadas
-- Traducción automática
 - Resúmenes de texto
 - Extracción de palabras clave
 

@@ -40,12 +40,12 @@ node cli.js server --port 3000
 # Workana scraping with notifications
 npm run workana:scrape
 # or
-node cli.js workana-scrape --notifications --translate
+node cli.js workana-scrape --notifications
 
 # Upwork scraping with notifications
 npm run upwork:scrape
 # or
-node cli.js upwork-scrape --notifications --translate
+node cli.js upwork-scrape --notifications
 
 # Workana login and session management (using user ID from database)
 npm run workana:login
@@ -62,8 +62,8 @@ node cli.js stats --platform workana
 node cli.js recent --platform upwork --limit 10
 node cli.js search --query "React" --platform workana --limit 5
 node cli.js health
-node cli.js continuous --parallel --notifications --translate
-node cli.js single --parallel --notifications --translate
+node cli.js continuous --parallel --notifications
+node cli.js single --parallel --notifications
 ```
 
 ### Management Commands
@@ -221,7 +221,6 @@ node cli.js server --port 3000
 ```json
 {
   "notifications": true,
-  "translate": true,
   "projectId": "123456",
   "username": "email@example.com",
   "password": "password"
