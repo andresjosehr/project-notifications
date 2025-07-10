@@ -180,22 +180,59 @@
     <script src="js/components.js"></script>
     <script src="js/proposal-review.js"></script>
     <script>
-        // Check authentication on page load
+        // Check if user is authenticated
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is authenticated
-            if (!Utils.isAuthenticated()) {
-                Utils.checkAuthRedirect();
-                return;
-            }
+            // Check if this is coming from Telegram (source=telegram in URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('source');
+            
+            if (source === 'telegram') {
+                // Coming from Telegram - no authentication required
+                document.getElementById('currentUser').textContent = 'Usuario de Telegram';
+                
+                // Hide navigation links since user is not authenticated
+                const headerNav = document.querySelector('.header-nav');
+                if (headerNav) {
+                    const navLinks = headerNav.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => {
+                        if (!link.textContent.includes('Cerrar Sesión')) {
+                            link.style.display = 'none';
+                        }
+                    });
+                    
+                    // Update logout button to go back to Telegram
+                    const logoutBtn = headerNav.querySelector('button');
+                    if (logoutBtn) {
+                        logoutBtn.textContent = '← Volver';
+                        logoutBtn.onclick = () => {
+                            if (confirm('¿Seguro que quieres salir sin enviar la propuesta?')) {
+                                window.close(); // Try to close tab
+                                // Fallback: show message
+                                alert('Puedes cerrar esta pestaña o volver a Telegram');
+                            }
+                        };
+                    }
+                }
+                
+                // Initialize proposal review
+                initializeProposalReview();
+                
+            } else {
+                // Normal authenticated flow
+                if (!Utils.isAuthenticated()) {
+                    Utils.checkAuthRedirect();
+                    return;
+                }
 
-            // Display current user info
-            const userInfo = Utils.getUserInfo();
-            if (userInfo) {
-                document.getElementById('currentUser').textContent = userInfo.email;
-            }
+                // Display current user info
+                const userInfo = Utils.getUserInfo();
+                if (userInfo) {
+                    document.getElementById('currentUser').textContent = userInfo.email;
+                }
 
-            // Initialize proposal review
-            initializeProposalReview();
+                // Initialize proposal review
+                initializeProposalReview();
+            }
         });
 
         // Logout function

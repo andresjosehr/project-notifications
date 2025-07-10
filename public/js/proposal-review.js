@@ -6,21 +6,30 @@ let currentUser = null;
 let originalProposal = '';
 let isGenerating = false;
 let isSending = false;
+let isFromTelegram = false;
 
 // URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const projectId = urlParams.get('projectId');
 const userId = urlParams.get('userId');
 const platform = urlParams.get('platform') || 'workana';
+const source = urlParams.get('source');
 
 // Initialize proposal review
 async function initializeProposalReview() {
     try {
+        // Check if coming from Telegram
+        isFromTelegram = source === 'telegram';
+        
         // Validate required parameters
         if (!projectId || !userId) {
             Utils.showAlert('❌ Faltan parámetros requeridos (projectId, userId)', 'error');
             setTimeout(() => {
-                window.location.href = 'projects.html';
+                if (isFromTelegram) {
+                    window.close();
+                } else {
+                    window.location.href = 'projects.html';
+                }
             }, 3000);
             return;
         }
@@ -52,7 +61,20 @@ async function initializeProposalReview() {
 // Load project data
 async function loadProjectData() {
     try {
-        const result = await api.getProjectById(projectId);
+        let result;
+        
+        if (isFromTelegram) {
+            // Use public endpoint for Telegram users
+            result = await fetch(`/api/project/${projectId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json());
+        } else {
+            // Use authenticated API for normal users
+            result = await api.getProjectById(projectId);
+        }
         
         if (result.success && result.data) {
             currentProject = result.data;
@@ -69,7 +91,20 @@ async function loadProjectData() {
 // Load user data
 async function loadUserData() {
     try {
-        const result = await api.getUserById(userId);
+        let result;
+        
+        if (isFromTelegram) {
+            // Use public endpoint for Telegram users
+            result = await fetch(`/api/user/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json());
+        } else {
+            // Use authenticated API for normal users
+            result = await api.getUserById(userId);
+        }
         
         if (result.success && result.data) {
             currentUser = result.data;
@@ -89,9 +124,27 @@ async function generateInitialProposal() {
         isGenerating = true;
         updateLoadingStatus('Generando propuesta con IA...');
         
-        const result = await api.generateProposal(projectId, userId, {
-            platform: platform
-        });
+        let result;
+        
+        if (isFromTelegram) {
+            // Use public endpoint for Telegram users
+            result = await fetch('/api/proposal/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectId: projectId,
+                    userId: userId,
+                    platform: platform
+                })
+            }).then(res => res.json());
+        } else {
+            // Use authenticated API for normal users
+            result = await api.generateProposal(projectId, userId, {
+                platform: platform
+            });
+        }
         
         if (result.success && result.data) {
             originalProposal = result.data.proposal || result.data.content || '';
@@ -291,17 +344,34 @@ async function confirmSend() {
         const proposalContent = document.getElementById('proposalContent').value.trim();
         const sendNotification = document.getElementById('sendNotification').checked;
         
-        // Prepare send options
-        const options = {
-            customProposal: proposalContent,
-            sendNotification: sendNotification,
-            platform: platform
-        };
-        
         updateSendingStatus('Enviando propuesta...', 'Conectando con Workana');
         
-        // Send proposal with custom content
-        const result = await api.sendProposalWithCustomContent(projectId, userId, proposalContent, options);
+        let result;
+        
+        if (isFromTelegram) {
+            // Use public endpoint for Telegram users
+            result = await fetch('/api/proposal/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectId: projectId,
+                    userId: userId,
+                    proposalContent: proposalContent,
+                    sendNotification: sendNotification,
+                    platform: platform
+                })
+            }).then(res => res.json());
+        } else {
+            // Use authenticated API for normal users
+            result = await api.sendProposalWithCustomContent(
+                projectId, 
+                userId, 
+                proposalContent, 
+                { sendNotification, platform }
+            );
+        }
         
         if (result.success) {
             updateSendingStatus('✅ Propuesta enviada exitosamente', 'La propuesta ha sido enviada a Workana');
@@ -342,15 +412,20 @@ function showSuccessOptions() {
             <h3>✅ ¡Propuesta Enviada!</h3>
             <p>La propuesta ha sido enviada exitosamente a Workana.</p>
             <div class="proposal-actions">
-                <button class="btn btn-primary btn-large" onclick="goToProjects()">
-                    📋 Ver Todos los Proyectos
-                </button>
-                <button class="btn btn-success btn-large" onclick="sendAnotherProposal()">
-                    📤 Enviar Otra Propuesta
-                </button>
-                <button class="btn btn-info btn-large" onclick="viewProposalHistory()">
-                    📊 Ver Historial
-                </button>
+                ${isFromTelegram 
+                    ? `<button class="btn btn-success btn-large" onclick="closeWindow()">
+                         📱 Volver a Telegram
+                       </button>`
+                    : `<button class="btn btn-primary btn-large" onclick="goToProjects()">
+                         📋 Ver Todos los Proyectos
+                       </button>
+                       <button class="btn btn-success btn-large" onclick="sendAnotherProposal()">
+                         📤 Enviar Otra Propuesta
+                       </button>
+                       <button class="btn btn-info btn-large" onclick="viewProposalHistory()">
+                         📊 Ver Historial
+                       </button>`
+                }
             </div>
         </div>
     `;
@@ -388,10 +463,26 @@ async function saveAsDraft() {
     }
 }
 
-// Go back to projects
+// Go back to projects or close window
 function goBack() {
-    if (confirm('¿Estás seguro de que quieres volver? Los cambios no guardados se perderán.')) {
-        window.location.href = 'projects.html';
+    if (isFromTelegram) {
+        if (confirm('¿Estás seguro de que quieres salir sin enviar la propuesta?')) {
+            closeWindow();
+        }
+    } else {
+        if (confirm('¿Estás seguro de que quieres volver? Los cambios no guardados se perderán.')) {
+            window.location.href = 'projects.html';
+        }
+    }
+}
+
+// Close window (for Telegram users)
+function closeWindow() {
+    try {
+        window.close();
+    } catch (error) {
+        // Fallback if can't close
+        alert('Puedes cerrar esta pestaña manualmente o volver a Telegram');
     }
 }
 
