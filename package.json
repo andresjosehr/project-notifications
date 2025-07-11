@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js continuous",
+    "start": "nodemon start-server.js",
+    "start:dev": "nodemon start-server.js",
     "dev": "NODE_ENV=development node index.js continuous",
     "single": "node index.js single",
     "workana": "node index.js platform --platform workana",
