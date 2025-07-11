@@ -181,22 +181,29 @@
 <body>
     <div class="register-container">
         <div class="register-header">
-            <h1>Configuración Inicial</h1>
-            <p>Configura el administrador del sistema</p>
+            <h1 id="pageTitle">Configuración Inicial</h1>
+            <p id="pageSubtitle">Configura el administrador del sistema</p>
         </div>
         
-        <div class="setup-info">
+        <div class="setup-info" id="setupInfo">
             <h3>🎉 ¡Bienvenido al Sistema de Notificaciones!</h3>
             <p>Esta es la primera vez que se ejecuta el sistema. Necesitamos configurar el administrador inicial que tendrá acceso completo a todas las funcionalidades.</p>
         </div>
+
+        <div class="setup-info" id="tokenInfo" style="display: none;">
+            <h3>👤 Registro de Usuario</h3>
+            <p>Has sido invitado a registrarte en el sistema. Completa el formulario para crear tu cuenta.</p>
+        </div>
         
         <form id="registerForm">
+            <input type="hidden" id="token" name="token">
+            
             <div class="form-group">
                 <label for="email">
-                    Email del Sistema <span class="required">*</span>
+                    Email <span class="required">*</span>
                 </label>
                 <input type="email" id="email" name="email" required 
-                       placeholder="admin@ejemplo.com">
+                       placeholder="tu@email.com">
                 <small class="optional">Este email se usará para iniciar sesión en el sistema</small>
             </div>
             
@@ -207,6 +214,36 @@
                 <input type="password" id="password" name="password" required 
                        placeholder="Contraseña para acceder al sistema">
                 <small class="optional">Esta contraseña se usará para iniciar sesión en el sistema</small>
+            </div>
+
+            <!-- Campos adicionales para registro con token -->
+            <div id="userFields" style="display: none;">
+                <div class="form-group">
+                    <label for="telegramUser">
+                        Usuario de Telegram <span class="optional">(opcional)</span>
+                    </label>
+                    <input type="text" id="telegramUser" name="telegram_user" 
+                           placeholder="@tu_usuario_telegram">
+                    <small class="optional">Para recibir notificaciones de proyectos</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="proposalDirectives">
+                        Directrices de Propuesta <span class="optional">(opcional)</span>
+                    </label>
+                    <textarea id="proposalDirectives" name="proposal_directives" 
+                              placeholder="Directrices para generar propuestas automáticas..."></textarea>
+                    <small class="optional">Se pueden configurar después en el perfil</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="professionalProfile">
+                        Perfil Profesional <span class="optional">(opcional)</span>
+                    </label>
+                    <textarea id="professionalProfile" name="professional_profile" 
+                              placeholder="Tu experiencia y habilidades profesionales..."></textarea>
+                    <small class="optional">Se puede configurar después en el perfil</small>
+                </div>
             </div>
             
             <button type="submit" class="register-button" id="registerButton">
@@ -233,12 +270,75 @@
                 this.form = document.getElementById('registerForm');
                 this.emailInput = document.getElementById('email');
                 this.passwordInput = document.getElementById('password');
+                this.tokenInput = document.getElementById('token');
                 this.registerButton = document.getElementById('registerButton');
                 this.errorMessage = document.getElementById('errorMessage');
                 this.successMessage = document.getElementById('successMessage');
                 this.loading = document.getElementById('loading');
                 
+                this.isTokenMode = false;
                 this.setupEventListeners();
+            }
+
+            async checkInitializationMode() {
+                // Check if there's a token in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                
+                if (token) {
+                    // Token registration mode
+                    await this.setupTokenMode(token);
+                } else {
+                    // Check if system is already initialized
+                    await this.checkSystemInitialization();
+                }
+            }
+
+            async setupTokenMode(token) {
+                try {
+                    // Validate token
+                    const response = await fetch(`/api/tokens/validate/${token}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.data.isValid) {
+                        this.isTokenMode = true;
+                        this.tokenInput.value = token;
+                        
+                        // Update UI for token registration
+                        document.getElementById('pageTitle').textContent = 'Registro de Usuario';
+                        document.getElementById('pageSubtitle').textContent = 'Completa tu registro';
+                        document.getElementById('setupInfo').style.display = 'none';
+                        document.getElementById('tokenInfo').style.display = 'block';
+                        document.getElementById('userFields').style.display = 'none'; // Hide additional fields for token registration
+                        document.getElementById('registerButton').textContent = 'Registrarse';
+                        
+                        // Update email placeholder
+                        this.emailInput.placeholder = 'tu@email.com';
+                    } else {
+                        this.showError('Token inválido o ya utilizado');
+                        this.registerButton.disabled = true;
+                    }
+                } catch (error) {
+                    this.showError('Error validando token');
+                    this.registerButton.disabled = true;
+                }
+            }
+
+            async checkSystemInitialization() {
+                try {
+                    const response = await fetch('/api/auth/check-initialization');
+                    const data = await response.json();
+                    
+                    if (data.success && data.isInitialized) {
+                        // System is already initialized, redirect to login
+                        this.showError('El sistema ya está configurado. Redirigiendo al login...');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    }
+                } catch (error) {
+                    console.error('Error checking system initialization:', error);
+                }
             }
             
             setupEventListeners() {
@@ -262,15 +362,28 @@
                 this.hideSuccess();
                 
                 try {
-                    const response = await fetch('/api/auth/register-admin', {
+                    let endpoint, requestData;
+                    
+                    if (this.isTokenMode) {
+                        // Token registration
+                        endpoint = '/api/auth/register-with-token';
+                        requestData = {
+                            token: this.tokenInput.value,
+                            email,
+                            password
+                        };
+                    } else {
+                        // Admin registration
+                        endpoint = '/api/auth/register-admin';
+                        requestData = { email, password };
+                    }
+                    
+                    const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            email,
-                            password
-                        })
+                        body: JSON.stringify(requestData)
                     });
                     
                     const data = await response.json();
@@ -279,12 +392,18 @@
                         this.showSuccess(data.message);
                         this.registerButton.disabled = true;
                         
-                        // Redirigir al login después de 3 segundos
+                        // Redirect based on registration type
                         setTimeout(() => {
-                            window.location.href = '/login.html';
-                        }, 3000);
+                            if (this.isTokenMode) {
+                                // For token registration, login and redirect to profile
+                                this.loginAndRedirectToProfile(email, password);
+                            } else {
+                                // For admin registration, redirect to login
+                                window.location.href = '/login.html';
+                            }
+                        }, 1500);
                     } else {
-                        this.showError(data.error || 'Error al configurar el administrador');
+                        this.showError(data.error || 'Error al registrarse');
                     }
                 } catch (error) {
                     console.error('Register error:', error);
@@ -317,11 +436,43 @@
             hideSuccess() {
                 this.successMessage.style.display = 'none';
             }
+            
+            async loginAndRedirectToProfile(email, password) {
+                try {
+                    // Login automatically after registration
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.token) {
+                        // Store authentication data
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('userInfo', JSON.stringify(data.user));
+                        
+                        // Redirect to profile page
+                        window.location.href = '/profile.html';
+                    } else {
+                        // If auto-login fails, redirect to login page
+                        window.location.href = '/login.html';
+                    }
+                } catch (error) {
+                    console.error('Auto-login error:', error);
+                    // If auto-login fails, redirect to login page
+                    window.location.href = '/login.html';
+                }
+            }
         }
 
         // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
-            new RegisterManager();
+            const registerManager = new RegisterManager();
+            registerManager.checkInitializationMode();
         });
     </script>
 </body>

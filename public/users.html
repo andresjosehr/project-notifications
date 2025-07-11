@@ -18,6 +18,7 @@
                     <a href="users.html" class="nav-link active">👥 Usuarios</a>
                     <a href="projects.html" class="nav-link">📋 Proyectos</a>
                     <a href="control.html" class="nav-link">⚙️ Control Panel</a>
+                    <a href="profile.html" class="nav-link">👤 Mi Perfil</a>
                     <div class="header-user">
                         <span id="currentUser">Cargando...</span>
                         <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
@@ -50,47 +51,42 @@
             <div class="alert alert-error" id="errorAlert"></div>
 
             <div class="section">
-                <h2 class="section-title">➕ Agregar Nuevo Usuario</h2>
+                <h2 class="section-title">🎫 Gestión de Tokens de Registro</h2>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalTokens">-</div>
+                        <div class="stat-label">Total Tokens</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="unusedTokens">-</div>
+                        <div class="stat-label">Tokens Disponibles</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="usedTokens">-</div>
+                        <div class="stat-label">Tokens Utilizados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="tokensThisWeek">-</div>
+                        <div class="stat-label">Creados Esta Semana</div>
+                    </div>
+                </div>
+                
                 <div class="form-container">
-                    <form id="userForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="workanaEmail">Email de Workana *</label>
-                                <input type="email" id="workanaEmail" name="workana_email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="workanaPassword">Contraseña de Workana *</label>
-                                <input type="password" id="workanaPassword" name="workana_password" required>
-                            </div>
-                        </div>
+                    <div class="form-row">
+                        <button type="button" class="btn btn-primary" onclick="generateNewToken()">
+                            🎫 Generar Nuevo Token
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="loadTokens()">
+                            🔄 Actualizar Lista
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="cleanupOldTokens()">
+                            🧹 Limpiar Tokens Antiguos
+                        </button>
+                    </div>
+                </div>
 
-                        <div class="form-group">
-                            <label for="telegramUser">Usuario de Telegram *</label>
-                            <input type="text" id="telegramUser" name="telegram_user" required 
-                                   placeholder="Ej: @usuario_telegram">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="proposalDirectives">Directrices de Propuesta *</label>
-                            <textarea id="proposalDirectives" name="proposal_directives" required 
-                                      placeholder="Ingrese las directrices para generar propuestas automáticas..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="professionalProfile">Perfil Profesional *</label>
-                            <textarea id="professionalProfile" name="professional_profile" required 
-                                      placeholder="Ingrese su perfil profesional completo..."></textarea>
-                        </div>
-
-                        <div class="form-row">
-                            <button type="submit" class="btn btn-primary">
-                                ✅ Crear Usuario
-                            </button>
-                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                🔄 Limpiar Formulario
-                            </button>
-                        </div>
-                    </form>
+                <div id="tokensTableContainer">
+                    <div class="loading">Cargando tokens...</div>
                 </div>
             </div>
 
@@ -160,6 +156,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadUsers();
             loadStats();
+            loadTokens();
+            loadTokenStats();
         });
 
         // Load user statistics
@@ -254,27 +252,202 @@
             container.innerHTML = table;
         }
 
-        // Create user form submission
-        document.getElementById('userForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const userData = Object.fromEntries(formData.entries());
-            
+        // Token management functions
+        async function loadTokenStats() {
             try {
-                const result = await api.createUser(userData);
+                const result = await api.getTokenStats();
                 
                 if (result.success) {
-                    showAlert('success', 'Usuario creado exitosamente');
-                    resetForm();
-                    loadUsers();
+                    document.getElementById('totalTokens').textContent = result.data.total;
+                    document.getElementById('unusedTokens').textContent = result.data.unused;
+                    document.getElementById('usedTokens').textContent = result.data.used;
+                    document.getElementById('tokensThisWeek').textContent = result.data.created_this_week;
+                }
+            } catch (error) {
+                console.error('Error loading token stats:', error);
+            }
+        }
+
+        async function loadTokens() {
+            try {
+                const container = document.getElementById('tokensTableContainer');
+                Utils.showLoading(container, 'Cargando tokens...');
+                
+                const result = await api.getTokens();
+                
+                if (result.success) {
+                    renderTokensTable(result.data);
+                    loadTokenStats(); // Refresh stats
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('tokensTableContainer').innerHTML = 
+                    `<div class="alert alert-error">Error cargando tokens: ${error.message}</div>`;
+            }
+        }
+
+        function renderTokensTable(tokens) {
+            const container = document.getElementById('tokensTableContainer');
+            
+            if (tokens.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay tokens de registro generados</div>';
+                return;
+            }
+
+            const table = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Token</th>
+                            <th>Estado</th>
+                            <th>Creado</th>
+                            <th>Usado Por</th>
+                            <th>Fecha de Uso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tokens.map(token => `
+                            <tr>
+                                <td>${token.id}</td>
+                                <td class="token-cell">
+                                    <span class="token-preview">${token.token.substring(0, 8)}...</span>
+                                    <button class="btn btn-info btn-tiny" onclick="copyToken('${token.token}')">📋</button>
+                                </td>
+                                <td>
+                                    <span class="status-badge ${token.isUsed ? 'status-inactive' : 'status-active'}">
+                                        ${token.isUsed ? 'Utilizado' : 'Disponible'}
+                                    </span>
+                                </td>
+                                <td>${new Date(token.createdAt).toLocaleDateString()}</td>
+                                <td>${token.registeredUserEmail || '-'}</td>
+                                <td>${token.usedAt ? new Date(token.usedAt).toLocaleDateString() : '-'}</td>
+                                <td>
+                                    <div class="actions">
+                                        ${!token.isUsed ? `
+                                            <button class="btn btn-info btn-small" onclick="copyRegistrationLink('${token.token}')">
+                                                🔗 Copiar Link
+                                            </button>
+                                        ` : ''}
+                                        <button class="btn btn-danger btn-small" onclick="deleteToken(${token.id})">
+                                            🗑️ Eliminar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        async function generateNewToken() {
+            try {
+                const result = await api.generateToken();
+                
+                if (result.success) {
+                    showAlert('success', 'Token generado exitosamente');
+                    loadTokens();
+                    
+                    // Mostrar modal con el link de registro
+                    showTokenModal(result.data);
                 } else {
                     showAlert('error', result.error);
                 }
             } catch (error) {
-                showAlert('error', 'Error creando usuario: ' + error.message);
+                showAlert('error', 'Error generando token: ' + error.message);
             }
-        });
+        }
+
+        function showTokenModal(tokenData) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>🎫 Token de Registro Generado</h2>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Token:</strong> <code>${tokenData.token}</code></p>
+                        <p><strong>Link de Registro:</strong></p>
+                        <div class="copy-container">
+                            <input type="text" id="registerLink" value="${tokenData.registerUrl}" readonly style="width: 100%; margin-bottom: 10px;">
+                            <button class="btn btn-primary" onclick="copyToClipboard('#registerLink')">📋 Copiar Link</button>
+                        </div>
+                        <p><small>⚠️ Este token es de un solo uso y permitirá a una persona registrarse en el sistema.</small></p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function copyToken(token) {
+            navigator.clipboard.writeText(token).then(() => {
+                showAlert('success', 'Token copiado al portapapeles');
+            }).catch(() => {
+                showAlert('error', 'Error copiando token');
+            });
+        }
+
+        function copyRegistrationLink(token) {
+            const link = `${window.location.origin}/register.html?token=${token}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showAlert('success', 'Link de registro copiado al portapapeles');
+            }).catch(() => {
+                showAlert('error', 'Error copiando link');
+            });
+        }
+
+        function copyToClipboard(selector) {
+            const element = document.querySelector(selector);
+            element.select();
+            document.execCommand('copy');
+            showAlert('success', 'Copiado al portapapeles');
+        }
+
+        async function deleteToken(tokenId) {
+            if (!confirm('¿Está seguro de eliminar este token?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            try {
+                const result = await api.deleteToken(tokenId);
+                
+                if (result.success) {
+                    showAlert('success', 'Token eliminado exitosamente');
+                    loadTokens();
+                } else {
+                    showAlert('error', result.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Error eliminando token: ' + error.message);
+            }
+        }
+
+        async function cleanupOldTokens() {
+            if (!confirm('¿Eliminar todos los tokens no utilizados de más de 30 días?')) {
+                return;
+            }
+            
+            try {
+                const result = await api.cleanupTokens(30);
+                
+                if (result.success) {
+                    showAlert('success', result.message);
+                    loadTokens();
+                } else {
+                    showAlert('error', result.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Error limpiando tokens: ' + error.message);
+            }
+        }
 
         // Edit user
         async function editUser(userId) {
@@ -368,10 +541,7 @@
             }
         }
 
-        // Utility functions
-        function resetForm() {
-            document.getElementById('userForm').reset();
-        }
+        // Utility functions (token modal close handled inline)
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';

@@ -343,6 +343,38 @@ class ApiClient {
         });
     }
 
+    // Token Management
+    async generateToken() {
+        return this.post('/tokens/generate');
+    }
+
+    async getTokens(params = {}) {
+        return this.get('/tokens', params);
+    }
+
+    async getTokenStats() {
+        return this.get('/tokens/stats');
+    }
+
+    async deleteToken(tokenId) {
+        return this.delete(`/tokens/${tokenId}`);
+    }
+
+    async cleanupTokens(days = 30) {
+        return this.post('/tokens/cleanup', { days });
+    }
+
+    async validateToken(token) {
+        return this.request(`/tokens/validate/${token}`, { method: 'GET' });
+    }
+
+    async registerWithToken(tokenData) {
+        return this.request('/auth/register-with-token', {
+            method: 'POST',
+            body: JSON.stringify(tokenData)
+        });
+    }
+
     // Check if user is authenticated
     isAuthenticated() {
         const token = this.getAuthToken();
