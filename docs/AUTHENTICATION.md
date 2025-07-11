@@ -101,7 +101,6 @@ Todos los endpoints API requieren autenticación JWT y rol ADMIN, excepto:
 - `GET /api/stats` - Estadísticas
 - `GET /api/projects/*` - Gestión de proyectos
 - `GET /api/users/*` - Gestión de usuarios
-- `POST /api/daemon/*` - Control de daemon
 - `GET /api/logs/*` - Logs del sistema
 
 ## Sistema de Tokens de Acceso

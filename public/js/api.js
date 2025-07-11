@@ -255,35 +255,6 @@ class ApiClient {
 
     // === CONTROL PANEL API METHODS ===
 
-    // Daemon Management
-    async startDaemon() {
-        return this.post('/daemon/start');
-    }
-
-    async stopDaemon() {
-        return this.post('/daemon/stop');
-    }
-
-    async getDaemonStatus() {
-        return this.get('/daemon/status');
-    }
-
-    async configureDaemon(config = {}) {
-        return this.post('/daemon/configure', config);
-    }
-
-    // Daemon Management
-    async startDaemon() {
-        return this.post('/daemon/start');
-    }
-
-    async stopDaemon() {
-        return this.post('/daemon/stop');
-    }
-
-    async getDaemonStatus() {
-        return this.get('/daemon/status');
-    }
 
     // System Health & Stats
     async getSystemHealth() {
@@ -308,9 +279,6 @@ class ApiClient {
     }
 
     // Logs Management
-    async getDaemonLogs() {
-        return this.get('/logs/daemon');
-    }
 
     async getAppLogs() {
         return this.get('/logs/app');

@@ -4,221 +4,6 @@
 let currentAction = null;
 let actionCallback = null;
 
-// ===== DAEMON MANAGEMENT FUNCTIONS =====
-
-// Start daemon function
-async function startDaemon() {
-    showConfirmModal(
-        'Iniciar Daemon',
-        '¿Estás seguro de que quieres iniciar el daemon de Workana? Esto ejecutará el scraping en modo continuo.',
-        async () => {
-            try {
-                Utils.showAlert('Iniciando daemon...', 'info');
-                
-                const result = await api.startDaemon();
-                
-                if (result.success) {
-                    Utils.showAlert('✅ Daemon iniciado correctamente', 'success');
-                    updateDaemonStartStatus('✅ Ejecutándose', 'success');
-                    // Refresh status after a short delay to ensure daemon is fully started
-                    setTimeout(refreshDaemonStatus, 1000);
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                Utils.showAlert(`❌ Error iniciando daemon: ${error.message}`, 'error');
-                updateDaemonStartStatus('❌ Error', 'error');
-            }
-        }
-    );
-}
-
-// Stop daemon function
-async function stopDaemon() {
-    showConfirmModal(
-        'Detener Daemon',
-        '¿Estás seguro de que quieres detener el daemon de Workana? El scraping se detendrá.',
-        async () => {
-            try {
-                Utils.showAlert('Deteniendo daemon...', 'info');
-                
-                const result = await api.stopDaemon();
-                
-                if (result.success) {
-                    Utils.showAlert('✅ Daemon detenido correctamente', 'success');
-                    updateDaemonStopStatus('✅ Detenido', 'success');
-                    // Refresh status after a short delay to ensure daemon is fully stopped
-                    setTimeout(refreshDaemonStatus, 1000);
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                Utils.showAlert(`❌ Error deteniendo daemon: ${error.message}`, 'error');
-                updateDaemonStopStatus('❌ Error', 'error');
-            }
-        }
-    );
-}
-
-// Get daemon status function
-async function getDaemonStatus() {
-    try {
-        Utils.showAlert('Obteniendo estado del daemon...', 'info');
-        
-        const result = await api.getDaemonStatus();
-        
-        if (result.success) {
-            Utils.showAlert('✅ Estado del daemon obtenido', 'success');
-            updateDaemonMonitorStatus('✅ Monitoreado', 'success');
-            displayDaemonDetails(result.data);
-        } else {
-            throw new Error(result.error);
-        }
-    } catch (error) {
-        Utils.showAlert(`❌ Error obteniendo estado del daemon: ${error.message}`, 'error');
-        updateDaemonMonitorStatus('❌ Error', 'error');
-    }
-}
-
-// Configure daemon function
-async function configureDaemon() {
-    try {
-        Utils.showAlert('Configurando daemon...', 'info');
-        
-        const result = await api.configureDaemon();
-        
-        if (result.success) {
-            Utils.showAlert('✅ Daemon configurado correctamente', 'success');
-            updateDaemonConfigStatus('✅ Configurado', 'success');
-        } else {
-            throw new Error(result.error);
-        }
-    } catch (error) {
-        Utils.showAlert(`❌ Error configurando daemon: ${error.message}`, 'error');
-        updateDaemonConfigStatus('❌ Error', 'error');
-    }
-}
-
-
-
-// Refresh daemon status
-async function refreshDaemonStatus() {
-    try {
-        const result = await api.getDaemonStatus();
-        
-        if (result.success) {
-            updateDaemonStatusDisplay(result.data);
-            updateDaemonCardStates(result.data);
-        }
-    } catch (error) {
-        console.error('Error refreshing daemon status:', error);
-    }
-}
-
-// Update daemon status displays
-function updateDaemonStartStatus(text, type) {
-    const element = document.getElementById('daemonStartStatus');
-    element.innerHTML = `<span class="status-indicator ${type}">${text}</span>`;
-}
-
-function updateDaemonStopStatus(text, type) {
-    const element = document.getElementById('daemonStopStatus');
-    element.innerHTML = `<span class="status-indicator ${type}">${text}</span>`;
-}
-
-function updateDaemonMonitorStatus(text, type) {
-    const element = document.getElementById('daemonMonitorStatus');
-    element.innerHTML = `<span class="status-indicator ${type}">${text}</span>`;
-}
-
-function updateDaemonConfigStatus(text, type) {
-    const element = document.getElementById('daemonConfigStatus');
-    element.innerHTML = `<span class="status-indicator ${type}">${text}</span>`;
-}
-
-function updateDaemonStatusDisplay(status) {
-    const daemonStatusElement = document.getElementById('daemonStatus');
-    if (status.active) {
-        daemonStatusElement.textContent = '✅ Activo';
-        daemonStatusElement.className = 'stat-number success';
-    } else {
-        daemonStatusElement.textContent = '❌ Inactivo';
-        daemonStatusElement.className = 'stat-number error';
-    }
-}
-
-// Update daemon card states based on current status
-function updateDaemonCardStates(status) {
-    if (status.active) {
-        // Daemon is running
-        updateDaemonStartStatus('✅ Ejecutándose', 'success');
-        updateDaemonStopStatus('⏳ Disponible', 'info');
-        updateDaemonMonitorStatus('✅ Monitoreando', 'success');
-        updateDaemonConfigStatus('✅ Configurado', 'success');
-    } else {
-        // Daemon is not running
-        updateDaemonStartStatus('⏳ No iniciado', 'info');
-        updateDaemonStopStatus('⏳ Sin acción', 'info');
-        updateDaemonMonitorStatus('⏳ Sin monitorear', 'info');
-        updateDaemonConfigStatus('⏳ Sin configurar', 'info');
-    }
-}
-
-// Display daemon details
-function displayDaemonDetails(details) {
-    const detailsSection = document.getElementById('daemonDetails');
-    const content = document.getElementById('daemonDetailsContent');
-    
-    let html = `
-        <div class="status-grid">
-            <div class="status-item">
-                <strong>Estado:</strong> ${details.active ? '✅ Activo' : '❌ Inactivo'}
-            </div>
-            <div class="status-item">
-                <strong>Última ejecución:</strong> ${details.lastExecution || 'N/A'}
-            </div>
-            <div class="status-item">
-                <strong>Ejecuciones hoy:</strong> ${details.todayExecutions || '0'}
-            </div>
-            <div class="status-item">
-                <strong>Intervalo:</strong> ${details.interval || 'N/A'}
-            </div>
-            <div class="status-item">
-                <strong>Tiempo máximo:</strong> ${details.maxTime || 'N/A'}
-            </div>
-            <div class="status-item">
-                <strong>Notificaciones:</strong> ${details.notifications ? '✅ Activadas' : '❌ Desactivadas'}
-            </div>
-        </div>
-    `;
-    
-    if (details.recentExecutions && details.recentExecutions.length > 0) {
-        html += `
-            <div class="recent-executions">
-                <h4>📈 Últimas ejecuciones:</h4>
-                <div class="execution-list">
-        `;
-        
-        details.recentExecutions.forEach(exec => {
-            html += `
-                <div class="execution-item">
-                    <span class="execution-time">${exec.time}</span>
-                    <span class="execution-status ${exec.success ? 'success' : 'error'}">
-                        ${exec.success ? '✅' : '❌'} ${exec.message}
-                    </span>
-                </div>
-            `;
-        });
-        
-        html += `
-                </div>
-            </div>
-        `;
-    }
-    
-    content.innerHTML = html;
-    detailsSection.style.display = 'block';
-}
 
 // ===== SYSTEM HEALTH FUNCTIONS =====
 
@@ -364,7 +149,6 @@ async function generateReports() {
 async function refreshLogs() {
     try {
         await Promise.all([
-            loadDaemonLogs(),
             loadAppLogs(),
             loadErrorLogs()
         ]);
@@ -373,21 +157,6 @@ async function refreshLogs() {
     }
 }
 
-// Load daemon logs
-async function loadDaemonLogs() {
-    try {
-        const result = await api.getDaemonLogs();
-        const content = document.getElementById('daemonLogContent');
-        
-        if (result.success) {
-            content.textContent = result.data || 'No hay logs disponibles';
-        } else {
-            content.textContent = 'Error cargando logs del daemon';
-        }
-    } catch (error) {
-        document.getElementById('daemonLogContent').textContent = 'Error cargando logs del daemon';
-    }
-}
 
 // Load app logs
 async function loadAppLogs() {
@@ -456,14 +225,11 @@ async function downloadCurrentLogs() {
         }
         
         const activeTabText = activeTab.textContent.trim();
-        let logType = 'daemon';
-        let fileName = 'daemon_logs.txt';
+        let logType = 'app';
+        let fileName = 'app_logs.txt';
         
         // Determine log type based on active tab
-        if (activeTabText.includes('Daemon')) {
-            logType = 'daemon';
-            fileName = 'daemon_logs.txt';
-        } else if (activeTabText.includes('App')) {
+        if (activeTabText.includes('App')) {
             logType = 'app';
             fileName = 'app_logs.txt';
         } else if (activeTabText.includes('Error')) {
@@ -476,9 +242,6 @@ async function downloadCurrentLogs() {
         // Get the logs data
         let result;
         switch (logType) {
-            case 'daemon':
-                result = await api.getDaemonLogs();
-                break;
             case 'app':
                 result = await api.getAppLogs();
                 break;
@@ -526,8 +289,7 @@ async function downloadAllLogs() {
         Utils.showAlert('📥 Descargando todos los logs...', 'info');
         
         // Get all logs in parallel
-        const [daemonResult, appResult, errorResult] = await Promise.all([
-            api.getDaemonLogs(),
+        const [appResult, errorResult] = await Promise.all([
             api.getAppLogs(),
             api.getErrorLogs()
         ]);
@@ -535,16 +297,6 @@ async function downloadAllLogs() {
         // Create combined log content
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         let combinedContent = `# Logs del Sistema - ${new Date().toLocaleString()}\n\n`;
-        
-        // Add daemon logs
-        combinedContent += '==========================================\n';
-        combinedContent += '=              DAEMON LOGS              =\n';
-        combinedContent += '==========================================\n\n';
-        if (daemonResult.success) {
-            combinedContent += daemonResult.data || 'No hay logs de daemon disponibles';
-        } else {
-            combinedContent += 'Error obteniendo logs del daemon';
-        }
         
         // Add app logs
         combinedContent += '\n\n==========================================\n';

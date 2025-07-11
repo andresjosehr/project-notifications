@@ -32,10 +32,6 @@
                 <div class="stat-label">Estado Sistema</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" id="daemonStatus">-</div>
-                <div class="stat-label">Estado Daemon</div>
-            </div>
-            <div class="stat-item">
                 <div class="stat-number" id="lastExecution">-</div>
                 <div class="stat-label">Última Ejecución</div>
             </div>
@@ -49,79 +45,6 @@
             <div class="alert alert-success" id="successAlert"></div>
             <div class="alert alert-error" id="errorAlert"></div>
 
-            <!-- Daemon Management Section -->
-            <div class="section">
-                <h2 class="section-title">
-                    🔄 Gestión del Daemon
-                    <div class="section-actions">
-                        <button class="btn btn-info btn-small" onclick="refreshDaemonStatus()">
-                            🔄 Actualizar Estado
-                        </button>
-                    </div>
-                </h2>
-                
-                <div class="control-grid">
-                    <div class="control-card">
-                        <h3>🚀 Iniciar Daemon</h3>
-                        <p>Inicia el scraping en modo continuo sin necesidad de cron.</p>
-                        <div class="control-actions">
-                            <button class="btn btn-success" onclick="startDaemon()">
-                                ✅ Iniciar Daemon
-                            </button>
-                        </div>
-                        <div class="control-status" id="daemonStartStatus">
-                            <span class="status-indicator">⏳ No iniciado</span>
-                        </div>
-                    </div>
-
-                    <div class="control-card">
-                        <h3>🛑 Detener Daemon</h3>
-                        <p>Detiene el daemon de scraping automático.</p>
-                        <div class="control-actions">
-                            <button class="btn btn-danger" onclick="stopDaemon()">
-                                🛑 Detener Daemon
-                            </button>
-                        </div>
-                        <div class="control-status" id="daemonStopStatus">
-                            <span class="status-indicator">⏳ Sin acción</span>
-                        </div>
-                    </div>
-
-                    <div class="control-card">
-                        <h3>📊 Estado del Daemon</h3>
-                        <p>Verifica el estado actual del daemon y las últimas ejecuciones.</p>
-                        <div class="control-actions">
-                            <button class="btn btn-primary" onclick="getDaemonStatus()">
-                                📊 Ver Estado
-                            </button>
-                        </div>
-                        <div class="control-status" id="daemonMonitorStatus">
-                            <span class="status-indicator">⏳ Sin monitorear</span>
-                        </div>
-                    </div>
-
-                    <div class="control-card">
-                        <h3>⚙️ Configurar Daemon</h3>
-                        <p>Configura los parámetros del daemon (intervalo, notificaciones, etc.).</p>
-                        <div class="control-actions">
-                            <button class="btn btn-info" onclick="configureDaemon()">
-                                ⚙️ Configurar
-                            </button>
-                        </div>
-                        <div class="control-status" id="daemonConfigStatus">
-                            <span class="status-indicator">⏳ Sin configurar</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Daemon Status Details -->
-                <div class="section-subsection" id="daemonDetails" style="display: none;">
-                    <h3>📋 Detalles del Estado del Daemon</h3>
-                    <div class="status-details" id="daemonDetailsContent">
-                        <!-- Details will be loaded here -->
-                    </div>
-                </div>
-            </div>
 
             <!-- System Health Section -->
             <div class="section">
@@ -235,16 +158,13 @@
                 
                 <div class="logs-container">
                     <div class="logs-tabs">
-                        <button class="tab-button active" onclick="showLogTab('daemon')">Daemon Logs</button>
+                        <button class="tab-button active" onclick="showLogTab('app')">App Logs</button>
                         <button class="tab-button" onclick="showLogTab('app')">App Logs</button>
                         <button class="tab-button" onclick="showLogTab('error')">Error Logs</button>
                     </div>
                     
                     <div class="logs-content">
-                        <div id="daemonLogs" class="log-content active">
-                            <pre id="daemonLogContent">Cargando logs del daemon...</pre>
-                        </div>
-                        <div id="appLogs" class="log-content">
+                        <div id="appLogs" class="log-content active">
                             <pre id="appLogContent">Cargando logs de la aplicación...</pre>
                         </div>
                         <div id="errorLogs" class="log-content">
@@ -313,7 +233,6 @@
         async function loadControlData() {
             try {
                 await Promise.all([
-                    refreshDaemonStatus(),
                     loadSystemStats()
                 ]);
             } catch (error) {
@@ -336,9 +255,8 @@
         // Update system statistics display
         function updateSystemStats(stats) {
             document.getElementById('systemStatus').textContent = stats.overall?.healthy ? '✅ Saludable' : '❌ Con problemas';
-            document.getElementById('daemonStatus').textContent = stats.daemon?.active ? '✅ Activo' : '❌ Inactivo';
-            document.getElementById('lastExecution').textContent = stats.daemon?.lastExecution || 'N/A';
-            document.getElementById('totalExecutions').textContent = stats.daemon?.todayExecutions || '0';
+            document.getElementById('lastExecution').textContent = stats.lastExecution || 'N/A';
+            document.getElementById('totalExecutions').textContent = stats.todayExecutions || '0';
         }
     </script>
 </body>
