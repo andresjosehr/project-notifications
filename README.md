@@ -106,6 +106,7 @@ CREATE TABLE projects (
   skills LONGTEXT,
   link VARCHAR(255),
   platform ENUM('workana','upwork') NOT NULL,
+  language VARCHAR(10),
   client_name VARCHAR(255),
   client_country VARCHAR(100),
   client_rating DECIMAL(3,2),

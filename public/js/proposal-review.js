@@ -118,7 +118,7 @@ function updateProjectDisplay() {
     document.getElementById('projectTitle').textContent = currentProject.title || 'Sin título';
     document.getElementById('projectDate').textContent = Utils.formatDate(currentProject.createdAt);
     document.getElementById('projectBudget').textContent = currentProject.price || 'No especificado';
-    document.getElementById('projectDeadline').textContent = currentProject.deadline || 'No especificado';
+    document.getElementById('projectDeadline').textContent = currentProject.deadline || 'Sin fecha límite';
     document.getElementById('projectCategory').textContent = currentProject.skills || 'No especificado';
     
     // Mostrar descripción del proyecto
@@ -134,7 +134,7 @@ function updateProjectDisplay() {
 function updateUserDisplay() {
     if (!currentUser) return;
     
-    document.getElementById('selectedUser').textContent = currentUser.email || 'Usuario desconocido';
+    document.getElementById('selectedUser').textContent = currentUser.clientName || 'Usuario desconocido';
 }
 
 // Initialize text editor

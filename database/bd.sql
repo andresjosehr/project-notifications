@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `skills` longtext,
   `link` varchar(255) DEFAULT NULL,
   `platform` enum('workana','upwork') NOT NULL,
+  `language` varchar(10) DEFAULT NULL,
   `client_name` varchar(255) DEFAULT NULL,
   `client_country` varchar(100) DEFAULT NULL,
   `client_rating` decimal(3,2) DEFAULT NULL,

@@ -441,33 +441,27 @@
                             <div class="project-main-info">
                                 <div class="info-row">
                                     <div class="info-item">
-                                        <span class="info-label">💰 Presupuesto:</span>
                                         <span class="budget-info">${Utils.escapeHtml(project.price || 'No especificado')}</span>
                                     </div>
                                     <div class="info-item">
-                                        <span class="info-label">👤 Cliente:</span>
                                         <span>${Utils.escapeHtml(project.clientName || 'No especificado')} (${Utils.escapeHtml(project.clientCountry || 'No especificado')})</span>
                                     </div>
                                 </div>
                                 
                                 <div class="info-row">
                                     <div class="info-item">
-                                        <span class="info-label">⭐ Calificación:</span>
                                         <span>${project.clientRating ? `${project.clientRating}/5` : 'Sin calificación'}</span>
                                     </div>
                                     <div class="info-item">
-                                        <span class="info-label">💳 Pago Verificado:</span>
                                         <span>${project.paymentVerified ? '✅ Sí' : '❌ No'}</span>
                                     </div>
                                 </div>
                                 
                                 <div class="info-row">
                                     <div class="info-item">
-                                        <span class="info-label">🏷️ Destacado:</span>
                                         <span>${project.isFeatured ? '✅ Sí' : '❌ No'}</span>
                                     </div>
                                     <div class="info-item">
-                                        <span class="info-label">📊 Máximo:</span>
                                         <span>${project.isMaxProject ? '✅ Sí' : '❌ No'}</span>
                                     </div>
                                 </div>

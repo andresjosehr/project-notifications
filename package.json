@@ -20,7 +20,8 @@
     "workana:scrape": "node cli.js workana-scrape",
     "upwork:scrape": "node cli.js upwork-scrape",
     "workana:login": "node cli.js workana-login",
-    "workana:proposal": "node cli.js workana-proposal"
+    "workana:proposal": "node cli.js workana-proposal",
+    "migrate:language": "node scripts/migrate_language_column.js"
   },
   "keywords": [
     "freelance",
@@ -41,6 +42,7 @@
     "commander": "^14.0.0",
     "dotenv": "^16.0.2",
     "express": "^5.1.0",
+    "franc": "^6.2.0",
     "jquery": "^3.6.1",
     "jsdom": "^20.0.0",
     "jsonwebtoken": "^9.0.2",
