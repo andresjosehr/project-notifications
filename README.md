@@ -87,8 +87,6 @@ JWT_EXPIRES_IN=24h
 # IA (Groq API)
 GROP_API_KEY=tu_api_key_groq
 
-# Telegram
-TELEGRAM_DEFAULT_USER=tu_usuario_telegram
 
 # Configuración opcional
 NODE_ENV=production
@@ -663,11 +661,6 @@ Error: Timeout waiting for selector
 ```
 **Solución**: Incrementar `SCRAPING_TIMEOUT` o verificar selectores
 
-#### Notificaciones no llegan
-```bash
-Error: Telegram API respondió con status 400
-```
-**Solución**: Verificar `TELEGRAM_DEFAULT_USER` configurado
 
 ### Logs de Debug
 

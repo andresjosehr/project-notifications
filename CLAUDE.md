@@ -168,7 +168,6 @@ The system uses MySQL with these main tables:
 Required environment variables:
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` - Database connection
 - `GROP_API_KEY` - Groq API key for AI services
-- `TELEGRAM_DEFAULT_USER` - Telegram user for notifications
 
 Optional configuration:
 - `NODE_ENV` - Environment (development/production)

@@ -9,7 +9,9 @@
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "migrate:make": "knex migrate:make",
-    "migrate:status": "knex migrate:status"
+    "migrate:status": "knex migrate:status",
+    "migrate:decouple": "node scripts/run-migrations.js",
+    "credentials:create": "node scripts/create-external-credentials.js"
   },
   "keywords": [
     "freelance",

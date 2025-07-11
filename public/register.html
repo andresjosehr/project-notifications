@@ -193,47 +193,20 @@
         <form id="registerForm">
             <div class="form-group">
                 <label for="email">
-                    Email de Workana <span class="required">*</span>
+                    Email del Sistema <span class="required">*</span>
                 </label>
                 <input type="email" id="email" name="email" required 
-                       placeholder="tu-email@ejemplo.com">
-                <small class="optional">Este email se usará para las sesiones de Workana</small>
+                       placeholder="admin@ejemplo.com">
+                <small class="optional">Este email se usará para iniciar sesión en el sistema</small>
             </div>
             
             <div class="form-group">
                 <label for="password">
-                    Contraseña del Sistema <span class="required">*</span>
+                    Contraseña <span class="required">*</span>
                 </label>
                 <input type="password" id="password" name="password" required 
                        placeholder="Contraseña para acceder al sistema">
                 <small class="optional">Esta contraseña se usará para iniciar sesión en el sistema</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="proposalDirectives">
-                    Directrices de Propuesta <span class="optional">(opcional)</span>
-                </label>
-                <textarea id="proposalDirectives" name="proposalDirectives" 
-                          placeholder="Instrucciones para generar propuestas automáticas..."></textarea>
-                <small class="optional">Puedes configurar esto más tarde desde el panel de administración</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="professionalProfile">
-                    Perfil Profesional <span class="optional">(opcional)</span>
-                </label>
-                <textarea id="professionalProfile" name="professionalProfile" 
-                          placeholder="Descripción de tu perfil profesional..."></textarea>
-                <small class="optional">Puedes configurar esto más tarde desde el panel de administración</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="telegramUser">
-                    Usuario de Telegram <span class="optional">(opcional)</span>
-                </label>
-                <input type="text" id="telegramUser" name="telegramUser" 
-                       placeholder="@tu_usuario_telegram">
-                <small class="optional">Para recibir notificaciones por Telegram</small>
             </div>
             
             <button type="submit" class="register-button" id="registerButton">
@@ -260,9 +233,6 @@
                 this.form = document.getElementById('registerForm');
                 this.emailInput = document.getElementById('email');
                 this.passwordInput = document.getElementById('password');
-                this.proposalDirectivesInput = document.getElementById('proposalDirectives');
-                this.professionalProfileInput = document.getElementById('professionalProfile');
-                this.telegramUserInput = document.getElementById('telegramUser');
                 this.registerButton = document.getElementById('registerButton');
                 this.errorMessage = document.getElementById('errorMessage');
                 this.successMessage = document.getElementById('successMessage');
@@ -281,9 +251,6 @@
             async handleRegister() {
                 const email = this.emailInput.value.trim();
                 const password = this.passwordInput.value.trim();
-                const proposalDirectives = this.proposalDirectivesInput.value.trim();
-                const professionalProfile = this.professionalProfileInput.value.trim();
-                const telegramUser = this.telegramUserInput.value.trim();
                 
                 if (!email || !password) {
                     this.showError('Por favor, complete los campos requeridos');
@@ -302,10 +269,7 @@
                         },
                         body: JSON.stringify({
                             email,
-                            password,
-                            proposalDirectives,
-                            professionalProfile,
-                            telegramUser
+                            password
                         })
                     });
                     

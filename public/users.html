@@ -116,28 +116,28 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editWorkanaEmail">Email de Workana *</label>
-                        <input type="email" id="editWorkanaEmail" name="workana_email" required>
+                        <label for="editWorkanaEmail">Email de Workana</label>
+                        <input type="email" id="editWorkanaEmail" name="workana_email">
                     </div>
                     <div class="form-group">
-                        <label for="editWorkanaPassword">Contraseña de Workana *</label>
-                        <input type="password" id="editWorkanaPassword" name="workana_password" required>
+                        <label for="editWorkanaPassword">Contraseña de Workana</label>
+                        <input type="password" id="editWorkanaPassword" name="workana_password">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="editTelegramUser">Usuario de Telegram *</label>
-                    <input type="text" id="editTelegramUser" name="telegram_user" required>
+                    <label for="editTelegramUser">Usuario de Telegram</label>
+                    <input type="text" id="editTelegramUser" name="telegram_user">
                 </div>
 
                 <div class="form-group">
-                    <label for="editProposalDirectives">Directrices de Propuesta *</label>
-                    <textarea id="editProposalDirectives" name="proposal_directives" required></textarea>
+                    <label for="editProposalDirectives">Directrices de Propuesta</label>
+                    <textarea id="editProposalDirectives" name="proposal_directives"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="editProfessionalProfile">Perfil Profesional *</label>
-                    <textarea id="editProfessionalProfile" name="professional_profile" required></textarea>
+                    <label for="editProfessionalProfile">Perfil Profesional</label>
+                    <textarea id="editProfessionalProfile" name="professional_profile"></textarea>
                 </div>
 
                 <div class="form-row">
@@ -285,7 +285,16 @@
                     const user = result.data;
                     
                     document.getElementById('editUserId').value = user.id;
-                    document.getElementById('editWorkanaEmail').value = user.workanaEmail;
+                    
+                    // Buscar credenciales de Workana
+                    const workanaCredential = user.credentials ? user.credentials.find(cred => cred.platform === 'workana') : null;
+                    
+                    if (workanaCredential) {
+                        document.getElementById('editWorkanaEmail').value = workanaCredential.email;
+                    } else {
+                        document.getElementById('editWorkanaEmail').value = '';
+                    }
+                    
                     document.getElementById('editWorkanaPassword').value = ''; // Don't prefill password
                     document.getElementById('editTelegramUser').value = user.telegramUser;
                     document.getElementById('editProposalDirectives').value = user.proposalDirectives;
