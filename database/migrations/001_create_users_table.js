@@ -13,7 +13,7 @@ exports.up = function(knex) {
     table.longtext('workana_session_data');
     table.datetime('session_expires_at');
     table.timestamp('created_at').defaultTo(knex.fn.now());
-    table.timestamp('updated_at').defaultTo(knex.fn.now()).onUpdate(knex.fn.now());
+    table.timestamp('updated_at').defaultTo(knex.fn.now());
     table.boolean('is_active').defaultTo(true);
     table.string('system_password', 255).notNullable();
     table.enum('role', ['ADMIN', 'USER']).notNullable().defaultTo('USER');

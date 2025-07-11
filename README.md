@@ -80,6 +80,10 @@ DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_DATABASE=tu_database
 
+# JWT (Autenticación)
+JWT_SECRET=tu_secret_key_muy_seguro
+JWT_EXPIRES_IN=24h
+
 # IA (Groq API)
 GROP_API_KEY=tu_api_key_groq
 
@@ -93,32 +97,39 @@ SCRAPING_HEADLESS=true
 ```
 
 4. **Configurar base de datos**
-```sql
--- Ejecutar el script SQL incluido
+```bash
+# Ejecutar migraciones
+npm run migrate
+
+# O ejecutar el script SQL incluido
 mysql -u tu_usuario -p tu_database < database/bd.sql
+```
 
--- O crear manualmente las tablas principales:
-CREATE TABLE projects (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title LONGTEXT,
-  description LONGTEXT,
-  price LONGTEXT,
-  skills LONGTEXT,
-  link VARCHAR(255),
-  platform ENUM('workana','upwork') NOT NULL,
-  language VARCHAR(10),
-  client_name VARCHAR(255),
-  client_country VARCHAR(100),
-  client_rating DECIMAL(3,2),
-  payment_verified BOOLEAN DEFAULT FALSE,
-  is_featured BOOLEAN DEFAULT FALSE,
-  is_max_project BOOLEAN DEFAULT FALSE,
-  date VARCHAR(50),
-  time_ago VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+5. **🆕 Configuración Inicial del Sistema**
 
+Al ejecutar la aplicación por primera vez, el sistema detectará que no hay usuarios registrados y te redirigirá automáticamente a la página de configuración inicial.
+
+**Opción A: Configuración Web (Recomendada)**
+```bash
+npm start
+# Abrir http://localhost:3000
+# El sistema te redirigirá automáticamente a /register.html
+```
+
+**Opción B: Script de Prueba**
+```bash
+# Limpiar base de datos (opcional)
+node reset-database.js
+
+# Probar configuración inicial
+node test-initial-setup.js
+```
+
+### 🆕 Estructura de Base de Datos Actualizada
+
+La tabla `users` ahora incluye campos para autenticación del sistema:
+
+```sql
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   workana_email VARCHAR(255) NOT NULL UNIQUE,
@@ -128,22 +139,22 @@ CREATE TABLE users (
   telegram_user VARCHAR(255) NOT NULL,
   workana_session_data LONGTEXT,
   session_expires_at DATETIME,
+  system_password VARCHAR(255) NOT NULL,  -- 🆕 Contraseña encriptada del sistema
+  role ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'USER',  -- 🆕 Rol del usuario
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE user_proposals (
+CREATE TABLE access_tokens (  -- 🆕 Nueva tabla para tokens de acceso
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  token VARCHAR(255) NOT NULL UNIQUE,
   project_id INT NOT NULL,
-  project_platform ENUM('workana','upwork') NOT NULL DEFAULT 'workana',
-  proposal_sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  proposal_content LONGTEXT,
-  status ENUM('sent','accepted','rejected','pending') DEFAULT 'sent',
+  platform ENUM('workana', 'upwork') NOT NULL,
+  user_id INT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY user_project_unique (user_id,project_id,project_platform),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
@@ -195,6 +206,43 @@ node index.js proposal --projectId 123 --platform workana
 #### Health Check
 ```bash
 npm run health
+```
+
+## 🆕 Configuración Inicial del Sistema
+
+### Flujo de Configuración Inicial
+
+1. **Primera Ejecución**: Al ejecutar `npm start` por primera vez, el sistema detecta que no hay usuarios registrados.
+
+2. **Redirección Automática**: El sistema te redirige automáticamente a `/register.html` para configurar el administrador inicial.
+
+3. **Formulario de Configuración**: Completa el formulario con:
+   - **Email de Workana**: Email que se usará para las sesiones de Workana
+   - **Contraseña del Sistema**: Contraseña para acceder al sistema (encriptada)
+   - **Directrices de Propuesta**: Instrucciones para generar propuestas (opcional)
+   - **Perfil Profesional**: Descripción de tu perfil (opcional)
+   - **Usuario de Telegram**: Para notificaciones (opcional)
+
+4. **Creación del Administrador**: El sistema crea automáticamente un usuario con rol `ADMIN`.
+
+5. **Redirección al Login**: Después de la configuración exitosa, eres redirigido al login para iniciar sesión.
+
+### Endpoints de Configuración Inicial
+
+- `GET /api/auth/check-initialization` - Verifica si el sistema está inicializado
+- `POST /api/auth/register-admin` - Registra el administrador inicial
+
+### Scripts de Prueba
+
+```bash
+# Limpiar base de datos para probar desde cero
+node reset-database.js
+
+# Probar configuración inicial
+node test-initial-setup.js
+
+# Verificar estado del sistema
+curl http://localhost:3000/api/auth/check-initialization
 ```
 
 ### 🆕 Nuevos Comandos CLI (Con Commander.js)

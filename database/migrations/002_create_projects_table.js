@@ -21,7 +21,7 @@ exports.up = function(knex) {
     table.string('date', 50);
     table.string('time_ago', 50);
     table.timestamp('created_at').defaultTo(knex.fn.now());
-    table.timestamp('updated_at').defaultTo(knex.fn.now()).onUpdate(knex.fn.now());
+    table.timestamp('updated_at').defaultTo(knex.fn.now());
   });
 };
 

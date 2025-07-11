@@ -8,7 +8,7 @@ exports.up = function(knex) {
     table.string('token', 255).notNullable().unique();
     table.integer('project_id').notNullable();
     table.enum('platform', ['workana', 'upwork']).notNullable();
-    table.integer('user_id').notNullable();
+    table.integer('user_id').unsigned().notNullable();
     table.datetime('expires_at').notNullable();
     table.datetime('used_at');
     table.timestamp('created_at').defaultTo(knex.fn.now());

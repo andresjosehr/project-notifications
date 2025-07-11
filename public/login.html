@@ -169,6 +169,22 @@
             }
             
             async checkExistingSession() {
+                // Primero verificar si el sistema está inicializado
+                try {
+                    const initResponse = await fetch('/api/auth/check-initialization');
+                    const initData = await initResponse.json();
+                    
+                    if (!initData.isInitialized) {
+                        // Sistema no inicializado, redirigir a registro
+                        window.location.href = '/register.html';
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error verificando inicialización:', error);
+                    // En caso de error, continuar con el flujo normal
+                }
+                
+                // Verificar sesión existente
                 const token = localStorage.getItem('authToken');
                 if (token) {
                     try {

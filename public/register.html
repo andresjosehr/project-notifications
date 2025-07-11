@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Inicial - Sistema de Notificaciones Freelance</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .register-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .register-header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .register-header p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .setup-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .setup-info h3 {
+            color: #1976d2;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .setup-info p {
+            color: #424242;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .required {
+            color: #e53e3e;
+        }
+        
+        .optional {
+            color: #666;
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+        
+        .register-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .register-button:hover {
+            background: #5a67d8;
+        }
+        
+        .register-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fed7d7;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            color: #38a169;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #c6f6d5;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Configuración Inicial</h1>
+            <p>Configura el administrador del sistema</p>
+        </div>
+        
+        <div class="setup-info">
+            <h3>🎉 ¡Bienvenido al Sistema de Notificaciones!</h3>
+            <p>Esta es la primera vez que se ejecuta el sistema. Necesitamos configurar el administrador inicial que tendrá acceso completo a todas las funcionalidades.</p>
+        </div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="email">
+                    Email de Workana <span class="required">*</span>
+                </label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="tu-email@ejemplo.com">
+                <small class="optional">Este email se usará para las sesiones de Workana</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    Contraseña del Sistema <span class="required">*</span>
+                </label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Contraseña para acceder al sistema">
+                <small class="optional">Esta contraseña se usará para iniciar sesión en el sistema</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="proposalDirectives">
+                    Directrices de Propuesta <span class="optional">(opcional)</span>
+                </label>
+                <textarea id="proposalDirectives" name="proposalDirectives" 
+                          placeholder="Instrucciones para generar propuestas automáticas..."></textarea>
+                <small class="optional">Puedes configurar esto más tarde desde el panel de administración</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="professionalProfile">
+                    Perfil Profesional <span class="optional">(opcional)</span>
+                </label>
+                <textarea id="professionalProfile" name="professionalProfile" 
+                          placeholder="Descripción de tu perfil profesional..."></textarea>
+                <small class="optional">Puedes configurar esto más tarde desde el panel de administración</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="telegramUser">
+                    Usuario de Telegram <span class="optional">(opcional)</span>
+                </label>
+                <input type="text" id="telegramUser" name="telegramUser" 
+                       placeholder="@tu_usuario_telegram">
+                <small class="optional">Para recibir notificaciones por Telegram</small>
+            </div>
+            
+            <button type="submit" class="register-button" id="registerButton">
+                Configurar Administrador
+            </button>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <span>Configurando sistema...</span>
+            </div>
+        </form>
+        
+        <div class="login-link">
+            <a href="/login.html">¿Ya tienes una cuenta? Inicia sesión</a>
+        </div>
+    </div>
+
+    <script>
+        class RegisterManager {
+            constructor() {
+                this.form = document.getElementById('registerForm');
+                this.emailInput = document.getElementById('email');
+                this.passwordInput = document.getElementById('password');
+                this.proposalDirectivesInput = document.getElementById('proposalDirectives');
+                this.professionalProfileInput = document.getElementById('professionalProfile');
+                this.telegramUserInput = document.getElementById('telegramUser');
+                this.registerButton = document.getElementById('registerButton');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.successMessage = document.getElementById('successMessage');
+                this.loading = document.getElementById('loading');
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleRegister();
+                });
+            }
+            
+            async handleRegister() {
+                const email = this.emailInput.value.trim();
+                const password = this.passwordInput.value.trim();
+                const proposalDirectives = this.proposalDirectivesInput.value.trim();
+                const professionalProfile = this.professionalProfileInput.value.trim();
+                const telegramUser = this.telegramUserInput.value.trim();
+                
+                if (!email || !password) {
+                    this.showError('Por favor, complete los campos requeridos');
+                    return;
+                }
+                
+                this.setLoading(true);
+                this.hideError();
+                this.hideSuccess();
+                
+                try {
+                    const response = await fetch('/api/auth/register-admin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            proposalDirectives,
+                            professionalProfile,
+                            telegramUser
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess(data.message);
+                        this.registerButton.disabled = true;
+                        
+                        // Redirigir al login después de 3 segundos
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    } else {
+                        this.showError(data.error || 'Error al configurar el administrador');
+                    }
+                } catch (error) {
+                    console.error('Register error:', error);
+                    this.showError('Error de conexión. Intente nuevamente.');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            setLoading(isLoading) {
+                this.registerButton.disabled = isLoading;
+                this.loading.style.display = isLoading ? 'block' : 'none';
+                this.registerButton.textContent = isLoading ? 'Configurando...' : 'Configurar Administrador';
+            }
+            
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+            }
+            
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+            
+            showSuccess(message) {
+                this.successMessage.textContent = message;
+                this.successMessage.style.display = 'block';
+            }
+            
+            hideSuccess() {
+                this.successMessage.style.display = 'none';
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            new RegisterManager();
+        });
+    </script>
+</body>
+</html> 
