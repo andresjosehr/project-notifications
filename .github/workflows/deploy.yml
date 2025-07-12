@@ -57,10 +57,11 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.PORT }}
+        port: ${{ secrets.PORT || '22' }}
         timeout: 60s
         command_timeout: 10m
         debug: true
+        use_insecure_cipher: false
         script: |
           cd /var/www/projects/jobs
           git pull origin master
