@@ -1,106 +1,85 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const NotificationApp = require('./lib/app');
-const WorkanaService = require('./lib/services/WorkanaService');
+const WorkanaScraper = require('./lib/scrapers/WorkanaScraper');
 const logger = require('./lib/utils/logger');
 
 const program = new Command();
 
 program
-  .name('freelance-notifications')
-  .description('Sistema de notificaciones para proyectos freelance')
-  .version('2.1.0');
+  .name('workana-scraper')
+  .description('Scraper de Workana para Laravel')
+  .version('1.0.0');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Comando para scraping único de Workana
+// Comando para scraping de Workana
 program
-  .command('workana-scrape')
-  .description('Ejecutar scraping de Workana una sola vez')
-  .option('-n, --notifications', 'Enviar notificaciones de nuevos proyectos', true)
+  .command('scrape-workana')
+  .description('Ejecutar scraping de Workana y devolver JSON')
   .option('-q, --quiet', 'Modo silencioso (solo errores)', false)
   .action(async (options) => {
     try {
-      const app = new NotificationApp();
-      await app.initializeWithoutAIValidation();
       
-      logger.info('🚀 Iniciando scraping único de Workana');
+      const startTime = Date.now();
       
-      // Función de ejecución
-      const runScraping = async () => {
-        try {
-          const execStartTime = Date.now();
-          const results = await app.runPlatformSpecific('workana', options);
-          const duration = Date.now() - execStartTime;
-          
-          if (!options.quiet) {
-            console.log(`✅ [${new Date().toLocaleTimeString()}] Scraping completado en ${duration}ms`);
-            console.log(`📊 Procesados: ${results.workana.processed || 0} | Nuevos: ${results.workana.newProjects || 0} | Errores: ${results.workana.errors || 0}`);
-          }
-          
-          logger.info(`Workana scraping único: ${results.workana.processed || 0} procesados, ${results.workana.newProjects || 0} nuevos, ${duration}ms`);
-          
-        } catch (error) {
-          logger.errorWithStack('Error en scraping único de Workana', error);
-          if (!options.quiet) {
-            console.error(`❌ [${new Date().toLocaleTimeString()}] Error:`, error.message);
-          }
-          process.exit(1);
-        }
+      // Crear y ejecutar scraper
+      const scraper = new WorkanaScraper();
+      const projects = await scraper.execute();
+      
+      const duration = Date.now() - startTime;
+      
+      // Convertir proyectos a formato JSON
+      const projectsJson = projects.map(project => project.toJSON());
+      
+      // Crear respuesta estructurada
+      const response = {
+        success: true,
+        platform: 'workana',
+        timestamp: new Date().toISOString(),
+        duration: duration,
+        stats: {
+          total: projects.length,
+          processed: projects.length,
+          errors: 0
+        },
+        projects: projectsJson
       };
       
-      // Ejecutar una vez
-      await runScraping();
+      // Imprimir resultado en formato JSON
+      console.log(JSON.stringify(response, null, 2));
       
-      logger.info('✅ Scraping completado');
+      if (!options.quiet) {
+        console.error(`✅ Scraping completado en ${duration}ms - ${projects.length} proyectos encontrados`);
+      }
+      
       process.exit(0);
       
     } catch (error) {
-      logger.errorWithStack('Error iniciando scraping único de Workana', error);
-      console.error('❌ Error:', error.message);
+      logger.errorWithStack('Error en scraping de Workana', error);
+      
+      const errorResponse = {
+        success: false,
+        platform: 'workana',
+        timestamp: new Date().toISOString(),
+        error: {
+          message: error.message,
+          type: error.constructor.name
+        },
+        stats: {
+          total: 0,
+          processed: 0,
+          errors: 1
+        },
+        projects: []
+      };
+      
+      console.log(JSON.stringify(errorResponse, null, 2));
+      
+      if (!options.quiet) {
+        console.error(`❌ Error: ${error.message}`);
+      }
+      
       process.exit(1);
     }
   });
 
-
-// Comando para iniciar servidor API
-program
-  .command('server')
-  .description('Iniciar servidor API con endpoints')
-  .option('-p, --port <port>', 'Puerto del servidor', process.env.PORT || '3000')
-  .action(async (options) => {
-    try {
-      const { startServer } = require('./lib/server');
-      await startServer(parseInt(options.port));
-    } catch (error) {
-      logger.errorWithStack('Error iniciando servidor', error);
-      console.error('❌ Error:', error.message);
-      process.exit(1);
-    }
-  });
-
-program.parse();
+program.parse(); 

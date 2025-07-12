@@ -127,11 +127,11 @@ export class ProfileComponent implements OnInit {
         this.profileForm.patchValue({
             email: this.userProfile.email,
             role: this.userProfile.role,
-            telegramUser: this.userProfile.telegramUser || '',
+            telegramUser: this.userProfile.telegramUser || this.userProfile.telegram_user || '',
             workanaEmail: this.userProfile.credentials?.find((cred: any) => cred.platform === 'workana')?.email || '',
             workanaPassword: '', // Don't prefill password
-            proposalDirectives: this.userProfile.proposalDirectives || '',
-            professionalProfile: this.userProfile.professionalProfile || '',
+            proposalDirectives: this.userProfile.proposalDirectives || this.userProfile.proposal_directives || '',
+            professionalProfile: this.userProfile.professionalProfile || this.userProfile.professional_profile || '',
         });
     }
 

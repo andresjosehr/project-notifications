@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -103,7 +103,8 @@ export class UsersComponent implements OnInit {
         private authService: AuthService,
         private router: Router,
         private dialog: MatDialog,
-        private snackbarService: SnackbarService
+        private snackbarService: SnackbarService,
+        private cdr: ChangeDetectorRef
     ) {
         this.currentUser = this.authService.currentUser;
         this.createEditForm();
@@ -148,11 +149,16 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.getTokens().toPromise();
             
             if (result?.success) {
-                this.tokens = result.data || [];
+                console.log('Tokens loaded successfully:', result.data);
+                console.log('Tokens array length:', result.data?.length);
+                this.tokens = result.data.data || [];
+                console.log('Component tokens array:', this.tokens);
+                this.cdr.detectChanges(); // Force change detection
             } else {
                 this.showError(result?.error || 'Error cargando tokens');
             }
         } catch (error: any) {
+            console.error('Error loading tokens:', error);
             this.showError(error.message || 'Error cargando tokens');
         }
     }

@@ -25,13 +25,7 @@ class Logger {
         fs.writeFileSync(this.logFile, '', 'utf8');
       }
     } catch (error) {
-      // Solo escribir el error al archivo de log, no a consola
-      const errorMessage = `[${DateUtils.toVenezuelaString()}] [ERROR] Error creando archivo de log: ${error.message}`;
-      try {
-        fs.appendFileSync(this.logFile, errorMessage + '\n', 'utf8');
-      } catch (writeError) {
-        // Si no podemos escribir al archivo, no hacer nada
-      }
+      console.error('Error creando archivo de log:', error.message);
     }
   }
 
@@ -39,13 +33,7 @@ class Logger {
     try {
       fs.appendFileSync(this.logFile, formattedMessage + '\n', 'utf8');
     } catch (error) {
-      // Solo escribir el error al archivo de log, no a consola
-      const errorMessage = `[${DateUtils.toVenezuelaString()}] [ERROR] Error escribiendo al archivo de log: ${error.message}`;
-      try {
-        fs.appendFileSync(this.logFile, errorMessage + '\n', 'utf8');
-      } catch (writeError) {
-        // Si no podemos escribir al archivo, no hacer nada
-      }
+      console.error('Error escribiendo al archivo de log:', error.message);
     }
   }
 
@@ -65,8 +53,9 @@ class Logger {
 
     const formattedMessage = this._formatMessage(logEntry);
     
-    // Solo escribir a archivo, nunca a consola
+    // Escribir a archivo
     this._writeToFile(formattedMessage);
+  
   }
 
   _formatMessage(logEntry) {
