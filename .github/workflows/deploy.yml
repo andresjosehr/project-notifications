@@ -54,7 +54,6 @@ jobs:
         timeout: 60s
         command_timeout: 10m
         debug: true
-        envs: NODE_ENV,DB_HOST,DB_USER,DB_PASSWORD,DB_DATABASE
         script: |
           cd /var/www/projects/jobs
           git pull origin master
@@ -62,15 +61,5 @@ jobs:
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          cd apps/api
-          npm install knex mysql2
-          npx knex migrate:latest
-          cd ../..
           pm2 restart jobs-api
           pm2 save
-      env:
-        NODE_ENV: production
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_USER: ${{ secrets.DB_USER }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_DATABASE: ${{ secrets.DB_DATABASE }}
