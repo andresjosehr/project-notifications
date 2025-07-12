@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const logger = require('../utils/logger');
 const config = require('../config');
-const { query } = require('../../database');
+const Database = require('../database/connection');
 const aiService = require('./AIService');
 const userRepository = require('../database/repositories/UserRepository');
 const userProposalRepository = require('../database/repositories/UserProposalRepository');
@@ -563,7 +563,7 @@ class WorkanaService {
 
   async _validateProjectExists(projectId) {
     const projectQuery = 'SELECT * FROM projects WHERE id = ?';
-    const projectResult = await query(projectQuery, [projectId]);
+    const projectResult = await Database.query(projectQuery, [projectId]);
     
     if (projectResult.length === 0) {
       throw new Error('Proyecto no encontrado');
@@ -664,7 +664,7 @@ class WorkanaService {
   }
 
   async _getProjectData(projectId) {
-    const rows = await query(
+    const rows = await Database.query(
       'SELECT link, title, description, language FROM projects WHERE id = ? AND platform = ?',
       [projectId, 'workana']
     );

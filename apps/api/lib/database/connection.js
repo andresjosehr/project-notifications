@@ -38,7 +38,8 @@ class DatabaseConnection {
         // Para errores de protocolo, simplemente logear - NO hacer nada
         if (error.code === 'PROTOCOL_CONNECTION_LOST' || 
             error.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER' ||
-            error.code === 'PROTOCOL_ENQUEUE_AFTER_DESTROY') {
+            error.code === 'PROTOCOL_ENQUEUE_AFTER_DESTROY' ||
+            error.code === 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR') {
           logger.warn('Error de protocolo detectado - IGNORANDO y continuando');
           // NO hacer nada - dejar que el pool se recupere solo
           // NO llamar a reconnect() - mantener el pool funcionando
@@ -116,10 +117,11 @@ class DatabaseConnection {
             error.code === 'ECONNRESET' ||
             error.code === 'ETIMEDOUT' ||
             error.code === 'POOL_CLOSED' ||
-            error.code === 'PROTOCOL_ENQUEUE_AFTER_DESTROY'
+            error.code === 'PROTOCOL_ENQUEUE_AFTER_DESTROY' ||
+            error.code === 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'
           )) {
           retryCount++;
-          logger.warn(`Reintentando consulta (${retryCount}/${maxRetries}) después de error de protocolo`);
+          logger.warn(`Reintentando consulta (${retryCount}/${maxRetries}) despu?s de error de protocolo: ${error.code}`);
           
           // Esperar un poco antes de reintentar (backoff exponencial)
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
