@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('dashboardComponent', () => {
   let component: any;
@@ -15,7 +16,8 @@ describe('dashboardComponent', () => {
       imports: [
         ComponentClass,
         NoopAnimationsModule,
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        RouterTestingModule
       ]
     }).compileComponents();
 

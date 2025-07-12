@@ -79,10 +79,7 @@
                             "outputHashing": "all",
                             "sourceMap": false,
                             "namedChunks": false,
-                            "aot": true,
                             "extractLicenses": true,
-                            "vendorChunk": false,
-                            "buildOptimizer": true,
                             "optimization": true
                         },
                         "staging": {
@@ -107,19 +104,14 @@
                             "outputHashing": "all",
                             "sourceMap": true,
                             "namedChunks": false,
-                            "aot": true,
                             "extractLicenses": true,
-                            "vendorChunk": false,
-                            "buildOptimizer": true,
                             "optimization": true
                         },
                         "development": {
                             "optimization": false,
                             "extractLicenses": false,
                             "sourceMap": true,
-                            "namedChunks": true,
-                            "vendorChunk": true,
-                            "buildOptimizer": false
+                            "namedChunks": true
                         }
                     },
                     "defaultConfiguration": "production"
