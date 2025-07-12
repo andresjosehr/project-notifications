@@ -1,0 +1,290 @@
+<div class="flex flex-col w-full">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
+        <div class="flex-1 min-w-0">
+            <!-- Breadcrumbs -->
+            <div class="flex flex-wrap items-center font-medium">
+                <div>
+                    <a class="whitespace-nowrap text-primary-500">Sistema de Notificaciones</a>
+                </div>
+                <div class="flex items-center ml-1 whitespace-nowrap">
+                    <mat-icon
+                        class="icon-size-5 text-secondary"
+                        [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
+                    <span class="ml-1 text-secondary">Panel de Control</span>
+                </div>
+            </div>
+            <!-- Title -->
+            <div class="mt-2">
+                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                    Panel de Control
+                </h2>
+                <p class="text-secondary">Administración del sistema y monitoreo en tiempo real</p>
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex items-center mt-6 -mb-3 sm:mt-0 sm:mb-0">
+            <div class="flex items-center ml-4">
+                <span class="text-sm font-medium text-secondary mr-4">{{ currentUser?.email }}</span>
+                <button 
+                    mat-stroked-button 
+                    class="ml-2"
+                    (click)="logout()">
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"></mat-icon>
+                    <span class="ml-2">Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    @if (showAlert) {
+        <fuse-alert
+            class="m-6 mb-0"
+            [appearance]="'outline'"
+            [showIcon]="false"
+            [type]="alertType">
+            {{ alertMessage }}
+        </fuse-alert>
+    }
+
+    <!-- Main Content -->
+    <div class="flex flex-col w-full p-6">
+        
+        <!-- System Health Section -->
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Estado del Sistema</h3>
+                <button 
+                    mat-stroked-button
+                    [disabled]="loadingStates.health"
+                    (click)="checkSystemHealth()">
+                    @if (!loadingStates.health) {
+                        <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                        <span class="ml-2">Verificar Estado</span>
+                    }
+                    @if (loadingStates.health) {
+                        <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                    }
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Database Status -->
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <mat-icon 
+                        class="mr-3 text-2xl"
+                        [svgIcon]="getHealthStatusIcon(systemHealth.database)"
+                        [ngClass]="getHealthStatusClass(systemHealth.database)">
+                    </mat-icon>
+                    <div>
+                        <div class="font-medium">Base de Datos</div>
+                        <div class="text-sm text-secondary">
+                            {{ systemHealth.database ? 'Conectada' : 'Desconectada' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Service Status -->
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <mat-icon 
+                        class="mr-3 text-2xl"
+                        [svgIcon]="getHealthStatusIcon(systemHealth.aiService)"
+                        [ngClass]="getHealthStatusClass(systemHealth.aiService)">
+                    </mat-icon>
+                    <div>
+                        <div class="font-medium">Servicio IA</div>
+                        <div class="text-sm text-secondary">
+                            {{ systemHealth.aiService ? 'Operativo' : 'No disponible' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telegram Status -->
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <mat-icon 
+                        class="mr-3 text-2xl"
+                        [svgIcon]="getHealthStatusIcon(systemHealth.telegram)"
+                        [ngClass]="getHealthStatusClass(systemHealth.telegram)">
+                    </mat-icon>
+                    <div>
+                        <div class="font-medium">Telegram</div>
+                        <div class="text-sm text-secondary">
+                            {{ systemHealth.telegram ? 'Conectado' : 'Desconectado' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrapers Status -->
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <mat-icon 
+                        class="mr-3 text-2xl"
+                        [svgIcon]="getHealthStatusIcon(systemHealth.scrapers)"
+                        [ngClass]="getHealthStatusClass(systemHealth.scrapers)">
+                    </mat-icon>
+                    <div>
+                        <div class="font-medium">Scrapers</div>
+                        <div class="text-sm text-secondary">
+                            {{ systemHealth.scrapers ? 'Operativos' : 'No disponibles' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fuse-card>
+
+        <!-- Operations Section -->
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mb-6">
+            <h3 class="text-lg font-semibold mb-4">Operaciones del Sistema</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Manual Scraping -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Scraping Manual</h4>
+                    <form [formGroup]="scrapingForm" class="space-y-4">
+                        <!-- Platform Selection -->
+                        <mat-form-field class="w-full">
+                            <mat-label>Plataforma</mat-label>
+                            <mat-select formControlName="platform">
+                                <mat-option value="both">Ambas plataformas</mat-option>
+                                <mat-option value="workana">Solo Workana</mat-option>
+                                <mat-option value="upwork">Solo Upwork</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <!-- Options -->
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" formControlName="notifications" class="mr-2">
+                                <span class="text-sm">Enviar notificaciones</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" formControlName="parallel" class="mr-2">
+                                <span class="text-sm">Modo paralelo (más rápido)</span>
+                            </label>
+                        </div>
+
+                        <!-- Execute Button -->
+                        <button 
+                            mat-flat-button
+                            [color]="'primary'"
+                            [disabled]="scrapingForm.invalid || loadingStates.scraping"
+                            (click)="startManualScraping()">
+                            @if (!loadingStates.scraping) {
+                                <mat-icon [svgIcon]="'heroicons_outline:play'"></mat-icon>
+                                <span class="ml-2">Ejecutar Scraping</span>
+                            }
+                            @if (loadingStates.scraping) {
+                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                <span class="ml-2">Ejecutando...</span>
+                            }
+                        </button>
+                    </form>
+                </div>
+
+                <!-- System Operations -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Operaciones de Mantenimiento</h4>
+                    <div class="space-y-3">
+                        <button 
+                            mat-stroked-button
+                            class="w-full justify-start"
+                            [disabled]="loadingStates.cleanup"
+                            (click)="cleanupDatabase()">
+                            @if (!loadingStates.cleanup) {
+                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                <span class="ml-2">Limpiar Base de Datos</span>
+                            }
+                            @if (loadingStates.cleanup) {
+                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                <span class="ml-2">Limpiando...</span>
+                            }
+                        </button>
+                        
+                        <button 
+                            mat-stroked-button
+                            class="w-full justify-start"
+                            [routerLink]="['/projects']">
+                            <mat-icon [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            <span class="ml-2">Ver Proyectos</span>
+                        </button>
+                        
+                        <button 
+                            mat-stroked-button
+                            class="w-full justify-start"
+                            [routerLink]="['/users']">
+                            <mat-icon [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                            <span class="ml-2">Gestionar Usuarios</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </fuse-card>
+
+        <!-- Logs Section -->
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Logs del Sistema</h3>
+                <div class="flex items-center space-x-2">
+                    <button 
+                        mat-stroked-button
+                        [disabled]="loadingStates.logs"
+                        (click)="loadLogs()">
+                        @if (!loadingStates.logs) {
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                            <span class="ml-2">Actualizar</span>
+                        }
+                        @if (loadingStates.logs) {
+                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                        }
+                    </button>
+                    
+                    <button 
+                        mat-stroked-button
+                        (click)="downloadLogs()">
+                        <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                        <span class="ml-2">Descargar</span>
+                    </button>
+                    
+                    <button 
+                        mat-stroked-button
+                        (click)="clearLogs()">
+                        <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                        <span class="ml-2">Limpiar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Log Type Tabs -->
+            <mat-tab-group (selectedTabChange)="onLogTypeChange($event.index === 0 ? 'app' : 'error')">
+                <mat-tab label="Logs de Aplicación">
+                    <div class="py-4">
+                        @if (systemLogs.app.length > 0) {
+                            <div class="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                                <pre class="text-sm whitespace-pre-wrap">{{ systemLogs.app.join('\n') }}</pre>
+                            </div>
+                        } @else {
+                            <div class="text-center py-8 text-secondary">
+                                No hay logs de aplicación disponibles
+                            </div>
+                        }
+                    </div>
+                </mat-tab>
+                
+                <mat-tab label="Logs de Error">
+                    <div class="py-4">
+                        @if (systemLogs.error.length > 0) {
+                            <div class="bg-red-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                                <pre class="text-sm whitespace-pre-wrap text-red-800">{{ systemLogs.error.join('\n') }}</pre>
+                            </div>
+                        } @else {
+                            <div class="text-center py-8 text-secondary">
+                                No hay logs de error disponibles
+                            </div>
+                        }
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </fuse-card>
+    </div>
+</div>

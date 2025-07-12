@@ -1,0 +1,264 @@
+<div class="flex flex-col w-full">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
+        <div class="flex-1 min-w-0">
+            <!-- Breadcrumbs -->
+            <div class="flex flex-wrap items-center font-medium">
+                <div>
+                    <a class="whitespace-nowrap text-primary-500" [routerLink]="['/projects']">Proyectos</a>
+                </div>
+                <div class="flex items-center ml-1 whitespace-nowrap">
+                    <mat-icon
+                        class="icon-size-5 text-secondary"
+                        [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
+                    <span class="ml-1 text-secondary">Revisar Propuesta</span>
+                </div>
+            </div>
+            <!-- Title -->
+            <div class="mt-2">
+                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                    Revisar y Enviar Propuesta
+                </h2>
+                <p class="text-secondary">Revisa y edita la propuesta generada por IA antes de enviarla</p>
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex items-center mt-6 -mb-3 sm:mt-0 sm:mb-0">
+            <button 
+                mat-stroked-button 
+                (click)="goBack()">
+                <mat-icon [svgIcon]="'heroicons_outline:arrow-left'"></mat-icon>
+                <span class="ml-2">Volver a Proyectos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    @if (showAlert) {
+        <fuse-alert
+            class="m-6 mb-0"
+            [appearance]="'outline'"
+            [showIcon]="false"
+            [type]="alertType">
+            {{ alertMessage }}
+        </fuse-alert>
+    }
+
+    <!-- Loading -->
+    @if (isLoading) {
+        <div class="flex items-center justify-center py-8">
+            <mat-progress-spinner [diameter]="40" mode="indeterminate"></mat-progress-spinner>
+            <span class="ml-4 text-lg">Cargando datos del proyecto...</span>
+        </div>
+    }
+
+    <!-- Main Content -->
+    @if (!isLoading && project) {
+        <div class="flex flex-col lg:flex-row w-full p-6 gap-6">
+            
+            <!-- Left Column: Project Information -->
+            <div class="w-full lg:w-1/3">
+                <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                    <h3 class="text-lg font-semibold mb-4">Información del Proyecto</h3>
+                    
+                    <!-- Project Title -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-primary mb-2">{{ project.title }}</h4>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                              [ngClass]="getPlatformBadgeClass()">
+                            {{ project.platform | titlecase }}
+                        </span>
+                    </div>
+
+                    <!-- Project Details -->
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="font-medium text-secondary">Presupuesto:</span>
+                            <span>{{ formatCurrency(project.price || '') }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <span class="font-medium text-secondary">Categoría:</span>
+                            <span>{{ project.category || 'No especificada' }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <span class="font-medium text-secondary">Cliente:</span>
+                            <span>{{ project.clientName || 'No especificado' }}</span>
+                        </div>
+                        
+                        @if (project.clientCountry) {
+                            <div class="flex justify-between">
+                                <span class="font-medium text-secondary">País:</span>
+                                <span>{{ project.clientCountry }}</span>
+                            </div>
+                        }
+                        
+                        <div class="flex justify-between">
+                            <span class="font-medium text-secondary">Publicado:</span>
+                            <span>{{ formatDate(project.createdAt) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Project Description -->
+                    <div class="mt-6">
+                        <h4 class="font-medium text-secondary mb-2">Descripción</h4>
+                        <div class="text-sm bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto">
+                            {{ project.description || 'Sin descripción disponible' }}
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    @if (project.skills) {
+                        <div class="mt-4">
+                            <h4 class="font-medium text-secondary mb-2">Habilidades</h4>
+                            <div class="flex flex-wrap gap-2">
+                                @for (skill of project.skills.split(','); track skill) {
+                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ skill.trim() }}
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- User Information -->
+                    @if (user) {
+                        <div class="mt-6 pt-4 border-t">
+                            <h4 class="font-medium text-secondary mb-2">Enviando como</h4>
+                            <div class="text-sm">
+                                <div class="font-medium">{{ user.email }}</div>
+                                @if (user.telegramUser) {
+                                    <div class="text-gray-600">{{ user.telegramUser }}</div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- External Link -->
+                    <div class="mt-4">
+                        <a 
+                            [href]="project.link" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center text-primary-500 hover:text-primary-700 text-sm">
+                            <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:arrow-top-right-on-square'"></mat-icon>
+                            Ver en {{ project.platform | titlecase }}
+                        </a>
+                    </div>
+                </fuse-card>
+            </div>
+
+            <!-- Right Column: Proposal Editor -->
+            <div class="w-full lg:w-2/3">
+                <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Editor de Propuesta</h3>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex items-center space-x-2">
+                            <button 
+                                mat-stroked-button
+                                [disabled]="isGenerating"
+                                (click)="regenerateProposal()">
+                                @if (!isGenerating) {
+                                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                    <span class="ml-2">Regenerar</span>
+                                }
+                                @if (isGenerating) {
+                                    <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                }
+                            </button>
+                            
+                            <button 
+                                mat-stroked-button
+                                [disabled]="!originalProposal"
+                                (click)="resetToOriginal()">
+                                <mat-icon [svgIcon]="'heroicons_outline:arrow-uturn-left'"></mat-icon>
+                                <span class="ml-2">Restaurar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Proposal Statistics -->
+                    <div class="flex items-center space-x-6 mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="text-sm">
+                            <span class="font-medium text-secondary">Caracteres:</span>
+                            <span class="ml-1">{{ proposalStats.characters }}</span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="font-medium text-secondary">Palabras:</span>
+                            <span class="ml-1">{{ proposalStats.words }}</span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="font-medium text-secondary">Líneas:</span>
+                            <span class="ml-1">{{ proposalStats.lines }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Proposal Form -->
+                    <form [formGroup]="proposalForm" class="flex-1 flex flex-col">
+                        <mat-form-field class="w-full flex-1">
+                            <mat-label>Contenido de la Propuesta</mat-label>
+                            <textarea 
+                                matInput 
+                                formControlName="proposalContent"
+                                rows="20"
+                                class="resize-none"
+                                placeholder="Escribe tu propuesta aquí o genera una con IA...">
+                            </textarea>
+                            <mat-hint>Edita el contenido según sea necesario antes de enviar</mat-hint>
+                            @if (proposalForm.get('proposalContent')?.hasError('required')) {
+                                <mat-error>El contenido de la propuesta es requerido</mat-error>
+                            }
+                        </mat-form-field>
+
+                        <!-- Generate/Send Buttons -->
+                        <div class="flex justify-between items-center mt-6">
+                            <div class="flex items-center space-x-2">
+                                @if (!proposalForm.get('proposalContent')?.value && !isGenerating) {
+                                    <button 
+                                        mat-stroked-button
+                                        type="button"
+                                        (click)="generateProposal()">
+                                        <mat-icon [svgIcon]="'heroicons_outline:sparkles'"></mat-icon>
+                                        <span class="ml-2">Generar con IA</span>
+                                    </button>
+                                }
+                            </div>
+                            
+                            <button 
+                                mat-flat-button
+                                [color]="'primary'"
+                                [disabled]="proposalForm.invalid || isSending || isGenerating"
+                                (click)="sendProposal()">
+                                @if (!isSending) {
+                                    <mat-icon [svgIcon]="'heroicons_outline:paper-airplane'"></mat-icon>
+                                    <span class="ml-2">Enviar Propuesta</span>
+                                }
+                                @if (isSending) {
+                                    <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                    <span class="ml-2">Enviando...</span>
+                                }
+                            </button>
+                        </div>
+                    </form>
+                </fuse-card>
+            </div>
+        </div>
+    }
+
+    <!-- No Project Found -->
+    @if (!isLoading && !project) {
+        <div class="flex flex-col items-center justify-center py-12">
+            <mat-icon class="text-6xl text-gray-400 mb-4" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+            <h3 class="text-xl font-medium text-gray-900 mb-2">Proyecto no encontrado</h3>
+            <p class="text-gray-500 text-center max-w-md mb-4">
+                No se pudo cargar la información del proyecto. Verifica que los parámetros sean correctos.
+            </p>
+            <button mat-flat-button [color]="'primary'" (click)="goBack()">
+                Volver a Proyectos
+            </button>
+        </div>
+    }
+</div>

@@ -1,0 +1,39 @@
+// Custom styles for projects component
+.projects-container {
+    .mat-mdc-table {
+        .mat-mdc-header-cell {
+            font-weight: 600;
+            color: rgb(var(--fuse-text-secondary-rgb));
+        }
+
+        .mat-mdc-cell {
+            padding: 12px;
+        }
+    }
+
+    .stats-card {
+        transition: transform 0.2s ease-in-out;
+        
+        &:hover {
+            transform: translateY(-2px);
+        }
+    }
+
+    .platform-badge {
+        &.workana {
+            @apply bg-blue-100 text-blue-800;
+        }
+        
+        &.upwork {
+            @apply bg-green-100 text-green-800;
+        }
+    }
+
+    .actions-menu {
+        .mat-mdc-menu-item {
+            .mat-icon {
+                margin-right: 8px;
+            }
+        }
+    }
+}

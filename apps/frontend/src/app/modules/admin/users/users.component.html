@@ -1,0 +1,389 @@
+<div class="flex flex-col w-full">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
+        <div class="flex-1 min-w-0">
+            <!-- Breadcrumbs -->
+            <div class="flex flex-wrap items-center font-medium">
+                <div>
+                    <a class="whitespace-nowrap text-primary-500" [routerLink]="['/projects']">Sistema de Notificaciones</a>
+                </div>
+                <div class="flex items-center ml-1 whitespace-nowrap">
+                    <mat-icon
+                        class="icon-size-5 text-secondary"
+                        [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
+                    <span class="ml-1 text-secondary">Gestión de Usuarios</span>
+                </div>
+            </div>
+            <!-- Title -->
+            <div class="mt-2">
+                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                    Gestión de Usuarios
+                </h2>
+                <p class="text-secondary">Configuración multiusuario y gestión de tokens de registro</p>
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex items-center mt-6 -mb-3 sm:mt-0 sm:mb-0">
+            <div class="flex items-center ml-4">
+                <span class="text-sm font-medium text-secondary mr-4">{{ currentUser?.email }}</span>
+                <button 
+                    mat-stroked-button 
+                    class="ml-2"
+                    (click)="logout()">
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"></mat-icon>
+                    <span class="ml-2">Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    @if (showAlert) {
+        <fuse-alert
+            class="m-6 mb-0"
+            [appearance]="'outline'"
+            [showIcon]="false"
+            [type]="alertType">
+            {{ alertMessage }}
+        </fuse-alert>
+    }
+
+    <!-- Stats Bar -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full p-6">
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+            <div class="flex items-center">
+                <div class="flex flex-col">
+                    <div class="text-2xl md:text-3xl font-bold tracking-tight leading-none text-primary">
+                        {{ userStats.total }}
+                    </div>
+                    <div class="text-lg font-medium text-secondary leading-none mt-1">
+                        Total Usuarios
+                    </div>
+                </div>
+                <div class="flex items-center justify-center ml-auto w-12 h-12 rounded-full bg-blue-100 text-blue-600">
+                    <mat-icon [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                </div>
+            </div>
+        </fuse-card>
+
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+            <div class="flex items-center">
+                <div class="flex flex-col">
+                    <div class="text-2xl md:text-3xl font-bold tracking-tight leading-none text-green-600">
+                        {{ userStats.active }}
+                    </div>
+                    <div class="text-lg font-medium text-secondary leading-none mt-1">
+                        Usuarios Activos
+                    </div>
+                </div>
+                <div class="flex items-center justify-center ml-auto w-12 h-12 rounded-full bg-green-100 text-green-600">
+                    <mat-icon [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                </div>
+            </div>
+        </fuse-card>
+
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+            <div class="flex items-center">
+                <div class="flex flex-col">
+                    <div class="text-2xl md:text-3xl font-bold tracking-tight leading-none text-red-600">
+                        {{ userStats.inactive }}
+                    </div>
+                    <div class="text-lg font-medium text-secondary leading-none mt-1">
+                        Usuarios Inactivos
+                    </div>
+                </div>
+                <div class="flex items-center justify-center ml-auto w-12 h-12 rounded-full bg-red-100 text-red-600">
+                    <mat-icon [svgIcon]="'heroicons_outline:x-circle'"></mat-icon>
+                </div>
+            </div>
+        </fuse-card>
+
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+            <div class="flex items-center">
+                <div class="flex flex-col">
+                    <div class="text-2xl md:text-3xl font-bold tracking-tight leading-none text-amber-600">
+                        {{ userStats.withValidSession }}
+                    </div>
+                    <div class="text-lg font-medium text-secondary leading-none mt-1">
+                        Sesiones Válidas
+                    </div>
+                </div>
+                <div class="flex items-center justify-center ml-auto w-12 h-12 rounded-full bg-amber-100 text-amber-600">
+                    <mat-icon [svgIcon]="'heroicons_outline:key'"></mat-icon>
+                </div>
+            </div>
+        </fuse-card>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col w-full p-6 pt-0">
+        <mat-tab-group class="w-full" dynamicHeight>
+            
+            <!-- Tokens Tab -->
+            <mat-tab label="Tokens de Registro">
+                <div class="py-6">
+                    <!-- Token Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-xl font-bold text-primary">{{ tokenStats.total }}</div>
+                            <div class="text-sm text-secondary">Total Tokens</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-xl font-bold text-green-600">{{ tokenStats.unused }}</div>
+                            <div class="text-sm text-secondary">Tokens Disponibles</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-xl font-bold text-red-600">{{ tokenStats.used }}</div>
+                            <div class="text-sm text-secondary">Tokens Utilizados</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-xl font-bold text-blue-600">{{ tokenStats.created_this_week }}</div>
+                            <div class="text-sm text-secondary">Creados Esta Semana</div>
+                        </div>
+                    </div>
+
+                    <!-- Token Actions -->
+                    <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Gestión de Tokens</h3>
+                            <div class="flex items-center space-x-2">
+                                <button mat-flat-button [color]="'primary'" (click)="generateNewToken()">
+                                    <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                    <span class="ml-2">Generar Token</span>
+                                </button>
+                                <button mat-stroked-button (click)="loadTokens()">
+                                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                    <span class="ml-2">Actualizar</span>
+                                </button>
+                                <button mat-stroked-button (click)="cleanupOldTokens()">
+                                    <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    <span class="ml-2">Limpiar Antiguos</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tokens Table -->
+                        @if (tokens.length > 0) {
+                            <div class="overflow-x-auto">
+                                <table mat-table [dataSource]="tokens" class="w-full">
+                                    <!-- ID Column -->
+                                    <ng-container matColumnDef="id">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">ID</th>
+                                        <td mat-cell *matCellDef="let token">{{ token.id }}</td>
+                                    </ng-container>
+
+                                    <!-- Token Column -->
+                                    <ng-container matColumnDef="token">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Token</th>
+                                        <td mat-cell *matCellDef="let token">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="font-mono text-sm">{{ token.token.substring(0, 8) }}...</span>
+                                                <button mat-icon-button (click)="copyToken(token.token)">
+                                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:clipboard-document'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </ng-container>
+
+                                    <!-- Status Column -->
+                                    <ng-container matColumnDef="status">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Estado</th>
+                                        <td mat-cell *matCellDef="let token">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  [ngClass]="getTokenStatusBadgeClass(token.isUsed)">
+                                                {{ token.isUsed ? 'Utilizado' : 'Disponible' }}
+                                            </span>
+                                        </td>
+                                    </ng-container>
+
+                                    <!-- Created At Column -->
+                                    <ng-container matColumnDef="createdAt">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Creado</th>
+                                        <td mat-cell *matCellDef="let token">{{ formatDate(token.createdAt) }}</td>
+                                    </ng-container>
+
+                                    <!-- Used By Column -->
+                                    <ng-container matColumnDef="usedBy">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Usado Por</th>
+                                        <td mat-cell *matCellDef="let token">{{ token.registeredUserEmail || '-' }}</td>
+                                    </ng-container>
+
+                                    <!-- Used At Column -->
+                                    <ng-container matColumnDef="usedAt">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Fecha de Uso</th>
+                                        <td mat-cell *matCellDef="let token">{{ token.usedAt ? formatDate(token.usedAt) : '-' }}</td>
+                                    </ng-container>
+
+                                    <!-- Actions Column -->
+                                    <ng-container matColumnDef="actions">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Acciones</th>
+                                        <td mat-cell *matCellDef="let token">
+                                            <div class="flex items-center space-x-2">
+                                                @if (!token.isUsed) {
+                                                    <button mat-icon-button (click)="copyRegistrationLink(token.token)">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:link'"></mat-icon>
+                                                    </button>
+                                                }
+                                                <button mat-icon-button (click)="deleteToken(token.id)">
+                                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </ng-container>
+
+                                    <tr mat-header-row *matHeaderRowDef="tokenColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: tokenColumns;"></tr>
+                                </table>
+                            </div>
+                        } @else {
+                            <div class="text-center py-8 text-secondary">
+                                No hay tokens de registro generados
+                            </div>
+                        }
+                    </fuse-card>
+                </div>
+            </mat-tab>
+
+            <!-- Users Tab -->
+            <mat-tab label="Usuarios Registrados">
+                <div class="py-6">
+                    <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Usuarios del Sistema</h3>
+                            <button mat-stroked-button (click)="loadUsers()">
+                                <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                <span class="ml-2">Actualizar Lista</span>
+                            </button>
+                        </div>
+
+                        <!-- Loading -->
+                        @if (isLoading) {
+                            <div class="flex items-center justify-center py-8">
+                                <mat-progress-spinner [diameter]="40" mode="indeterminate"></mat-progress-spinner>
+                            </div>
+                        }
+
+                        <!-- Users Table -->
+                        @if (!isLoading && users.length > 0) {
+                            <div class="overflow-x-auto">
+                                <table mat-table [dataSource]="users" class="w-full">
+                                    <!-- ID Column -->
+                                    <ng-container matColumnDef="id">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">ID</th>
+                                        <td mat-cell *matCellDef="let user">{{ user.id }}</td>
+                                    </ng-container>
+
+                                    <!-- Email Column -->
+                                    <ng-container matColumnDef="email">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Email</th>
+                                        <td mat-cell *matCellDef="let user">
+                                            <div class="truncate max-w-xs" [title]="user.email">{{ user.email }}</div>
+                                        </td>
+                                    </ng-container>
+
+                                    <!-- Telegram User Column -->
+                                    <ng-container matColumnDef="telegramUser">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Telegram</th>
+                                        <td mat-cell *matCellDef="let user">{{ user.telegramUser || '-' }}</td>
+                                    </ng-container>
+
+                                    <!-- Status Column -->
+                                    <ng-container matColumnDef="status">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Estado</th>
+                                        <td mat-cell *matCellDef="let user">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  [ngClass]="getUserStatusBadgeClass(user.isActive)">
+                                                {{ user.isActive ? 'Activo' : 'Inactivo' }}
+                                            </span>
+                                        </td>
+                                    </ng-container>
+
+                                    <!-- Created At Column -->
+                                    <ng-container matColumnDef="createdAt">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Creado</th>
+                                        <td mat-cell *matCellDef="let user">{{ formatDate(user.createdAt) }}</td>
+                                    </ng-container>
+
+                                    <!-- Actions Column -->
+                                    <ng-container matColumnDef="actions">
+                                        <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Acciones</th>
+                                        <td mat-cell *matCellDef="let user">
+                                            <div class="flex items-center space-x-2">
+                                                <button mat-icon-button (click)="editUser(user)">
+                                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                                                </button>
+                                                <button mat-icon-button (click)="toggleUserStatus(user)">
+                                                    <mat-icon class="icon-size-4" 
+                                                             [svgIcon]="user.isActive ? 'heroicons_outline:pause' : 'heroicons_outline:play'"></mat-icon>
+                                                </button>
+                                                <button mat-icon-button (click)="deleteUser(user)">
+                                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </ng-container>
+
+                                    <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: userColumns;"></tr>
+                                </table>
+                            </div>
+                        }
+
+                        <!-- Empty State -->
+                        @if (!isLoading && users.length === 0) {
+                            <div class="text-center py-8 text-secondary">
+                                No hay usuarios registrados
+                            </div>
+                        }
+                    </fuse-card>
+
+                    <!-- Edit User Form -->
+                    @if (editingUser) {
+                        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mt-6">
+                            <h3 class="text-lg font-semibold mb-4">Editar Usuario: {{ editingUser.email }}</h3>
+                            
+                            <form [formGroup]="editUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Workana Email -->
+                                <mat-form-field class="w-full">
+                                    <mat-label>Email de Workana</mat-label>
+                                    <input matInput formControlName="workanaEmail" type="email">
+                                </mat-form-field>
+
+                                <!-- Workana Password -->
+                                <mat-form-field class="w-full">
+                                    <mat-label>Contraseña de Workana</mat-label>
+                                    <input matInput formControlName="workanaPassword" type="password">
+                                    <mat-hint>Deja en blanco para mantener la actual</mat-hint>
+                                </mat-form-field>
+
+                                <!-- Telegram User -->
+                                <mat-form-field class="w-full">
+                                    <mat-label>Usuario de Telegram</mat-label>
+                                    <input matInput formControlName="telegramUser">
+                                </mat-form-field>
+
+                                <!-- Proposal Directives -->
+                                <mat-form-field class="w-full md:col-span-2">
+                                    <mat-label>Directrices de Propuesta</mat-label>
+                                    <textarea matInput formControlName="proposalDirectives" rows="3"></textarea>
+                                </mat-form-field>
+
+                                <!-- Professional Profile -->
+                                <mat-form-field class="w-full md:col-span-2">
+                                    <mat-label>Perfil Profesional</mat-label>
+                                    <textarea matInput formControlName="professionalProfile" rows="4"></textarea>
+                                </mat-form-field>
+
+                                <!-- Actions -->
+                                <div class="flex justify-end space-x-2 md:col-span-2">
+                                    <button mat-stroked-button (click)="cancelEdit()">Cancelar</button>
+                                    <button mat-flat-button [color]="'primary'" (click)="saveUser()">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </fuse-card>
+                    }
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+</div>

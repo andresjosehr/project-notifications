@@ -1,0 +1,203 @@
+// Custom styles for proposal review component
+.proposal-review-container {
+    .project-info-card {
+        .project-details {
+            .detail-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid rgb(var(--fuse-border-rgb) / 0.1);
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .label {
+                    font-weight: 500;
+                    color: rgb(var(--fuse-text-secondary-rgb));
+                }
+
+                .value {
+                    color: rgb(var(--fuse-text-default-rgb));
+                }
+            }
+        }
+
+        .skills-container {
+            .skill-tag {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                background-color: rgb(var(--fuse-primary-rgb) / 0.1);
+                color: rgb(var(--fuse-primary-rgb));
+                margin: 2px;
+            }
+        }
+    }
+
+    .proposal-editor-card {
+        .stats-bar {
+            background-color: rgb(var(--fuse-bg-card-rgb));
+            border: 1px solid rgb(var(--fuse-border-rgb));
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+
+            .stat-item {
+                display: flex;
+                align-items: center;
+                font-size: 0.875rem;
+
+                .label {
+                    font-weight: 500;
+                    color: rgb(var(--fuse-text-secondary-rgb));
+                }
+
+                .value {
+                    margin-left: 4px;
+                    color: rgb(var(--fuse-text-default-rgb));
+                }
+            }
+        }
+
+        .mat-mdc-form-field {
+            .mat-mdc-text-field-wrapper {
+                .mat-mdc-form-field-flex {
+                    .mat-mdc-form-field-infix {
+                        textarea {
+                            font-family: 'Inter', sans-serif;
+                            line-height: 1.5;
+                            resize: vertical;
+                            min-height: 400px;
+                        }
+                    }
+                }
+            }
+        }
+
+        .action-buttons {
+            .generate-button {
+                background-color: rgb(var(--fuse-accent-rgb));
+                color: rgb(var(--fuse-on-accent-rgb));
+
+                &:hover {
+                    background-color: rgb(var(--fuse-accent-rgb) / 0.9);
+                }
+            }
+
+            .send-button {
+                background-color: rgb(var(--fuse-primary-rgb));
+                color: rgb(var(--fuse-on-primary-rgb));
+
+                &:hover {
+                    background-color: rgb(var(--fuse-primary-rgb) / 0.9);
+                }
+
+                &:disabled {
+                    background-color: rgb(var(--fuse-text-disabled-rgb));
+                }
+            }
+        }
+    }
+
+    .platform-badge {
+        &.workana {
+            @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+        }
+        
+        &.upwork {
+            @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+        }
+    }
+}
+
+// Confirmation dialog styles
+.proposal-confirmation-dialog {
+    .project-preview {
+        background-color: rgb(var(--fuse-bg-card-rgb));
+        border: 1px solid rgb(var(--fuse-border-rgb));
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+
+        .project-title {
+            font-weight: 600;
+            color: rgb(var(--fuse-text-default-rgb));
+            margin-bottom: 8px;
+        }
+    }
+
+    .stats-preview {
+        background-color: rgb(var(--fuse-bg-card-rgb));
+        border: 1px solid rgb(var(--fuse-border-rgb));
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+
+            .stat-item {
+                text-align: center;
+
+                .label {
+                    font-weight: 500;
+                    color: rgb(var(--fuse-text-secondary-rgb));
+                    font-size: 0.875rem;
+                }
+
+                .value {
+                    color: rgb(var(--fuse-text-default-rgb));
+                    font-size: 1rem;
+                    font-weight: 600;
+                }
+            }
+        }
+    }
+
+    .proposal-preview {
+        background-color: rgb(var(--fuse-bg-card-rgb));
+        border: 1px solid rgb(var(--fuse-border-rgb));
+        border-radius: 8px;
+        padding: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 1024px) {
+    .proposal-review-container {
+        .main-content {
+            flex-direction: column;
+
+            .project-info-card,
+            .proposal-editor-card {
+                width: 100%;
+            }
+        }
+    }
+}
+
+// Animation for loading states
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

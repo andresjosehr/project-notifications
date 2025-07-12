@@ -1,0 +1,136 @@
+// Custom styles for users component
+.users-container {
+    .stats-grid {
+        .stat-card {
+            transition: transform 0.2s ease-in-out;
+            
+            &:hover {
+                transform: translateY(-2px);
+            }
+        }
+    }
+
+    .mat-mdc-table {
+        .mat-mdc-header-cell {
+            font-weight: 600;
+            color: rgb(var(--fuse-text-secondary-rgb));
+        }
+
+        .mat-mdc-cell {
+            padding: 12px 8px;
+        }
+    }
+
+    .token-cell {
+        .token-preview {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background-color: rgb(var(--fuse-bg-card-rgb));
+            border: 1px solid rgb(var(--fuse-border-rgb));
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+    }
+
+    .status-badge {
+        &.active {
+            @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+        }
+        
+        &.inactive {
+            @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+        }
+
+        &.available {
+            @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+        }
+        
+        &.used {
+            @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+        }
+    }
+
+    .edit-form {
+        .mat-mdc-form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+    }
+
+    .token-stats {
+        .stat-item {
+            background-color: rgb(var(--fuse-bg-card-rgb));
+            border: 1px solid rgb(var(--fuse-border-rgb));
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+
+            .stat-number {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 0.875rem;
+                color: rgb(var(--fuse-text-secondary-rgb));
+            }
+        }
+    }
+
+    .mat-mdc-tab-group {
+        .mat-mdc-tab-header {
+            border-bottom: 1px solid rgb(var(--fuse-border-rgb));
+        }
+
+        .mat-mdc-tab-body-wrapper {
+            .mat-mdc-tab-body {
+                .mat-mdc-tab-body-content {
+                    overflow: visible;
+                }
+            }
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .users-container {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .token-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .edit-form {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+}
+
+// Animation for table rows
+.mat-mdc-row {
+    transition: background-color 0.2s ease-in-out;
+
+    &:hover {
+        background-color: rgb(var(--fuse-bg-hover-rgb));
+    }
+}
+
+// Loading states
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
