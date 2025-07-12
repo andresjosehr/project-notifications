@@ -10,7 +10,7 @@
     "start:frontend": "npm start --workspace=apps/frontend",
     "start": "concurrently --kill-others-on-fail \"npm run start:api\" \"npm run start:frontend\"",
     "build:frontend": "npm run build --workspace=apps/frontend",
-    "migrate": "npm run migrate --workspace=apps/api"
+    "migrate": "node migrate-api.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
