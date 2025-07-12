@@ -90,6 +90,23 @@ class ApiServer {
       }
     });
 
+    // API Health check endpoint (for frontend compatibility)
+    this.app.get('/api/health', async (req, res) => {
+      try {
+        const health = await this.notificationApp.healthCheck();
+        res.json({
+          success: true,
+          data: health
+        });
+      } catch (error) {
+        logger.errorWithStack('Error en API health check endpoint', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message 
+        });
+      }
+    });
+
     // Status endpoint for checking authentication
     this.app.get('/api/status', authMiddleware.authenticate, async (req, res) => {
       try {

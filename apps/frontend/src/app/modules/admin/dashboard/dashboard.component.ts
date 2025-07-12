@@ -138,10 +138,14 @@ export class DashboardComponent implements OnInit {
             const result = await this.apiService.getLogs(logType).toPromise();
             
             if (result?.success) {
+                // La API devuelve el contenido como string, necesitamos convertirlo a array
+                const logContent = result.data || '';
+                const logLines = logContent ? logContent.split('\n').filter(line => line.trim()) : [];
+                
                 if (logType === 'app') {
-                    this.systemLogs.app = result.data || [];
+                    this.systemLogs.app = logLines;
                 } else {
-                    this.systemLogs.error = result.data || [];
+                    this.systemLogs.error = logLines;
                 }
             } else {
                 this.showError(result?.error || 'Error cargando logs');
