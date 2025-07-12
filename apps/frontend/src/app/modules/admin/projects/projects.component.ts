@@ -12,6 +12,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ProposalReviewComponent } from './proposal-review/proposal-review.component';
 import { FuseCardComponent } from '@fuse/components/card';
 import { FuseAlertComponent } from '@fuse/components/alert';
 import { ApiService, Project, ProjectFilters } from 'app/core/services/api.service';
@@ -46,6 +48,8 @@ interface ProjectStats {
         MatDialogModule,
         MatMenuModule,
         MatCheckboxModule,
+        MatTooltipModule,
+        ProposalReviewComponent,
         FuseCardComponent,
         FuseAlertComponent,
     ],
@@ -204,22 +208,23 @@ export class ProjectsComponent implements OnInit {
     }
 
     async generateProposal(project: Project): Promise<void> {
-        try {
-            const result = await this.apiService.generateProposal({
-                projectId: project.id.toString(),
-                userId: this.currentUser?.id?.toString() || '',
-                platform: project.platform,
-            }).toPromise();
+        const dialogRef = this.dialog.open(ProposalReviewComponent, {
+            width: '90vw',
+            maxWidth: '1200px',
+            height: '90vh',
+            maxHeight: '800px',
+            data: {
+                project: project,
+                isModal: true
+            },
+            disableClose: false
+        });
 
-            if (result?.success) {
-                this.showSuccess('Propuesta generada exitosamente');
-                // You can show the proposal in a dialog or navigate to proposal page
-            } else {
-                this.showError(result?.error || 'Error generando propuesta');
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.showSuccess('Propuesta enviada exitosamente');
             }
-        } catch (error: any) {
-            this.showError(error.message || 'Error generando propuesta');
-        }
+        });
     }
 
     copyProjectUrl(project: Project): void {

@@ -199,4 +199,61 @@ export class AuthService {
         // If the access token exists, and it didn't expire, sign in using it
         return this.signInUsingToken();
     }
+
+    /**
+     * Sign up new user
+     */
+    signUp(userData: any): Observable<any> {
+        return this._apiService.registerWithToken(userData).pipe(
+            tap((response) => {
+                if (response.success && response.token) {
+                    // Auto-login after successful registration
+                    this.accessToken = response.token;
+                    localStorage.setItem('userInfo', JSON.stringify(response.user));
+                    this._authenticated = true;
+                    this._userService.user = response.user;
+                }
+            })
+        );
+    }
+
+    /**
+     * Forgot password
+     */
+    forgotPassword(email: string): Observable<any> {
+        return this._httpClient.post('/api/auth/forgot-password', { email }).pipe(
+            catchError((error) => {
+                return throwError(error.message || 'Password reset request failed');
+            })
+        );
+    }
+
+    /**
+     * Reset password
+     */
+    resetPassword(password: string, token?: string): Observable<any> {
+        return this._httpClient.post('/api/auth/reset-password', { password, token }).pipe(
+            catchError((error) => {
+                return throwError(error.message || 'Password reset failed');
+            })
+        );
+    }
+
+    /**
+     * Unlock session
+     */
+    unlockSession(credentials: { email?: string; password: string }): Observable<any> {
+        const user = this.currentUser;
+        const email = credentials.email || user?.email;
+        
+        if (!email) {
+            return throwError('No user email found');
+        }
+
+        return this.signIn({ email: email, password: credentials.password }).pipe(
+            catchError((error) => {
+                return throwError(error.message || 'Session unlock failed');
+            })
+        );
+    }
 }

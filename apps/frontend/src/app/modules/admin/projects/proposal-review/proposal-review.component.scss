@@ -1,0 +1,66 @@
+.proposal-editor {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 400px;
+}
+
+.modal-content {
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+// Responsive adjustments
+@media (max-width: 1024px) {
+    .lg\:w-1\/3 {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .lg\:w-2\/3 {
+        width: 100%;
+    }
+}
+
+// Platform badge styles
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+
+.text-blue-800 {
+    color: #1e40af;
+}
+
+.bg-green-100 {
+    background-color: #dcfce7;
+}
+
+.text-green-800 {
+    color: #166534;
+}
+
+// Alert styles
+.alert {
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.alert-error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.alert-info {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+} 

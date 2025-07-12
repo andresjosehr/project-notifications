@@ -219,8 +219,14 @@
                             <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Acciones</th>
                             <td mat-cell *matCellDef="let project">
                                 <div class="flex items-center space-x-2">
-                                    <button mat-icon-button [matMenuTriggerFor]="actionsMenu" [matMenuTriggerData]="{project: project}">
-                                        <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
+                                    <button mat-icon-button (click)="viewProject(project)" matTooltip="Ver detalles">
+                                        <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button (click)="generateProposal(project)" matTooltip="Generar propuesta">
+                                        <mat-icon [svgIcon]="'heroicons_outline:light-bulb'"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button (click)="copyProjectUrl(project)" matTooltip="Copiar URL">
+                                        <mat-icon [svgIcon]="'heroicons_outline:link'"></mat-icon>
                                     </button>
                                 </div>
                             </td>
@@ -258,20 +264,3 @@
     </div>
 </div>
 
-<!-- Actions Menu -->
-<mat-menu #actionsMenu="matMenu">
-    <ng-template matMenuContent let-project="project">
-        <button mat-menu-item (click)="viewProject(project)">
-            <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
-            <span>Ver detalles</span>
-        </button>
-        <button mat-menu-item (click)="generateProposal(project)">
-            <mat-icon [svgIcon]="'heroicons_outline:light-bulb'"></mat-icon>
-            <span>Generar propuesta</span>
-        </button>
-        <button mat-menu-item (click)="copyProjectUrl(project)">
-            <mat-icon [svgIcon]="'heroicons_outline:link'"></mat-icon>
-            <span>Copiar URL</span>
-        </button>
-    </ng-template>
-</mat-menu>
