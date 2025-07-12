@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { AcademyMockApi } from 'app/mock-api/apps/academy/api';
-import { ChatMockApi } from 'app/mock-api/apps/chat/api';
 import { ContactsMockApi } from 'app/mock-api/apps/contacts/api';
 import { ECommerceInventoryMockApi } from 'app/mock-api/apps/ecommerce/inventory/api';
 import { FileManagerMockApi } from 'app/mock-api/apps/file-manager/api';
@@ -29,7 +28,6 @@ export class MockApiService {
     activitiesMockApi = inject(ActivitiesMockApi);
     analyticsMockApi = inject(AnalyticsMockApi);
     authMockApi = inject(AuthMockApi);
-    chatMockApi = inject(ChatMockApi);
     contactsMockApi = inject(ContactsMockApi);
     cryptoMockApi = inject(CryptoMockApi);
     eCommerceInventoryMockApi = inject(ECommerceInventoryMockApi);

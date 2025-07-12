@@ -60,8 +60,10 @@
                     [disabled]="loadingStates.health"
                     (click)="checkSystemHealth()">
                     @if (!loadingStates.health) {
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
-                        <span class="ml-2">Verificar Estado</span>
+                        <ng-container>
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                            <span class="ml-2">Verificar Estado</span>
+                        </ng-container>
                     }
                     @if (loadingStates.health) {
                         <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
@@ -171,8 +173,10 @@
                             [disabled]="scrapingForm.invalid || loadingStates.scraping"
                             (click)="startManualScraping()">
                             @if (!loadingStates.scraping) {
-                                <mat-icon [svgIcon]="'heroicons_outline:play'"></mat-icon>
-                                <span class="ml-2">Ejecutar Scraping</span>
+                                <ng-container>
+                                    <mat-icon [svgIcon]="'heroicons_outline:play'"></mat-icon>
+                                    <span class="ml-2">Ejecutar Scraping</span>
+                                </ng-container>
                             }
                             @if (loadingStates.scraping) {
                                 <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
@@ -192,8 +196,10 @@
                             [disabled]="loadingStates.cleanup"
                             (click)="cleanupDatabase()">
                             @if (!loadingStates.cleanup) {
-                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
-                                <span class="ml-2">Limpiar Base de Datos</span>
+                                <ng-container>
+                                    <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    <span class="ml-2">Limpiar Base de Datos</span>
+                                </ng-container>
                             }
                             @if (loadingStates.cleanup) {
                                 <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
@@ -231,8 +237,10 @@
                         [disabled]="loadingStates.logs"
                         (click)="loadLogs()">
                         @if (!loadingStates.logs) {
-                            <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
-                            <span class="ml-2">Actualizar</span>
+                            <ng-container>
+                                <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                <span class="ml-2">Actualizar</span>
+                            </ng-container>
                         }
                         @if (loadingStates.logs) {
                             <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>

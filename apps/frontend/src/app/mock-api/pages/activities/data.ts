@@ -70,15 +70,7 @@ export const activities = [
         link: '/apps/mailbox',
         useRouter: true,
     },
-    {
-        id: 'fd0f01b4-f3de-4333-add5-cd86850279f8',
-        image: 'images/avatars/female-02.jpg',
-        description: '<strong>Tina Harris</strong> started a chat with you',
-        date: now.minus({ day: 1 }).toISO(), // 1 day ago,
-        linkedContent: 'Go to Chat (Tina Harris)',
-        link: '/apps/chat/5636c0ba-fa47-42ca-9160-27340583041e',
-        useRouter: true,
-    },
+
     {
         id: '8f8e1bf9-4661-4939-9e43-390957b60f42',
         icon: 'heroicons_solid:star',
