@@ -184,15 +184,23 @@ class WorkanaService {
       const externalCredentialRepository = new ExternalCredentialRepository();
       const workanaCredential = await externalCredentialRepository.findByUserIdAndPlatform(userId, 'workana');
       
-      if (workanaCredential && workanaCredential.sessionData && workanaCredential.sessionExpiresAt) {
-        if (new Date(workanaCredential.sessionExpiresAt) > new Date()) {
-          logger.info(`Cargando sesión desde external_credentials para usuario ${workanaCredential.email}`);
-          return JSON.parse(workanaCredential.sessionData);
-        } else {
-          logger.info(`Sesión en external_credentials expirada para usuario ${workanaCredential.email}`);
-        }
+      if (!workanaCredential) {
+        logger.info(`No se encontraron credenciales de Workana para usuario ${userId}`);
+        return null;
       }
-      return null;
+      
+      if (!workanaCredential.sessionData || !workanaCredential.sessionExpiresAt) {
+        logger.info(`No hay datos de sesión guardados para usuario ${workanaCredential.email}`);
+        return null;
+      }
+      
+      if (new Date(workanaCredential.sessionExpiresAt) > new Date()) {
+        logger.info(`Cargando sesión desde external_credentials para usuario ${workanaCredential.email}`);
+        return JSON.parse(workanaCredential.sessionData);
+      } else {
+        logger.info(`Sesión en external_credentials expirada para usuario ${workanaCredential.email}`);
+        return null;
+      }
     } catch (dbError) {
       logger.errorWithStack('Error cargando sesión desde external_credentials', dbError);
       return null;
@@ -246,6 +254,15 @@ class WorkanaService {
   async hasActiveSession(userId = null) {
     try {
       if (this.isLoggedIn) return true;
+      
+      // Primero verificar si hay datos de sesión válidos en la base de datos
+      const sessionData = await this._getSessionData(userId);
+      if (!sessionData) {
+        logger.info('No hay datos de sesión en la base de datos');
+        return false;
+      }
+      
+      // Si hay datos de sesión, intentar cargarlos en el browser
       return await this.loadSession(userId);
     } catch (error) {
       logger.errorWithStack('Error verificando sesión activa', error);
@@ -631,8 +648,12 @@ class WorkanaService {
   }
 
   async _ensureUserSession(user) {
+    logger.info(`Verificando sesión activa para usuario ${user.id}...`);
     const hasSession = await this.hasActiveSession(user.id);
-    if (!hasSession) {
+    
+    if (hasSession) {
+      logger.info(`Sesión activa encontrada para usuario ${user.id}`);
+    } else {
       logger.info('No hay sesión activa, intentando login automático...');
       const loginResult = await this.loginByUserId(user.id);
       if (!loginResult.success) {

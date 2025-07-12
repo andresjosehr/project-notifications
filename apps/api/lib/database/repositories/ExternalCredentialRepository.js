@@ -161,12 +161,12 @@ class ExternalCredentialRepository {
     }
   }
 
-  async updateSessionData(id, sessionData, expiresAt) {
+  async updateSessionData(userId, sessionData, expiresAt) {
     try {
-      const query = `UPDATE ${this.tableName} SET session_data = ?, updated_at = NOW() WHERE user_id = ?`;
-      await db.query(query, [sessionData, id]);
+      const query = `UPDATE ${this.tableName} SET session_data = ?, session_expires_at = ?, updated_at = NOW() WHERE user_id = ? AND platform = 'workana'`;
+      await db.query(query, [sessionData, expiresAt, userId]);
       
-      logger.dbLog('Datos de sesión actualizados', { id });
+      logger.dbLog('Datos de sesión actualizados', { userId });
       
       return true;
     } catch (error) {
