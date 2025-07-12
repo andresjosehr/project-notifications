@@ -37,16 +37,7 @@
         </div>
     </div>
 
-    <!-- Alert -->
-    @if (showAlert) {
-        <fuse-alert
-            class="m-6 mb-0"
-            [appearance]="'outline'"
-            [showIcon]="false"
-            [type]="alertType">
-            {{ alertMessage }}
-        </fuse-alert>
-    }
+
 
     <!-- Loading -->
     @if (isLoading) {

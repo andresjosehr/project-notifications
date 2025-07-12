@@ -136,92 +136,124 @@
 
         <!-- Operations Section -->
         <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mb-6">
-            <h3 class="text-lg font-semibold mb-4">Operaciones del Sistema</h3>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Operaciones del Sistema</h3>
+                <div class="flex items-center space-x-2">
+                    <mat-icon [svgIcon]="'heroicons_outline:cog'" class="text-gray-500"></mat-icon>
+                </div>
+            </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                <!-- Manual Scraping -->
-                <div class="space-y-4">
-                    <h4 class="font-medium">Scraping Manual</h4>
-                    <form [formGroup]="scrapingForm" class="space-y-4">
-                        <!-- Platform Selection -->
-                        <mat-form-field class="w-full">
-                            <mat-label>Plataforma</mat-label>
-                            <mat-select formControlName="platform">
-                                <mat-option value="both">Ambas plataformas</mat-option>
-                                <mat-option value="workana">Solo Workana</mat-option>
-                                <mat-option value="upwork">Solo Upwork</mat-option>
-                            </mat-select>
-                        </mat-form-field>
-
-                        <!-- Options -->
-                        <div class="space-y-2">
-                            <label class="flex items-center">
-                                <input type="checkbox" formControlName="notifications" class="mr-2">
-                                <span class="text-sm">Enviar notificaciones</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" formControlName="parallel" class="mr-2">
-                                <span class="text-sm">Modo paralelo (más rápido)</span>
-                            </label>
+                <!-- Manual Scraping - Ocupa 2 columnas -->
+                <div class="lg:col-span-2">
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <mat-icon [svgIcon]="'heroicons_outline:play'" class="text-blue-600"></mat-icon>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Scraping Manual</h4>
+                                <p class="text-sm text-gray-600">Ejecutar búsqueda manual de proyectos</p>
+                            </div>
                         </div>
+                        
+                        <form [formGroup]="scrapingForm" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Platform Selection -->
+                                <mat-form-field class="w-full">
+                                    <mat-label>Plataforma</mat-label>
+                                    <mat-select formControlName="platform">
+                                        <mat-option value="both">Ambas plataformas</mat-option>
+                                        <mat-option value="workana">Solo Workana</mat-option>
+                                        <mat-option value="upwork">Solo Upwork</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                
+                                <!-- Options -->
+                                <div class="flex flex-col justify-center space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" formControlName="notifications" class="mr-3">
+                                        <span class="text-sm font-medium">Enviar notificaciones</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" formControlName="parallel" class="mr-3">
+                                        <span class="text-sm font-medium">Modo paralelo (más rápido)</span>
+                                    </label>
+                                </div>
+                            </div>
 
-                        <!-- Execute Button -->
-                        <button 
-                            mat-flat-button
-                            [color]="'primary'"
-                            [disabled]="scrapingForm.invalid || loadingStates.scraping"
-                            (click)="startManualScraping()">
-                            @if (!loadingStates.scraping) {
-                                <ng-container>
-                                    <mat-icon [svgIcon]="'heroicons_outline:play'"></mat-icon>
-                                    <span class="ml-2">Ejecutar Scraping</span>
-                                </ng-container>
-                            }
-                            @if (loadingStates.scraping) {
-                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
-                                <span class="ml-2">Ejecutando...</span>
-                            }
-                        </button>
-                    </form>
+                            <!-- Execute Button -->
+                            <div class="pt-2">
+                                <button 
+                                    mat-flat-button
+                                    [color]="'primary'"
+                                    [disabled]="scrapingForm.invalid || loadingStates.scraping"
+                                    (click)="startManualScraping()"
+                                    class="w-full h-12">
+                                    @if (!loadingStates.scraping) {
+                                        <ng-container>
+                                            <mat-icon [svgIcon]="'heroicons_outline:play'"></mat-icon>
+                                            <span class="ml-2 font-medium">Ejecutar Scraping</span>
+                                        </ng-container>
+                                    }
+                                    @if (loadingStates.scraping) {
+                                        <mat-progress-spinner [diameter]="24" mode="indeterminate"></mat-progress-spinner>
+                                        <span class="ml-2 font-medium">Ejecutando...</span>
+                                    }
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
-                <!-- System Operations -->
-                <div class="space-y-4">
-                    <h4 class="font-medium">Operaciones de Mantenimiento</h4>
-                    <div class="space-y-3">
-                        <button 
-                            mat-stroked-button
-                            class="w-full justify-start"
-                            [disabled]="loadingStates.cleanup"
-                            (click)="cleanupDatabase()">
-                            @if (!loadingStates.cleanup) {
-                                <ng-container>
-                                    <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
-                                    <span class="ml-2">Limpiar Base de Datos</span>
-                                </ng-container>
-                            }
-                            @if (loadingStates.cleanup) {
-                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
-                                <span class="ml-2">Limpiando...</span>
-                            }
-                        </button>
+                <!-- System Operations - Ocupa 1 columna -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 h-full">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                <mat-icon [svgIcon]="'heroicons_outline:cog'" class="text-orange-600"></mat-icon>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Mantenimiento</h4>
+                                <p class="text-sm text-gray-600">Operaciones del sistema</p>
+                            </div>
+                        </div>
                         
-                        <button 
-                            mat-stroked-button
-                            class="w-full justify-start"
-                            [routerLink]="['/projects']">
-                            <mat-icon [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
-                            <span class="ml-2">Ver Proyectos</span>
-                        </button>
-                        
-                        <button 
-                            mat-stroked-button
-                            class="w-full justify-start"
-                            [routerLink]="['/users']">
-                            <mat-icon [svgIcon]="'heroicons_outline:users'"></mat-icon>
-                            <span class="ml-2">Gestionar Usuarios</span>
-                        </button>
+                        <div class="space-y-3">
+                            <button 
+                                mat-stroked-button
+                                class="w-full justify-start h-12"
+                                [disabled]="loadingStates.cleanup"
+                                (click)="cleanupDatabase()">
+                                @if (!loadingStates.cleanup) {
+                                    <ng-container>
+                                        <mat-icon [svgIcon]="'heroicons_outline:trash'" class="text-red-500"></mat-icon>
+                                        <span class="ml-3 font-medium">Limpiar Base de Datos</span>
+                                    </ng-container>
+                                }
+                                @if (loadingStates.cleanup) {
+                                    <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                    <span class="ml-3 font-medium">Limpiando...</span>
+                                }
+                            </button>
+                            
+                            <button 
+                                mat-stroked-button
+                                class="w-full justify-start h-12"
+                                [routerLink]="['/projects']">
+                                <mat-icon [svgIcon]="'heroicons_outline:document-text'" class="text-blue-500"></mat-icon>
+                                <span class="ml-3 font-medium">Ver Proyectos</span>
+                            </button>
+                            
+                            <button 
+                                mat-stroked-button
+                                class="w-full justify-start h-12"
+                                [routerLink]="['/users']">
+                                <mat-icon [svgIcon]="'heroicons_outline:users'" class="text-green-500"></mat-icon>
+                                <span class="ml-3 font-medium">Gestionar Usuarios</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

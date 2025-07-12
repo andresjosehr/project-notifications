@@ -180,6 +180,16 @@ class UserController {
         });
       }
 
+      // Convertir campos camelCase a snake_case para la base de datos
+      const convertedUserData = {};
+      Object.keys(userData).forEach(key => {
+        if (userData[key] !== undefined && userData[key] !== null && userData[key] !== '') {
+          // Convertir camelCase a snake_case
+          const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+          convertedUserData[snakeCaseKey] = userData[key];
+        }
+      });
+
       // Separar datos del usuario de las credenciales externas
       const userFields = ['proposal_directives', 'professional_profile', 'telegram_user'];
       const credentialFields = ['workana_email', 'workana_password'];
@@ -187,13 +197,11 @@ class UserController {
       const userUpdateData = {};
       const credentialUpdateData = {};
       
-      Object.keys(userData).forEach(key => {
-        if (userData[key] !== undefined && userData[key] !== null && userData[key] !== '') {
-          if (userFields.includes(key)) {
-            userUpdateData[key] = userData[key];
-          } else if (credentialFields.includes(key)) {
-            credentialUpdateData[key] = userData[key];
-          }
+      Object.keys(convertedUserData).forEach(key => {
+        if (userFields.includes(key)) {
+          userUpdateData[key] = convertedUserData[key];
+        } else if (credentialFields.includes(key)) {
+          credentialUpdateData[key] = convertedUserData[key];
         }
       });
 

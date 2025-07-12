@@ -45,6 +45,7 @@ export class AuthSignInComponent implements OnInit {
     };
     signInForm: UntypedFormGroup;
     showAlert: boolean = false;
+    loading: boolean = false;
 
     /**
      * Constructor
@@ -64,12 +65,44 @@ export class AuthSignInComponent implements OnInit {
      * On init
      */
     ngOnInit(): void {
+        // Check system initialization first
+        this.checkSystemInitialization();
+        
         // Create the form
         this.signInForm = this._formBuilder.group({
             email: ['', [Validators.required, Validators.email]],
             password: ['', Validators.required],
             rememberMe: [''],
         });
+    }
+
+    // -----------------------------------------------------------------------------------------------------
+    // @ Private methods
+    // -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Check if system is initialized
+     */
+    private async checkSystemInitialization(): Promise<void> {
+        this.loading = true;
+        try {
+            const result = await this._authService.checkInitialization().toPromise();
+            
+            if (!result?.isInitialized) {
+                // System not initialized, redirect to register
+                this._router.navigate(['/register']);
+                return;
+            }
+        } catch (error) {
+            // If there's an error checking initialization, show error but allow login
+            this.alert = {
+                type: 'error',
+                message: 'Error verificando estado del sistema. Puedes intentar iniciar sesión.'
+            };
+            this.showAlert = true;
+        } finally {
+            this.loading = false;
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------

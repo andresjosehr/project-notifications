@@ -25,16 +25,25 @@
                 </a>
             </div>
 
+            <!-- Loading indicator for system initialization check -->
+            @if (loading) {
+                <div class="mt-8 flex justify-center">
+                    <mat-progress-spinner [diameter]="40" [mode]="'indeterminate'"></mat-progress-spinner>
+                </div>
+            }
+
             <!-- Welcome Alert -->
-            <fuse-alert
-                class="mt-8"
-                [appearance]="'outline'"
-                [showIcon]="false"
-                [type]="'info'"
-            >
-                Bienvenido al <strong>Sistema de Notificaciones Freelance</strong>. 
-                Ingresa tus credenciales para acceder al dashboard.
-            </fuse-alert>
+            @if (!loading) {
+                <fuse-alert
+                    class="mt-8"
+                    [appearance]="'outline'"
+                    [showIcon]="false"
+                    [type]="'info'"
+                >
+                    Bienvenido al <strong>Sistema de Notificaciones Freelance</strong>. 
+                    Ingresa tus credenciales para acceder al dashboard.
+                </fuse-alert>
+            }
 
             <!-- Alert -->
             @if (showAlert) {
@@ -50,7 +59,8 @@
             }
 
             <!-- Sign in form -->
-            <form class="mt-8" [formGroup]="signInForm" #signInNgForm="ngForm">
+            @if (!loading) {
+                <form class="mt-8" [formGroup]="signInForm" #signInNgForm="ngForm">
                 <!-- Email field -->
                 <mat-form-field class="w-full">
                     <mat-label>Correo electrónico</mat-label>
@@ -133,7 +143,8 @@
                     }
                 </button>
 
-            </form>
+                </form>
+            }
         </div>
     </div>
     <div
