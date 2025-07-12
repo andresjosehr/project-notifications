@@ -195,4 +195,148 @@ program
     }
   });
 
+// Comando simple para enviar propuesta con sesión y texto
+program
+  .command('sendProposal')
+  .description('Enviar propuesta simple con sesión y texto')
+  .argument('<session>', 'Datos de sesión en formato JSON')
+  .argument('<proposalText>', 'Texto de la propuesta')
+  .action(async (session, proposalText) => {
+    try {
+      const startTime = Date.now();
+      
+      // Parsear datos de sesión
+      let sessionData;
+      try {
+        sessionData = JSON.parse(session);
+      } catch (parseError) {
+        throw new Error(`Error parseando session: ${parseError.message}`);
+      }
+
+      // Crear instancia del servicio de Workana
+      const workanaService = new WorkanaService({
+        headless: true,
+        debug: false
+      });
+
+      // Enviar propuesta usando el método simplificado
+      const result = await workanaService.sendProposalByUserId(sessionData, proposalText);
+
+      const duration = Date.now() - startTime;
+
+      // Crear respuesta estructurada
+      const response = {
+        success: result.success,
+        platform: 'workana',
+        timestamp: new Date().toISOString(),
+        duration: duration,
+        message: result.message,
+        error: result.error ? {
+          message: result.error,
+          type: 'ProposalError'
+        } : null
+      };
+
+      // Imprimir resultado en formato JSON
+      console.log(JSON.stringify(response, null, 2));
+
+      // Cerrar el navegador
+      await workanaService.close();
+
+      process.exit(result.success ? 0 : 1);
+
+    } catch (error) {
+      logger.errorWithStack('Error enviando propuesta', error);
+
+      const errorResponse = {
+        success: false,
+        platform: 'workana',
+        timestamp: new Date().toISOString(),
+        error: {
+          message: error.message,
+          type: error.constructor.name
+        }
+      };
+
+      console.log(JSON.stringify(errorResponse, null, 2));
+
+      process.exit(1);
+    }
+  });
+
+// Comando para login y obtener sesión
+program
+  .command('login')
+  .description('Iniciar sesión en Workana y obtener datos de sesión')
+  .argument('<username>', 'Email del usuario de Workana')
+  .argument('<password>', 'Contraseña del usuario de Workana')
+  .option('--headless', 'Ejecutar en modo headless', true)
+  .option('--debug', 'Modo debug con más logs', false)
+  .action(async (username, password, options) => {
+    try {
+      const startTime = Date.now();
+      
+      // Validar parámetros requeridos
+      if (!username || !password) {
+        throw new Error('Se requieren username y password');
+      }
+
+      // Crear instancia del servicio de Workana
+      const workanaService = new WorkanaService({
+        headless: options.headless,
+        debug: options.debug
+      });
+
+      // Configurar credenciales en variables de entorno temporalmente
+      process.env.WORKANA_USERNAME = username;
+      process.env.WORKANA_PASSWORD = password;
+
+      // Realizar login
+      const loginResult = await workanaService.login(username, password);
+      
+      if (!loginResult.success) {
+        throw new Error(`Error en login: ${loginResult.error}`);
+      }
+
+      // Obtener datos de sesión
+      const sessionResult = await workanaService.saveSession(1); // userId = 1 para el CLI
+      
+      if (!sessionResult.success) {
+        throw new Error(`Error guardando sesión: ${sessionResult.error}`);
+      }
+
+      const duration = Date.now() - startTime;
+
+      // Crear respuesta estructurada
+      const response = {
+        success: true,
+        sessionData: sessionResult.sessionData
+      };
+
+      // Imprimir resultado en formato JSON
+      console.log(JSON.stringify(response, null, 2));
+
+      // Cerrar el navegador
+      await workanaService.close();
+
+      process.exit(0);
+
+    } catch (error) {
+      logger.errorWithStack('Error en login de Workana', error);
+
+      const errorResponse = {
+        success: false,
+        error: error.message
+      };
+
+      console.log(JSON.stringify(errorResponse, null, 2));
+
+      if (options.debug) {
+        console.error(`❌ Error: ${error.message}`);
+      }
+
+      process.exit(1);
+    }
+  });
+
 program.parse(); 

@@ -5,7 +5,8 @@
   "scripts": {
     "scrape": "node cli.js scrape-workana",
     "scrape:quiet": "node cli.js scrape-workana --quiet",
-    "send-proposal": "node cli.js send-proposal"
+    "send-proposal": "node cli.js send-proposal",
+    "sendProposal": "node cli.js sendProposal"
   },
   "keywords": [
     "scraping",

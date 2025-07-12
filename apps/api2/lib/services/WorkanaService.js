@@ -92,6 +92,32 @@ class WorkanaService extends BaseScraper {
     }
   }
 
+  async initialize() {
+    try {
+      await this.initBrowser();
+      if (this.debug) {
+        logger.info('WorkanaService inicializado');
+      }
+    } catch (error) {
+      logger.errorWithStack('Error inicializando WorkanaService', error);
+      throw error;
+    }
+  }
+
+  async navigateTo(url) {
+    try {
+      await this._ensureBrowserReady();
+      await this.page.goto(url, { 
+        waitUntil: 'domcontentloaded',
+        timeout: this.pageConfig.timeout 
+      });
+      await this.page.waitForTimeout(2000);
+    } catch (error) {
+      logger.errorWithStack('Error navegando a URL', error);
+      throw error;
+    }
+  }
+
   // ===========================================
   // SESSION MANAGEMENT
   // ===========================================
@@ -142,21 +168,56 @@ class WorkanaService extends BaseScraper {
 
   async _checkLoggedInElements() {
     try {
-      const loggedInSelectors = [
-        '.user-menu',
-        '.profile-menu',
-        '[data-testid="user-menu"]',
-        '.dropdown-toggle:has-text("Mi cuenta")',
-        '.user-avatar'
+      // Check current URL first - most reliable indicator
+      const currentUrl = this.page.url();
+      if (this.debug) {
+        logger.debug(`URL actual: ${currentUrl}`);
+      }
+      
+      // If we're on dashboard or not on login page, we're likely logged in
+      if (currentUrl.includes('/dashboard') || currentUrl.includes('/messages') || currentUrl.includes('/projects')) {
+        logger.debug('Usuario logueado - detectado por URL');
+        return true;
+      }
+      
+      // If still on login page, we failed
+      if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
+        logger.debug('Aún en página de login');
+        return false;
+      }
+      
+      // Look for user avatar/profile button in navigation
+      const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user|perfil|profile/i }).first();
+      if (await userButton.count() > 0) {
+        logger.debug('Botón de usuario encontrado en navegación');
+        return true;
+      }
+      
+      // Look for user avatar image
+      const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
+      if (await userAvatar.count() > 0) {
+        logger.debug('Avatar de usuario encontrado');
+        return true;
+      }
+      
+      // Look for navigation elements that only appear when logged in
+      const loggedInNavElements = [
+        'text=Contrata',
+        'text=Mis proyectos',
+        'text=Mis finanzas',
+        'button:has-text("Contrata")',
+        'button:has-text("Mis proyectos")'
       ];
       
-      for (const selector of loggedInSelectors) {
+      for (const selector of loggedInNavElements) {
         const element = this.page.locator(selector).first();
         if (await element.count() > 0) {
+          logger.debug(`Elemento de navegación logueado encontrado: ${selector}`);
           return true;
         }
       }
       
+      logger.debug('No se detectó sesión activa');
       return false;
     } catch (error) {
       logger.errorWithStack('Error verificando elementos de login', error);
@@ -170,7 +231,29 @@ class WorkanaService extends BaseScraper {
         throw new Error('Se requieren username y password para login');
       }
 
+      if (this.debug) {
+        logger.info(`Iniciando proceso de login para: ${username}`);
+      }
+
       await this._ensureBrowserReady();
+      
+      // Check if already logged in
+      const currentUrl = this.page.url();
+      if (!currentUrl.includes('/login') && !currentUrl.includes('/signin')) {
+        const alreadyLoggedIn = await this._checkLoggedInElements();
+        if (alreadyLoggedIn) {
+          if (this.debug) {
+            logger.info('Ya estamos logueados');
+          }
+          this.isLoggedIn = true;
+          return {
+            success: true,
+            user: await this._getUserInfo(),
+            message: 'Ya estaba logueado'
+          };
+        }
+      }
+      
       await this._navigateToLogin();
       await this._handleCookieConsent();
       await this._checkForCaptcha();
@@ -186,9 +269,11 @@ class WorkanaService extends BaseScraper {
       
       return {
         success: true,
-        user: await this._getUserInfo()
+        user: await this._getUserInfo(),
+        message: 'Login exitoso'
       };
     } catch (error) {
+      this.isLoggedIn = false;
       logger.errorWithStack('Error en login de Workana', error);
       return {
         success: false,
@@ -198,22 +283,55 @@ class WorkanaService extends BaseScraper {
   }
 
   async _navigateToLogin() {
+    if (this.debug) {
+      logger.debug(`Navegando a página de login: ${this.loginUrl}`);
+    }
+    
     await this.page.goto(this.loginUrl, { 
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'networkidle',
       timeout: 30000 
     });
-    await this.page.waitForTimeout(2000);
+    
+    // Wait for form to be ready
+    await this.page.waitForSelector('input[type="email"], input[type="text"]', { timeout: 10000 });
+    await this.page.waitForTimeout(1000);
+    
+    if (this.debug) {
+      logger.debug('Página de login cargada correctamente');
+    }
   }
 
   async _handleCookieConsent() {
     try {
-      const cookieButton = this.page.locator('button:has-text("Aceptar"), button:has-text("Accept"), .cookie-accept, [data-testid="cookie-accept"]').first();
-      if (await cookieButton.count() > 0) {
-        await cookieButton.click();
-        await this.page.waitForTimeout(1000);
+      // Wait a bit for cookie banner to appear
+      await this.page.waitForTimeout(1000);
+      
+      // Look for cookie consent buttons with more specific selectors
+      const cookieSelectors = [
+        'button:has-text("Aceptar")',
+        'button:has-text("Accept")',
+        'button:has-text("Aceitar")',
+        '.cookie-accept',
+        '[data-testid="cookie-accept"]',
+        '#cookie-accept',
+        '.btn-accept-cookies'
+      ];
+      
+      for (const selector of cookieSelectors) {
+        const cookieButton = this.page.locator(selector).first();
+        if (await cookieButton.count() > 0 && await cookieButton.isVisible()) {
+          if (this.debug) {
+            logger.debug(`Aceptando cookies con selector: ${selector}`);
+          }
+          await cookieButton.click();
+          await this.page.waitForTimeout(1000);
+          break;
+        }
       }
     } catch (error) {
-      // Ignorar errores de cookies
+      if (this.debug) {
+        logger.debug('No se encontró banner de cookies o error al manejarlo');
+      }
     }
   }
 
@@ -239,36 +357,114 @@ class WorkanaService extends BaseScraper {
   }
 
   async _fillLoginForm(username, password) {
-    const emailInput = this.page.locator('input[type="email"], input[name="email"], input[placeholder*="email"], input[placeholder*="correo"]').first();
-    const passwordInput = this.page.locator('input[type="password"], input[name="password"]').first();
+    // Wait for the form to be fully loaded
+    await this.page.waitForSelector('form, .login-form', { timeout: 10000 });
     
-    if (await emailInput.count() === 0 || await passwordInput.count() === 0) {
-      throw new Error('No se encontraron los campos de login');
+    // Use more specific and reliable selectors based on actual Workana structure
+    const emailInput = this.page.getByRole('textbox', { name: /email/i }).first();
+    const passwordInput = this.page.getByRole('textbox', { name: /contraseña|password/i }).first();
+    
+    // Verify fields exist
+    if (await emailInput.count() === 0) {
+      throw new Error('No se encontró el campo de email');
+    }
+    if (await passwordInput.count() === 0) {
+      throw new Error('No se encontró el campo de contraseña');
     }
     
+    // Clear and fill the fields
+    await emailInput.clear();
     await emailInput.fill(username);
+    await this.page.waitForTimeout(500);
+    
+    await passwordInput.clear();
     await passwordInput.fill(password);
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(500);
+    
+    if (this.debug) {
+      logger.debug('Campos de login completados');
+    }
   }
 
   async _submitLogin() {
-    const submitButton = this.page.locator('button[type="submit"], input[type="submit"], button:has-text("Iniciar sesión"), button:has-text("Login")').first();
+    // Use more reliable selector for the login button
+    const submitButton = this.page.getByRole('button', { name: /ingresa|login|iniciar/i }).first();
     
     if (await submitButton.count() === 0) {
-      throw new Error('No se encontró el botón de submit del login');
+      throw new Error('No se encontró el botón de login');
     }
     
-    await submitButton.click();
-    await this.page.waitForTimeout(3000);
+    if (this.debug) {
+      logger.debug('Haciendo clic en el botón de login');
+    }
+    
+    // Click and wait for navigation
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
+      submitButton.click()
+    ]);
+    
+    await this.page.waitForTimeout(2000);
   }
 
   async _verifyLoginSuccess() {
     try {
-      await this.page.waitForURL(url => url.includes(this.baseUrl) && !url.includes('login'), { timeout: 10000 });
+      // Wait for page to settle after navigation
+      await this.page.waitForTimeout(3000);
       
+      // Check for login errors first
+      const errorSelectors = [
+        '.alert-danger',
+        '.error-message',
+        '.login-error',
+        'text=Usuario o contraseña incorrectos',
+        'text=Invalid credentials',
+        'text=Credenciales inválidas'
+      ];
+      
+      for (const selector of errorSelectors) {
+        const errorElement = this.page.locator(selector).first();
+        if (await errorElement.count() > 0) {
+          const errorText = await errorElement.textContent();
+          throw new Error(`Error de login detectado: ${errorText}`);
+        }
+      }
+      
+      const currentUrl = this.page.url();
+      logger.debug(`URL actual después del login: ${currentUrl}`);
+      
+      // Check if still on login page - indicates failure
+      if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
+        // Wait a bit more in case of slow navigation
+        await this.page.waitForTimeout(3000);
+        const urlAfterWait = this.page.url();
+        if (urlAfterWait.includes('/login') || urlAfterWait.includes('/signin')) {
+          throw new Error('Login falló - permanecemos en la página de login');
+        }
+      }
+      
+      // Verify we're logged in
       const isLoggedIn = await this._checkLoggedInElements();
       if (!isLoggedIn) {
-        throw new Error('Login falló - no se detectó sesión activa');
+        // One retry after additional wait
+        await this.page.waitForTimeout(2000);
+        const isLoggedInRetry = await this._checkLoggedInElements();
+        if (!isLoggedInRetry) {
+          // Take screenshot for debugging if enabled
+          if (this.debug) {
+            try {
+              await this.page.screenshot({ path: 'login-verification-failed.png' });
+              logger.debug('Screenshot guardado: login-verification-failed.png');
+            } catch (screenshotError) {
+              // Ignore screenshot errors
+            }
+          }
+          throw new Error('Login falló - no se detectó sesión activa después de múltiples intentos');
+        }
+      }
+      
+      if (this.debug) {
+        logger.info(`Login verificado exitosamente. URL final: ${this.page.url()}`);
       }
     } catch (error) {
       throw new Error(`Error verificando login: ${error.message}`);
@@ -277,21 +473,153 @@ class WorkanaService extends BaseScraper {
 
   async _getUserInfo() {
     try {
-      const userMenu = this.page.locator('.user-menu, .profile-menu, [data-testid="user-menu"]').first();
-      if (await userMenu.count() > 0) {
-        await userMenu.click();
-        await this.page.waitForTimeout(1000);
-        
-        const userEmail = this.page.locator('.user-email, .profile-email, [data-testid="user-email"]').first();
-        if (await userEmail.count() > 0) {
-          return { email: await userEmail.textContent() };
+      // Look for user name/button in navigation
+      const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user/i }).first();
+      if (await userButton.count() > 0) {
+        const userName = await userButton.textContent();
+        if (userName && userName.trim()) {
+          return { 
+            name: userName.trim(),
+            email: 'usuario@workana.com' // Default since email is not easily accessible
+          };
         }
       }
       
-      return { email: 'Usuario de Workana' };
+      // Try to find user avatar with alt text
+      const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
+      if (await userAvatar.count() > 0) {
+        const altText = await userAvatar.getAttribute('alt');
+        if (altText) {
+          return { 
+            name: altText,
+            email: 'usuario@workana.com'
+          };
+        }
+      }
+      
+      // Check current URL for user information
+      const currentUrl = this.page.url();
+      if (currentUrl.includes('/dashboard')) {
+        return { 
+          name: 'Usuario de Workana',
+          email: 'usuario@workana.com',
+          status: 'logueado'
+        };
+      }
+      
+      return { 
+        name: 'Usuario de Workana',
+        email: 'usuario@workana.com'
+      };
     } catch (error) {
       logger.errorWithStack('Error obteniendo información del usuario', error);
-      return { email: 'Usuario de Workana' };
+      return { 
+        name: 'Usuario de Workana',
+        email: 'usuario@workana.com'
+      };
+    }
+  }
+
+  // ===========================================
+  // AUTHENTICATION METHODS
+  // ===========================================
+
+  async loginByUserId(userId) {
+    try {
+      this._validateUserId(userId);
+      
+      const user = await this._getUserForLogin(userId);
+      logger.info(`Iniciando sesión en Workana con usuario ${user.workanaEmail}...`);
+      
+      const result = await this.login(user.workanaEmail, user.workanaPassword);
+      
+      if (result.success) {
+        await this.saveSession(userId);
+        return {
+          ...result,
+          userId: userId,
+          userEmail: user.workanaEmail
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      logger.errorWithStack('Error en login por userId', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async _getUserForLogin(userId) {
+    // Para el CLI, simulamos un usuario con credenciales
+    // En una implementación real, esto vendría de la base de datos
+    const user = {
+      id: userId,
+      workanaEmail: process.env.WORKANA_USERNAME,
+      workanaPassword: process.env.WORKANA_PASSWORD,
+      isActive: true
+    };
+    
+    if (!user.workanaEmail || !user.workanaPassword) {
+      throw new Error('Se requieren credenciales de Workana. Configurar WORKANA_USERNAME y WORKANA_PASSWORD en .env');
+    }
+    
+    return user;
+  }
+
+  async saveSession(userId) {
+    try {
+      if (!this.page) {
+        throw new Error('No hay página activa para guardar sesión');
+      }
+
+      const sessionData = await this._createSessionData();
+      
+      // En el CLI, simplemente retornamos los datos de sesión
+      // En una implementación real, esto se guardaría en la base de datos
+      logger.info(`Sesión guardada para usuario ${userId}`);
+      
+      return {
+        success: true,
+        sessionData: sessionData,
+        userId: userId
+      };
+    } catch (error) {
+      logger.errorWithStack('Error guardando sesión', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async _createSessionData() {
+    try {
+      const cookies = await this.page.context().cookies();
+      const localStorage = await this.page.evaluate(() => {
+        return Object.keys(localStorage).reduce((acc, key) => {
+          acc[key] = localStorage.getItem(key);
+          return acc;
+        }, {});
+      });
+      
+      return {
+        cookies: cookies,
+        localStorage: localStorage,
+        timestamp: new Date().toISOString(),
+        platform: 'workana'
+      };
+    } catch (error) {
+      logger.errorWithStack('Error creando datos de sesión', error);
+      throw error;
+    }
+  }
+
+  _validateUserId(userId) {
+    if (!userId || isNaN(parseInt(userId))) {
+      throw new Error('userId debe ser un número válido');
     }
   }
 
@@ -615,56 +943,41 @@ class WorkanaService extends BaseScraper {
   // PROPOSAL MANAGEMENT
   // ===========================================
 
-  async sendProposalByUserId(projectId, userId, options = {}) {
+  async sendProposalByUserId(sessionData, proposalText) {
     try {
-      this._validateProjectId(projectId);
-      this._validateUserId(userId);
+      // Validar que se proporcionen los datos requeridos
+      if (!sessionData) {
+        throw new Error('Se requieren datos de sesión');
+      }
       
+      if (!proposalText || typeof proposalText !== 'string' || proposalText.trim().length === 0) {
+        throw new Error('Se requiere texto de propuesta válido');
+      }
+
       if (this.debug) {
-        logger.info(`Enviando propuesta para proyecto ${projectId} con usuario ${userId}...`);
+        logger.info('Enviando propuesta con sesión y texto personalizado...');
       }
       
-      // Cargar sesión si se proporcionan datos de sesión
-      if (options.sessionData) {
-        const sessionLoaded = await this.loadSessionData(options.sessionData);
-        if (!sessionLoaded && options.autoLogin) {
-          if (!options.username || !options.password) {
-            throw new Error('Se requieren credenciales para auto-login');
-          }
-          
-          const loginResult = await this.login(options.username, options.password);
-          if (!loginResult.success) {
-            throw new Error(`Error en auto-login: ${loginResult.error}`);
-          }
-        }
-      } else if (options.autoLogin && options.username && options.password) {
-        const loginResult = await this.login(options.username, options.password);
-        if (!loginResult.success) {
-          throw new Error(`Error en login: ${loginResult.error}`);
-        }
-      } else {
-        throw new Error('Se requieren datos de sesión o credenciales para enviar propuesta');
+      // Cargar y validar sesión
+      const sessionLoaded = await this.loadSessionData(sessionData);
+      if (!sessionLoaded) {
+        throw new Error('Sesión inválida o expirada');
       }
       
-      const project = await this._getProjectData(projectId);
-      await this._navigateToProposal(project);
+      // Navegar a la página de propuesta
+      await this._navigateToProposalPage();
       await this._verifyProposalPage();
       
-      const proposalText = options.customProposal || await this._generateDefaultProposal(project);
-      await this._fillAndSubmitProposal(proposalText);
+      // Enviar propuesta
+      await this._fillAndSubmitProposal(proposalText.trim());
       
       if (this.debug) {
-        logger.info(`Propuesta enviada exitosamente para proyecto ${projectId}`);
+        logger.info('Propuesta enviada exitosamente');
       }
       
       return {
         success: true,
-        projectId,
-        userId,
-        userEmail: options.username || 'Usuario de Workana',
-        title: project.title,
-        message: 'Propuesta enviada exitosamente',
-        proposalText: proposalText
+        message: 'Propuesta enviada exitosamente'
       };
     } catch (error) {
       logger.errorWithStack('Error enviando propuesta', error);
@@ -731,6 +1044,60 @@ class WorkanaService extends BaseScraper {
     });
     
     await this.page.waitForTimeout(3000);
+  }
+
+  async _navigateToProposalPage() {
+    try {
+      // Asumimos que ya estamos en la página del proyecto
+      // Buscar el botón de "Enviar propuesta" o "Aplicar"
+      const proposalButtonSelectors = [
+        'a:has-text("Enviar propuesta")',
+        'a:has-text("Send proposal")',
+        'a:has-text("Aplicar")',
+        'a:has-text("Apply")',
+        'button:has-text("Enviar propuesta")',
+        'button:has-text("Send proposal")',
+        'button:has-text("Aplicar")',
+        'button:has-text("Apply")',
+        '.proposal-btn',
+        '.apply-btn',
+        '[data-testid="send-proposal-btn"]'
+      ];
+      
+      let proposalButton = null;
+      for (const selector of proposalButtonSelectors) {
+        const button = this.page.locator(selector).first();
+        if (await button.count() > 0) {
+          proposalButton = button;
+          break;
+        }
+      }
+      
+      if (!proposalButton) {
+        // Si no encontramos el botón, intentar navegar directamente a la URL de propuesta
+        const currentUrl = this.page.url();
+        if (currentUrl.includes('/job/')) {
+          const jobSlug = currentUrl.split('/job/')[1]?.split('?')[0];
+          if (jobSlug) {
+            const proposalUrl = `${this.baseUrl}/messages/bid/${jobSlug}/?tab=message&ref=project_view`;
+            await this.page.goto(proposalUrl, { 
+              waitUntil: 'domcontentloaded',
+              timeout: 60000 
+            });
+            await this.page.waitForTimeout(3000);
+            return;
+          }
+        }
+        throw new Error('No se encontró el botón de propuesta ni se pudo navegar a la página de propuesta');
+      }
+      
+      await proposalButton.click();
+      await this.page.waitForTimeout(3000);
+      
+    } catch (error) {
+      logger.errorWithStack('Error navegando a la página de propuesta', error);
+      throw error;
+    }
   }
 
   async _verifyProposalPage() {

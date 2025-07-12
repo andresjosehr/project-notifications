@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExternalCredentialController;
 use App\Http\Controllers\ScraperController;
+use App\Http\Controllers\ProposalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,9 @@ Route::prefix('scrape')->group(function () {
 
 // AI and proposal routes
 Route::post('/proposal/generate', [ProjectController::class, 'buildProposal'])->middleware(['auth.api']);
+
+// Send proposal endpoint
+Route::post('/proposal/send', [ProposalController::class, 'send'])->middleware(['auth.api']);
 
 // Workana specific routes (communication with Node.js)
 Route::prefix('workana')->group(function () {
