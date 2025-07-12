@@ -2,3 +2,40 @@
 /*  @ Import/write your custom styles here.
 /*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
+
+/* Snackbar Styles */
+.success-snackbar {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.success-snackbar .mat-simple-snackbar-action {
+    color: white !important;
+}
+
+.error-snackbar {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
+.error-snackbar .mat-simple-snackbar-action {
+    color: white !important;
+}
+
+.info-snackbar {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.info-snackbar .mat-simple-snackbar-action {
+    color: white !important;
+}
+
+.warning-snackbar {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+.warning-snackbar .mat-simple-snackbar-action {
+    color: white !important;
+}

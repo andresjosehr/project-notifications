@@ -17,6 +17,7 @@ import { FuseAlertComponent } from '@fuse/components/alert';
 import { ApiService, User } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 
 interface UserStats {
     total: number;
@@ -102,7 +103,8 @@ export class UsersComponent implements OnInit {
         private apiService: ApiService,
         private authService: AuthService,
         private router: Router,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private snackbarService: SnackbarService
     ) {
         this.currentUser = this.authService.currentUser;
         this.createEditForm();
@@ -202,7 +204,19 @@ export class UsersComponent implements OnInit {
     private showTokenDialog(tokenData: any): void {
         // Implementation for showing token dialog
         const registerUrl = `${window.location.origin}/register?token=${tokenData.token}`;
-        alert(`Token generado: ${tokenData.token}\n\nURL de registro: ${registerUrl}`);
+        const message = `Token generado: ${tokenData.token}\n\nURL de registro: ${registerUrl}`;
+        
+        this.snackbarService.showInfo(message, {
+            duration: 10000,
+            actionText: 'Copiar URL',
+            actionCallback: () => {
+                navigator.clipboard.writeText(registerUrl).then(() => {
+                    this.snackbarService.showSuccess('URL copiada al portapapeles');
+                }).catch(() => {
+                    this.snackbarService.showError('Error copiando URL');
+                });
+            }
+        });
     }
 
     async deleteToken(tokenId: number): Promise<void> {
@@ -350,24 +364,15 @@ export class UsersComponent implements OnInit {
     }
 
     showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showSuccess(message);
     }
 
     showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showError(message);
     }
 
     showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showInfo(message);
     }
 
     logout(): void {

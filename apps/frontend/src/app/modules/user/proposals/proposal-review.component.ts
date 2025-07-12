@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { Inject } from '@angular/core';
 import { FuseCardComponent } from '@fuse/components/card';
@@ -15,6 +15,7 @@ import { FuseAlertComponent } from '@fuse/components/alert';
 import { ApiService, Project } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 
 @Component({
     selector: 'app-proposal-review',
@@ -72,7 +73,7 @@ export class ProposalReviewComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar
+        private snackbarService: SnackbarService
     ) {
         this.createForm();
         this.setupStatsCalculation();
@@ -213,12 +214,11 @@ export class ProposalReviewComponent implements OnInit {
                 this.showSuccess('Propuesta enviada exitosamente a Workana');
                 
                 // Show success snackbar with action
-                this.snackBar.open('Propuesta enviada exitosamente', 'Ver Proyectos', {
-                    duration: 5000,
-                    horizontalPosition: 'end',
-                    verticalPosition: 'top',
-                }).onAction().subscribe(() => {
-                    this.router.navigate(['/projects']);
+                this.snackbarService.showSuccess('Propuesta enviada exitosamente', {
+                    actionText: 'Ver Proyectos',
+                    actionCallback: () => {
+                        this.router.navigate(['/projects']);
+                    }
                 });
 
                 // Navigate back after a delay
@@ -276,24 +276,15 @@ export class ProposalReviewComponent implements OnInit {
     }
 
     showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showSuccess(message);
     }
 
     showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showError(message);
     }
 
     showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
+        this.snackbarService.showInfo(message);
     }
 }
 
