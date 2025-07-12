@@ -8,6 +8,7 @@ class NotificationService {
   constructor() {
     this.apiUrl = config.telegram.apiUrl;
     this.defaultTimeout = 10000;
+    this.defaultUser = null; // Se establecerá dinámicamente desde la base de datos
   }
 
   encodeForUrl(text) {
@@ -248,16 +249,32 @@ class NotificationService {
   // Método para verificar el estado del servicio (sin enviar notificación)
   async healthCheck() {
     try {
-      // Solo verificar que el servicio esté configurado correctamente
-      // Sin enviar notificación de test
-      const isConfigured = !!(this.apiUrl && this.defaultUser);
+      // Verificar que el servicio esté configurado correctamente
+      // Solo necesitamos la URL de la API, los usuarios se obtienen dinámicamente
+      const isConfigured = !!(this.apiUrl);
+      
+      // Verificar si hay usuarios activos disponibles
+      let hasActiveUsers = false;
+      try {
+        const activeUsers = await userRepository.findActive();
+        hasActiveUsers = activeUsers.length > 0;
+      } catch (error) {
+        logger.warn('Error verificando usuarios activos en health check', error);
+      }
+      
+      const isHealthy = isConfigured && hasActiveUsers;
       
       logger.telegramLog('Health check completado', { 
-        success: isConfigured,
-        configured: isConfigured
+        success: isHealthy,
+        configured: isConfigured,
+        hasActiveUsers
       });
 
-      return { healthy: isConfigured, configured: isConfigured };
+      return { 
+        healthy: isHealthy, 
+        configured: isConfigured,
+        hasActiveUsers
+      };
     } catch (error) {
       logger.errorWithStack('Error en health check de notificaciones', error);
       return { healthy: false, error: error.message };

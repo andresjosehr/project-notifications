@@ -24,12 +24,6 @@ export class ModuleDetectorService {
         // Módulos básicos que siempre están disponibles
         modules.push(
             {
-                path: '/dashboard',
-                title: 'Dashboard',
-                icon: 'heroicons_outline:home',
-                type: 'basic'
-            },
-            {
                 path: '/projects',
                 title: 'Proyectos',
                 icon: 'heroicons_outline:briefcase',
@@ -62,13 +56,6 @@ export class ModuleDetectorService {
                     path: '/admin/users',
                     title: 'Usuarios',
                     icon: 'heroicons_outline:users',
-                    type: 'basic',
-                    permissions: ['admin']
-                },
-                {
-                    path: '/admin/projects',
-                    title: 'Gestión de Proyectos',
-                    icon: 'heroicons_outline:briefcase',
                     type: 'basic',
                     permissions: ['admin']
                 }
