@@ -51,6 +51,7 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
+        envs: NODE_ENV,DB_HOST,DB_USER,DB_PASSWORD,DB_DATABASE
         script: |
           cd /var/www/projects/jobs
           git pull origin master
@@ -64,3 +65,9 @@ jobs:
           cd ../..
           pm2 restart jobs-api
           pm2 save
+      env:
+        NODE_ENV: production
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_DATABASE: ${{ secrets.DB_DATABASE }}
