@@ -21,7 +21,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        npm ci
+        npm install
         npm ci --workspace=apps/api
         npm ci --workspace=apps/frontend
         
@@ -46,7 +46,7 @@ jobs:
         script: |
           cd /var/www/projects/jobs
           git pull origin master
-          npm ci
+          npm install
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
