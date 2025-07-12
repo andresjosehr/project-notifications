@@ -18,11 +18,12 @@ chown -R github-deploy:github-deploy /var/www/projects/jobs
 chmod -R 755 /var/www/projects/jobs
 
 # Configurar PM2 para el usuario github-deploy
-echo "⚙️ Configurando PM2 para github-deploy..."
+echo "⚙️ Configurando acceso PM2 para github-deploy..."
+# Dar acceso al usuario github-deploy al PM2 existente
 su - github-deploy -c "
 cd /var/www/projects/jobs
-npm install -g pm2
-pm2 startup
+# Verificar acceso a PM2
+pm2 list
 "
 
 # Crear directorio para logs

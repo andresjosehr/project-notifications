@@ -51,5 +51,5 @@ jobs:
           npm ci --workspace=apps/frontend
           npm run build:frontend
           npm run migrate --workspace=apps/api
-          pm2 restart jobs-api || pm2 start ecosystem.config.js
+          pm2 restart jobs-api
           pm2 save
