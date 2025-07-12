@@ -50,8 +50,6 @@ jobs:
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          cd apps/api
-          npm run migrate
-          cd ../..
+          npx knex migrate:latest --knexfile=apps/api/knexfile.js
           pm2 restart jobs-api
           pm2 save
