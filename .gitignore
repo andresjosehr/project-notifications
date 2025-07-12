@@ -6,3 +6,4 @@ debug.log
 playwright
 data
 logs/*
+apache-configs/*

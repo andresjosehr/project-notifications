@@ -1,4 +1,4 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://jobs.andresjosehr.com'
+    apiUrl: 'https://jobs-api.andresjosehr.com'
 };

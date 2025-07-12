@@ -9,7 +9,12 @@
         "ng": "ng",
         "start": "ng serve",
         "build": "ng build",
+        "build:prod": "ng build --configuration production",
+        "build:staging": "ng build --configuration staging",
+        "build:dev": "ng build --configuration development",
         "watch": "ng build --watch --configuration development",
+        "serve:prod": "ng serve --configuration production",
+        "serve:staging": "ng serve --configuration staging",
         "test": "ng test"
     },
     "dependencies": {
