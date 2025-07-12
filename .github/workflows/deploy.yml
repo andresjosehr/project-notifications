@@ -24,12 +24,15 @@ jobs:
         npm ci
         npm ci --workspace=apps/api
         npm ci --workspace=apps/frontend
+        npm install -g knex
         
     - name: Build frontend
       run: npm run build:frontend
       
     - name: Run database migrations
-      run: npm run migrate --workspace=apps/api
+      run: |
+        cd apps/api
+        npm run migrate
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_USER: ${{ secrets.DB_USER }}
@@ -50,6 +53,8 @@ jobs:
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          npm run migrate --workspace=apps/api
+          cd apps/api
+          npm run migrate
+          cd ../..
           pm2 restart jobs-api
           pm2 save
