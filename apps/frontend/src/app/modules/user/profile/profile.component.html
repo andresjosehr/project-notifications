@@ -1,7 +1,5 @@
 <div class="flex flex-col w-full">
 
-
-
     <!-- Loading -->
     @if (isLoading) {
         <div class="flex items-center justify-center py-8">
@@ -14,81 +12,20 @@
         <div class="flex flex-col w-full p-6">
             <mat-tab-group class="w-full" dynamicHeight>
                 
-                <!-- Basic Information Tab -->
-                <mat-tab label="Información Básica">
+                <!-- Profile Tab -->
+                <mat-tab label="Perfil">
                     <div class="py-6">
                         <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold">Información Personal</h3>
-                            </div>
-
-                            <form [formGroup]="basicInfoForm" class="grid grid-cols-1 gap-6">
-                                <!-- Email (readonly) -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Correo Electrónico</mat-label>
-                                    <input matInput formControlName="email" readonly>
-                                    <mat-icon matSuffix [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
-                                    <mat-hint>Este campo no se puede modificar</mat-hint>
-                                </mat-form-field>
-
-                                <!-- Role (readonly) -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Rol</mat-label>
-                                    <input matInput formControlName="role" readonly>
-                                    <mat-icon matSuffix [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
-                                </mat-form-field>
-
-                                <!-- Telegram User -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Usuario de Telegram *</mat-label>
-                                    <input matInput formControlName="telegramUser" placeholder="@tu_usuario">
-                                    <mat-icon matSuffix [svgIcon]="'heroicons_outline:chat-bubble-left-ellipsis'"></mat-icon>
-                                    <mat-hint>Requerido para recibir notificaciones de nuevos proyectos</mat-hint>
-                                    @if (basicInfoForm.get('telegramUser')?.hasError('required')) {
-                                        <mat-error>El usuario de Telegram es requerido</mat-error>
-                                    }
-                                </mat-form-field>
-
-                                <!-- Save Button -->
-                                <div class="flex justify-end">
-                                    <button 
-                                        mat-flat-button 
-                                        [color]="'primary'"
-                                        [disabled]="basicInfoForm.invalid || loadingStates.basicInfo"
-                                        (click)="saveBasicInfo()">
-                                        @if (!loadingStates.basicInfo) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                                <span class="ml-2">Guardar Cambios</span>
-                                            </div>
-                                        }
-                                        @if (loadingStates.basicInfo) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
-                                                <span class="ml-2">Guardando...</span>
-                                            </div>
-                                        }
-                                    </button>
-                                </div>
-                            </form>
-                        </fuse-card>
-                    </div>
-                </mat-tab>
-
-                <!-- Workana Credentials Tab -->
-                <mat-tab label="Credenciales de Workana">
-                    <div class="py-6">
-                        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold">Configuración de Workana</h3>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold">Información del Perfil</h3>
                                 <button 
                                     mat-stroked-button
-                                    [disabled]="workanaCredentialsForm.invalid || loadingStates.testConnection"
+                                    [disabled]="profileForm.get('workanaEmail')?.invalid || profileForm.get('workanaPassword')?.invalid || loadingStates.testConnection"
                                     (click)="testWorkanaConnection()">
                                     @if (!loadingStates.testConnection) {
                                         <div class="flex items-center justify-center">
                                             <mat-icon [svgIcon]="'heroicons_outline:wifi'"></mat-icon>
-                                            <span class="ml-2">Probar Conexión</span>
+                                            <span class="ml-2">Probar Conexión Workana</span>
                                         </div>
                                     }
                                     @if (loadingStates.testConnection) {
@@ -100,168 +37,137 @@
                                 </button>
                             </div>
 
-                            <form [formGroup]="workanaCredentialsForm" class="grid grid-cols-1 gap-6">
-                                <!-- Workana Email -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Email de Workana *</mat-label>
-                                    <input matInput formControlName="workanaEmail" type="email">
-                                    <mat-icon matSuffix [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
-                                    @if (workanaCredentialsForm.get('workanaEmail')?.hasError('required')) {
-                                        <mat-error>El email de Workana es requerido</mat-error>
-                                    }
-                                    @if (workanaCredentialsForm.get('workanaEmail')?.hasError('email')) {
-                                        <mat-error>Ingresa un email válido</mat-error>
-                                    }
-                                </mat-form-field>
+                            <form [formGroup]="profileForm" class="space-y-6">
+                                
+                                <!-- Basic Information Section -->
+                                <div class="border-b border-gray-200 pb-6">
+                                    <h4 class="text-md font-medium mb-4 text-gray-700">Información Básica</h4>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Email (readonly) -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Correo Electrónico</mat-label>
+                                            <input matInput formControlName="email" readonly>
+                                            <mat-icon matSuffix [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+                                            <mat-hint>No modificable</mat-hint>
+                                        </mat-form-field>
 
-                                <!-- Workana Password -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Contraseña de Workana *</mat-label>
-                                    <input 
-                                        matInput 
-                                        formControlName="workanaPassword" 
-                                        type="password"
-                                        #passwordField>
-                                    <button
-                                        mat-icon-button
-                                        type="button"
-                                        (click)="passwordField.type === 'password' ? (passwordField.type = 'text') : (passwordField.type = 'password')"
-                                        matSuffix>
-                                        @if (passwordField.type === 'password') {
-                                            <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
-                                        }
-                                        @if (passwordField.type === 'text') {
-                                            <mat-icon [svgIcon]="'heroicons_outline:eye-slash'"></mat-icon>
-                                        }
-                                    </button>
-                                    <mat-hint>Deja en blanco para mantener la contraseña actual</mat-hint>
-                                    @if (workanaCredentialsForm.get('workanaPassword')?.hasError('required')) {
-                                        <mat-error>La contraseña de Workana es requerida</mat-error>
-                                    }
-                                </mat-form-field>
-
-                                <!-- Save Button -->
-                                <div class="flex justify-end">
-                                    <button 
-                                        mat-flat-button 
-                                        [color]="'primary'"
-                                        [disabled]="workanaCredentialsForm.invalid || loadingStates.workanaCredentials"
-                                        (click)="saveWorkanaCredentials()">
-                                        @if (!loadingStates.workanaCredentials) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                                <span class="ml-2">Guardar Credenciales</span>
-                                            </div>
-                                        }
-                                        @if (loadingStates.workanaCredentials) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
-                                                <span class="ml-2">Guardando...</span>
-                                            </div>
-                                        }
-                                    </button>
-                                </div>
-                            </form>
-                        </fuse-card>
-                    </div>
-                </mat-tab>
-
-                <!-- Proposal Directives Tab -->
-                <mat-tab label="Directrices de Propuesta">
-                    <div class="py-6">
-                        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold">Directrices para Generación de Propuestas</h3>
-                                <button 
-                                    mat-stroked-button
-                                    (click)="showProposalPreview()">
-                                    <div class="flex items-center justify-center">
-                                        <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
-                                        <span class="ml-2">Vista Previa</span>
+                                        <!-- Role (readonly) -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Rol</mat-label>
+                                            <input matInput formControlName="role" readonly>
+                                            <mat-icon matSuffix [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
+                                        </mat-form-field>
                                     </div>
-                                </button>
-                            </div>
 
-                            <form [formGroup]="proposalDirectivesForm" class="grid grid-cols-1 gap-6">
-                                <!-- Proposal Directives -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Directrices para la IA *</mat-label>
-                                    <textarea 
-                                        matInput 
-                                        formControlName="proposalDirectives"
-                                        rows="8"
-                                        placeholder="Ejemplo: Enfócate en mi experiencia en React y Node.js, menciona mi disponibilidad inmediata, destaca mi capacidad para trabajar en proyectos a largo plazo...">
-                                    </textarea>
-                                    <mat-hint>Instrucciones detalladas para que la IA genere propuestas personalizadas</mat-hint>
-                                    @if (proposalDirectivesForm.get('proposalDirectives')?.hasError('required')) {
-                                        <mat-error>Las directrices de propuesta son requeridas</mat-error>
-                                    }
-                                </mat-form-field>
-
-                                <!-- Save Button -->
-                                <div class="flex justify-end">
-                                    <button 
-                                        mat-flat-button 
-                                        [color]="'primary'"
-                                        [disabled]="proposalDirectivesForm.invalid || loadingStates.proposalDirectives"
-                                        (click)="saveProposalDirectives()">
-                                        @if (!loadingStates.proposalDirectives) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                                <span class="ml-2">Guardar Directrices</span>
-                                            </div>
-                                        }
-                                        @if (loadingStates.proposalDirectives) {
-                                            <div class="flex items-center justify-center">
-                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
-                                                <span class="ml-2">Guardando...</span>
-                                            </div>
-                                        }
-                                    </button>
+                                    <!-- Telegram User -->
+                                    <div class="mt-4">
+                                        <mat-form-field class="w-full max-w-md">
+                                            <mat-label>Usuario de Telegram *</mat-label>
+                                            <input matInput formControlName="telegramUser" placeholder="@tu_usuario">
+                                            <mat-icon matSuffix [svgIcon]="'heroicons_outline:chat-bubble-left-ellipsis'"></mat-icon>
+                                            <mat-hint>Para notificaciones de proyectos</mat-hint>
+                                            @if (profileForm.get('telegramUser')?.hasError('required')) {
+                                                <mat-error>Usuario de Telegram requerido</mat-error>
+                                            }
+                                        </mat-form-field>
+                                    </div>
                                 </div>
-                            </form>
-                        </fuse-card>
-                    </div>
-                </mat-tab>
 
-                <!-- Professional Profile Tab -->
-                <mat-tab label="Perfil Profesional">
-                    <div class="py-6">
-                        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold">Perfil Profesional</h3>
-                            </div>
+                                <!-- Workana Credentials Section -->
+                                <div class="border-b border-gray-200 pb-6">
+                                    <h4 class="text-md font-medium mb-4 text-gray-700">Credenciales de Workana</h4>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Workana Email -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Email de Workana *</mat-label>
+                                            <input matInput formControlName="workanaEmail" type="email">
+                                            <mat-icon matSuffix [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                                            @if (profileForm.get('workanaEmail')?.hasError('required')) {
+                                                <mat-error>Email requerido</mat-error>
+                                            }
+                                            @if (profileForm.get('workanaEmail')?.hasError('email')) {
+                                                <mat-error>Email inválido</mat-error>
+                                            }
+                                        </mat-form-field>
 
-                            <form [formGroup]="professionalProfileForm" class="grid grid-cols-1 gap-6">
-                                <!-- Professional Profile -->
-                                <mat-form-field class="w-full">
-                                    <mat-label>Experiencia y Habilidades *</mat-label>
-                                    <textarea 
-                                        matInput 
-                                        formControlName="professionalProfile"
-                                        rows="10"
-                                        placeholder="Describe tu experiencia profesional, habilidades técnicas, logros principales, certificaciones, años de experiencia, etc.">
-                                    </textarea>
-                                    <mat-hint>Información detallada sobre tu experiencia que se utilizará en las propuestas</mat-hint>
-                                    @if (professionalProfileForm.get('professionalProfile')?.hasError('required')) {
-                                        <mat-error>El perfil profesional es requerido</mat-error>
-                                    }
-                                </mat-form-field>
+                                        <!-- Workana Password -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Contraseña de Workana</mat-label>
+                                            <input 
+                                                matInput 
+                                                formControlName="workanaPassword" 
+                                                type="password"
+                                                #passwordField>
+                                            <button
+                                                mat-icon-button
+                                                type="button"
+                                                (click)="passwordField.type === 'password' ? (passwordField.type = 'text') : (passwordField.type = 'password')"
+                                                matSuffix>
+                                                @if (passwordField.type === 'password') {
+                                                    <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                                }
+                                                @if (passwordField.type === 'text') {
+                                                    <mat-icon [svgIcon]="'heroicons_outline:eye-slash'"></mat-icon>
+                                                }
+                                            </button>
+                                            <mat-hint>Dejar en blanco para mantener actual</mat-hint>
+                                        </mat-form-field>
+                                    </div>
+                                </div>
+
+                                <!-- Professional Information Section -->
+                                <div class="border-b border-gray-200 pb-6">
+                                    <h4 class="text-md font-medium mb-4 text-gray-700">Información Profesional</h4>
+                                    
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <!-- Professional Profile -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Experiencia y Habilidades *</mat-label>
+                                            <textarea 
+                                                matInput 
+                                                formControlName="professionalProfile"
+                                                rows="20"
+                                                placeholder="Describe tu experiencia profesional, habilidades técnicas, logros principales, certificaciones, años de experiencia, etc.">
+                                            </textarea>
+                                            <mat-hint>Información que se utilizará en las propuestas</mat-hint>
+                                            @if (profileForm.get('professionalProfile')?.hasError('required')) {
+                                                <mat-error>Perfil profesional requerido</mat-error>
+                                            }
+                                        </mat-form-field>
+
+                                        <!-- Proposal Directives -->
+                                        <mat-form-field class="w-full">
+                                            <mat-label>Directrices para la IA *</mat-label>
+                                            <textarea 
+                                                matInput 
+                                                formControlName="proposalDirectives"
+                                                rows="20"
+                                                placeholder="Ejemplo: Enfócate en mi experiencia en React y Node.js, menciona mi disponibilidad inmediata, destaca mi capacidad para trabajar en proyectos a largo plazo...">
+                                            </textarea>
+                                            <mat-hint>Instrucciones para generar propuestas personalizadas</mat-hint>
+                                            @if (profileForm.get('proposalDirectives')?.hasError('required')) {
+                                                <mat-error>Directrices requeridas</mat-error>
+                                            }
+                                        </mat-form-field>
+                                    </div>
+                                </div>
 
                                 <!-- Save Button -->
-                                <div class="flex justify-end">
+                                <div class="flex justify-end pt-4 border-t border-gray-200">
                                     <button 
                                         mat-flat-button 
                                         [color]="'primary'"
-                                        [disabled]="professionalProfileForm.invalid || loadingStates.professionalProfile"
-                                        (click)="saveProfessionalProfile()">
-                                        @if (!loadingStates.professionalProfile) {
+                                        [disabled]="loadingStates.profile"
+                                        (click)="saveProfile()">
+                                        @if (!loadingStates.profile) {
                                             <div class="flex items-center justify-center">
                                                 <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
                                                 <span class="ml-2">Guardar Perfil</span>
                                             </div>
                                         }
-                                        @if (loadingStates.professionalProfile) {
+                                        @if (loadingStates.profile) {
                                             <div class="flex items-center justify-center">
                                                 <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
                                                 <span class="ml-2">Guardando...</span>
@@ -282,14 +188,14 @@
                                 <h3 class="text-lg font-semibold">Cambiar Contraseña</h3>
                             </div>
 
-                            <form [formGroup]="changePasswordForm" class="grid grid-cols-1 gap-6 max-w-md">
+                            <form [formGroup]="changePasswordForm" class="max-w-md">
                                 <!-- Current Password -->
                                 <mat-form-field class="w-full">
                                     <mat-label>Contraseña Actual *</mat-label>
                                     <input matInput formControlName="currentPassword" type="password">
                                     <mat-icon matSuffix [svgIcon]="'heroicons_outline:lock-closed'"></mat-icon>
                                     @if (changePasswordForm.get('currentPassword')?.hasError('required')) {
-                                        <mat-error>La contraseña actual es requerida</mat-error>
+                                        <mat-error>Contraseña actual requerida</mat-error>
                                     }
                                 </mat-form-field>
 
@@ -299,10 +205,10 @@
                                     <input matInput formControlName="newPassword" type="password">
                                     <mat-icon matSuffix [svgIcon]="'heroicons_outline:key'"></mat-icon>
                                     @if (changePasswordForm.get('newPassword')?.hasError('required')) {
-                                        <mat-error>La nueva contraseña es requerida</mat-error>
+                                        <mat-error>Nueva contraseña requerida</mat-error>
                                     }
                                     @if (changePasswordForm.get('newPassword')?.hasError('minlength')) {
-                                        <mat-error>La contraseña debe tener al menos 6 caracteres</mat-error>
+                                        <mat-error>Mínimo 6 caracteres</mat-error>
                                     }
                                 </mat-form-field>
 

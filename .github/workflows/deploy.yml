@@ -1,0 +1,55 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm ci --workspace=apps/api
+        npm ci --workspace=apps/frontend
+        
+    - name: Build frontend
+      run: npm run build:frontend
+      
+    - name: Run database migrations
+      run: npm run migrate --workspace=apps/api
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_DATABASE: ${{ secrets.DB_DATABASE }}
+        
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd /var/www/projects/jobs
+          git pull origin master
+          npm ci
+          npm ci --workspace=apps/api
+          npm ci --workspace=apps/frontend
+          npm run build:frontend
+          npm run migrate --workspace=apps/api
+          pm2 restart jobs-api || pm2 start ecosystem.config.js
+          pm2 save
