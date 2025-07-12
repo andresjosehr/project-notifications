@@ -29,7 +29,7 @@ jobs:
       run: npm run build:frontend
       
     - name: Run database migrations
-      run: npm run migrate --workspace=apps/api
+      run: npx knex migrate:latest --knexfile=apps/api/knexfile.js
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_USER: ${{ secrets.DB_USER }}
