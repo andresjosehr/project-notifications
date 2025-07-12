@@ -19,14 +19,14 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
-    # - name: Install dependencies
-    #   run: |
-    #     npm ci
-    #     npm ci --workspace=apps/api
-    #     npm ci --workspace=apps/frontend
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm ci --workspace=apps/api
+        npm ci --workspace=apps/frontend
         
-    # - name: Build frontend
-    #   run: npm run build:frontend
+    - name: Build frontend
+      run: npm run build:frontend
       
     - name: Run database migrations
       run: |
