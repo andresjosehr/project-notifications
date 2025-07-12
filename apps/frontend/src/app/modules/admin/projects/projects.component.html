@@ -1,42 +1,4 @@
 <div class="flex flex-col w-full">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
-        <div class="flex-1 min-w-0">
-            <!-- Breadcrumbs -->
-            <div class="flex flex-wrap items-center font-medium">
-                <div>
-                    <a class="whitespace-nowrap text-primary-500">Sistema de Notificaciones</a>
-                </div>
-                <div class="flex items-center ml-1 whitespace-nowrap">
-                    <mat-icon
-                        class="icon-size-5 text-secondary"
-                        [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
-                    <span class="ml-1 text-secondary">Proyectos</span>
-                </div>
-            </div>
-            <!-- Title -->
-            <div class="mt-2">
-                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
-                    Dashboard de Proyectos
-                </h2>
-                <p class="text-secondary">Sistema de Notificaciones Freelance v2.0 - Gestión de Proyectos</p>
-            </div>
-        </div>
-        <!-- Actions -->
-        <div class="flex items-center mt-6 -mb-3 sm:mt-0 sm:mb-0">
-            <!-- User info and logout -->
-            <div class="flex items-center ml-4">
-                <span class="text-sm font-medium text-secondary mr-4">{{ currentUser?.email }}</span>
-                <button 
-                    mat-stroked-button 
-                    class="ml-2"
-                    (click)="logout()">
-                    <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"></mat-icon>
-                    <span class="ml-2">Cerrar Sesión</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Alert -->
     @if (showAlert) {

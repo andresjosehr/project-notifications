@@ -1,41 +1,4 @@
 <div class="flex flex-col w-full">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
-        <div class="flex-1 min-w-0">
-            <!-- Breadcrumbs -->
-            <div class="flex flex-wrap items-center font-medium">
-                <div>
-                    <a class="whitespace-nowrap text-primary-500" [routerLink]="['/projects']">Sistema de Notificaciones</a>
-                </div>
-                <div class="flex items-center ml-1 whitespace-nowrap">
-                    <mat-icon
-                        class="icon-size-5 text-secondary"
-                        [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
-                    <span class="ml-1 text-secondary">Mi Perfil</span>
-                </div>
-            </div>
-            <!-- Title -->
-            <div class="mt-2">
-                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
-                    Mi Perfil
-                </h2>
-                <p class="text-secondary">Configuración personal y preferencias del sistema</p>
-            </div>
-        </div>
-        <!-- Actions -->
-        <div class="flex items-center mt-6 -mb-3 sm:mt-0 sm:mb-0">
-            <div class="flex items-center ml-4">
-                <span class="text-sm font-medium text-secondary mr-4">{{ currentUser?.email }}</span>
-                <button 
-                    mat-stroked-button 
-                    class="ml-2"
-                    (click)="logout()">
-                    <mat-icon [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"></mat-icon>
-                    <span class="ml-2">Cerrar Sesión</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
 
 
@@ -94,11 +57,16 @@
                                         [disabled]="basicInfoForm.invalid || loadingStates.basicInfo"
                                         (click)="saveBasicInfo()">
                                         @if (!loadingStates.basicInfo) {
-                                            <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                            <span class="ml-2">Guardar Cambios</span>
+                                            <div class="flex items-center justify-center">
+                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                                <span class="ml-2">Guardar Cambios</span>
+                                            </div>
                                         }
                                         @if (loadingStates.basicInfo) {
-                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <div class="flex items-center justify-center">
+                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                                <span class="ml-2">Guardando...</span>
+                                            </div>
                                         }
                                     </button>
                                 </div>
@@ -118,11 +86,16 @@
                                     [disabled]="workanaCredentialsForm.invalid || loadingStates.testConnection"
                                     (click)="testWorkanaConnection()">
                                     @if (!loadingStates.testConnection) {
-                                        <mat-icon [svgIcon]="'heroicons_outline:wifi'"></mat-icon>
-                                        <span class="ml-2">Probar Conexión</span>
+                                        <div class="flex items-center justify-center">
+                                            <mat-icon [svgIcon]="'heroicons_outline:wifi'"></mat-icon>
+                                            <span class="ml-2">Probar Conexión</span>
+                                        </div>
                                     }
                                     @if (loadingStates.testConnection) {
-                                        <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                        <div class="flex items-center justify-center">
+                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <span class="ml-2">Probando...</span>
+                                        </div>
                                     }
                                 </button>
                             </div>
@@ -175,11 +148,16 @@
                                         [disabled]="workanaCredentialsForm.invalid || loadingStates.workanaCredentials"
                                         (click)="saveWorkanaCredentials()">
                                         @if (!loadingStates.workanaCredentials) {
-                                            <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                            <span class="ml-2">Guardar Credenciales</span>
+                                            <div class="flex items-center justify-center">
+                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                                <span class="ml-2">Guardar Credenciales</span>
+                                            </div>
                                         }
                                         @if (loadingStates.workanaCredentials) {
-                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <div class="flex items-center justify-center">
+                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                                <span class="ml-2">Guardando...</span>
+                                            </div>
                                         }
                                     </button>
                                 </div>
@@ -197,8 +175,10 @@
                                 <button 
                                     mat-stroked-button
                                     (click)="showProposalPreview()">
-                                    <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
-                                    <span class="ml-2">Vista Previa</span>
+                                    <div class="flex items-center justify-center">
+                                        <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                        <span class="ml-2">Vista Previa</span>
+                                    </div>
                                 </button>
                             </div>
 
@@ -226,11 +206,16 @@
                                         [disabled]="proposalDirectivesForm.invalid || loadingStates.proposalDirectives"
                                         (click)="saveProposalDirectives()">
                                         @if (!loadingStates.proposalDirectives) {
-                                            <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                            <span class="ml-2">Guardar Directrices</span>
+                                            <div class="flex items-center justify-center">
+                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                                <span class="ml-2">Guardar Directrices</span>
+                                            </div>
                                         }
                                         @if (loadingStates.proposalDirectives) {
-                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <div class="flex items-center justify-center">
+                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                                <span class="ml-2">Guardando...</span>
+                                            </div>
                                         }
                                     </button>
                                 </div>
@@ -271,11 +256,16 @@
                                         [disabled]="professionalProfileForm.invalid || loadingStates.professionalProfile"
                                         (click)="saveProfessionalProfile()">
                                         @if (!loadingStates.professionalProfile) {
-                                            <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                            <span class="ml-2">Guardar Perfil</span>
+                                            <div class="flex items-center justify-center">
+                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                                <span class="ml-2">Guardar Perfil</span>
+                                            </div>
                                         }
                                         @if (loadingStates.professionalProfile) {
-                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <div class="flex items-center justify-center">
+                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                                <span class="ml-2">Guardando...</span>
+                                            </div>
                                         }
                                     </button>
                                 </div>
@@ -337,11 +327,16 @@
                                         [disabled]="changePasswordForm.invalid || loadingStates.changePassword"
                                         (click)="changePassword()">
                                         @if (!loadingStates.changePassword) {
-                                            <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
-                                            <span class="ml-2">Cambiar Contraseña</span>
+                                            <div class="flex items-center justify-center">
+                                                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                                <span class="ml-2">Cambiar Contraseña</span>
+                                            </div>
                                         }
                                         @if (loadingStates.changePassword) {
-                                            <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                            <div class="flex items-center justify-center">
+                                                <mat-progress-spinner [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                                                <span class="ml-2">Cambiando...</span>
+                                            </div>
                                         }
                                     </button>
                                 </div>

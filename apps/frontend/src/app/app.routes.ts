@@ -67,9 +67,6 @@ export const appRoutes: Route[] = [
             // User profile - available to all users
             {path: 'profile', loadChildren: () => import('app/modules/user/profile/profile.routes')},
             
-            // Proposals - available to all users
-            {path: 'proposals', loadChildren: () => import('app/modules/user/proposals/proposals.routes')},
-            
             // Admin routes - only for admin users
             {path: 'admin/dashboard', loadChildren: () => import('app/modules/admin/dashboard/dashboard.routes')},
             {path: 'admin/users', loadChildren: () => import('app/modules/admin/users/users.routes')},

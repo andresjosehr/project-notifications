@@ -28,12 +28,6 @@ export class ModuleDetectorService {
                 title: 'Proyectos',
                 icon: 'heroicons_outline:briefcase',
                 type: 'basic'
-            },
-            {
-                path: '/proposals',
-                title: 'Propuestas',
-                icon: 'heroicons_outline:document-text',
-                type: 'basic'
             }
         );
 
