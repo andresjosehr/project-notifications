@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { MatIconModule } from '@angular/material/icon';
+import { provideMockMatIconRegistry } from '../testing/mock-icon-registry';
 
 describe('AppComponent', () => {
   let component: any;
@@ -16,7 +18,11 @@ describe('AppComponent', () => {
         ComponentClass,
         NoopAnimationsModule,
         RouterTestingModule,
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        MatIconModule
+      ],
+      providers: [
+        provideMockMatIconRegistry()
       ]
     }).compileComponents();
 

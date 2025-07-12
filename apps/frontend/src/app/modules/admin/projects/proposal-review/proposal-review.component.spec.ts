@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatIconModule } from '@angular/material/icon';
+import { provideMockMatIconRegistry } from '../../../../../testing/mock-icon-registry';
+import { of } from 'rxjs';
 
 describe('proposal-reviewComponent', () => {
   let component: any;
@@ -15,7 +20,25 @@ describe('proposal-reviewComponent', () => {
       imports: [
         ComponentClass,
         NoopAnimationsModule,
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        RouterTestingModule,
+        MatIconModule
+      ],
+      providers: [
+        provideMockMatIconRegistry(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: of({}),
+            queryParams: of({}),
+            queryParamMap: of(new Map()),
+            snapshot: {
+              params: {},
+              queryParams: {},
+              queryParamMap: new Map()
+            }
+          }
+        }
       ]
     }).compileComponents();
 

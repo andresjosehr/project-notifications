@@ -8,19 +8,19 @@ import { of } from 'rxjs';
  */
 @Injectable()
 export class MockMatIconRegistry extends MatIconRegistry {
-  override addSvgIconSet(): MatIconRegistry {
+  override addSvgIconSet(...args: any[]): this {
     return this;
   }
 
-  override addSvgIconSetInNamespace(): MatIconRegistry {
+  override addSvgIconSetInNamespace(...args: any[]): this {
     return this;
   }
 
-  override addSvgIcon(): MatIconRegistry {
+  override addSvgIcon(...args: any[]): this {
     return this;
   }
 
-  override addSvgIconInNamespace(): MatIconRegistry {
+  override addSvgIconInNamespace(...args: any[]): this {
     return this;
   }
 

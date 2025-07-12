@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { MatIconModule } from '@angular/material/icon';
+import { provideMockMatIconRegistry } from '../../../../testing/mock-icon-registry';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -19,9 +21,11 @@ describe('sign-inComponent', () => {
         ComponentClass,
         NoopAnimationsModule,
         HttpClientTestingModule,
-        RouterTestingModule
+        RouterTestingModule,
+        MatIconModule
       ],
       providers: [
+        provideMockMatIconRegistry(),
         {
           provide: ActivatedRoute,
           useValue: {
