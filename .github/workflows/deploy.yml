@@ -25,8 +25,10 @@ jobs:
         npm ci --workspace=apps/api
         npm ci --workspace=apps/frontend
         
-    - name: Install knex globally for migrations
-      run: npm install -g knex
+    - name: Install knex in api directory
+      run: |
+        cd apps/api
+        npm install knex mysql2
         
     - name: Build frontend
       run: npm run build:frontend
@@ -34,7 +36,7 @@ jobs:
     - name: Run database migrations
       run: |
         cd apps/api
-        knex migrate:latest
+        npx knex migrate:latest
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_USER: ${{ secrets.DB_USER }}
@@ -55,8 +57,9 @@ jobs:
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          npm install -g knex
-          cd apps/api && knex migrate:latest
+          cd apps/api
+          npm install knex mysql2
+          npx knex migrate:latest
           cd ../..
           pm2 restart jobs-api
           pm2 save
