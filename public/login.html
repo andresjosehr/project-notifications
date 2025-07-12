@@ -262,7 +262,23 @@
             
             redirectToApp() {
                 const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect') || '/control';
+                // Default redirect based on user role
+                let defaultRedirect = '/profile.html';
+                
+                // Check if user data exists in localStorage to determine role
+                try {
+                    const userData = localStorage.getItem('userInfo');
+                    if (userData) {
+                        const user = JSON.parse(userData);
+                        if (user.role === 'ADMIN') {
+                            defaultRedirect = '/control.html';
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error parsing user data:', e);
+                }
+                
+                const redirect = urlParams.get('redirect') || defaultRedirect;
                 window.location.href = redirect;
             }
         }

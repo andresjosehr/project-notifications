@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revisar Propuesta - Sistema Freelance</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/early-init.js"></script>
 </head>
 <body>
     <div class="container">
@@ -175,10 +176,13 @@
     <script>
         // Check if user is authenticated
         document.addEventListener('DOMContentLoaded', function() {
-            if (!Utils.isAuthenticated()) {
-                Utils.checkAuthRedirect();
+            // Check page access (any authenticated user)
+            if (!Utils.checkPageAccess()) {
                 return;
             }
+
+            // Hide admin navigation for non-admin users
+            Utils.hideAdminNavigation();
 
             // Display current user info
             const userInfo = Utils.getUserInfo();

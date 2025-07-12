@@ -68,6 +68,28 @@ class ApiClient {
         return localStorage.getItem('authToken');
     }
 
+    // Get user data from localStorage
+    getUserData() {
+        const userData = localStorage.getItem('user');
+        return userData ? JSON.parse(userData) : null;
+    }
+
+    // Get user role
+    getUserRole() {
+        const userData = this.getUserData();
+        return userData ? userData.role : null;
+    }
+
+    // Check if user is admin
+    isAdmin() {
+        return this.getUserRole() === 'ADMIN';
+    }
+
+    // Check if user is regular user
+    isUser() {
+        return this.getUserRole() === 'USER';
+    }
+
     // Handle authentication errors
     handleAuthError() {
         localStorage.removeItem('authToken');
@@ -204,9 +226,6 @@ class ApiClient {
     }
 
     // Proposal Management
-    async generateProposal(data) {
-        return this.post('/proposal/generate', data);
-    }
 
     async sendProposal(projectId, userId, options = {}) {
         return this.post('/workana/proposal', {
@@ -243,10 +262,6 @@ class ApiClient {
 
     async getStatus() {
         return this.get('/status');
-    }
-
-    async getSystemHealth() {
-        return this.get('/system/health');
     }
 
     async cleanup() {
@@ -325,15 +340,6 @@ class ApiClient {
         });
     }
 
-    // Get project by ID
-    async getProjectById(projectId) {
-        return this.get(`/project/${projectId}`);
-    }
-
-    // Get user by ID
-    async getUserById(userId) {
-        return this.get(`/user/${userId}`);
-    }
 
     async generateAccessToken(projectId, platform, userId) {
         return this.post('/auth/generate-access-token', {

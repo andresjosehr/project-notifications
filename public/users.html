@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios - Sistema Freelance</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/early-init.js"></script>
 </head>
 <body>
     <div class="container">
@@ -571,11 +572,13 @@
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is authenticated
-            if (!Utils.isAuthenticated()) {
-                Utils.checkAuthRedirect();
+            // Check page access (admin only)
+            if (!Utils.checkPageAccess('ADMIN')) {
                 return;
             }
+
+            // Hide admin navigation for non-admin users
+            Utils.hideAdminNavigation();
 
             // Display current user info
             const userInfo = Utils.getUserInfo();

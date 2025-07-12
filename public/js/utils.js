@@ -518,9 +518,70 @@ class Utils {
     static redirectIfAuthenticated() {
         if (this.isAuthenticated()) {
             const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/control';
+            // Default redirect based on user role
+            let defaultRedirect = '/profile.html';
+            if (this.isUserAdmin()) {
+                defaultRedirect = '/control.html';
+            }
+            const redirect = urlParams.get('redirect') || defaultRedirect;
             window.location.href = redirect;
         }
+    }
+
+    // Check if user has admin role
+    static isUserAdmin() {
+        const userInfo = this.getUserInfo();
+        return userInfo && userInfo.role === 'ADMIN';
+    }
+
+    // Check if user has user role
+    static isUserRegular() {
+        const userInfo = this.getUserInfo();
+        return userInfo && userInfo.role === 'USER';
+    }
+
+    // Hide admin-only navigation elements for regular users
+    static hideAdminNavigation() {
+        if (!this.isUserAdmin()) {
+            // Hide admin navigation links immediately
+            const adminLinks = document.querySelectorAll('a[href="users.html"], a[href="control.html"]');
+            adminLinks.forEach(link => {
+                link.style.display = 'none';
+            });
+        }
+    }
+
+    // Initialize role-based navigation (call this ASAP)
+    static initializeNavigation() {
+        // Add CSS to hide admin elements initially for non-admin users
+        if (this.isAuthenticated() && !this.isUserAdmin()) {
+            const style = document.createElement('style');
+            style.textContent = `
+                a[href="users.html"], 
+                a[href="control.html"] {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    // Check page access based on user role
+    static checkPageAccess(requiredRole = null, redirectTo = 'projects.html') {
+        if (!this.isAuthenticated()) {
+            this.checkAuthRedirect();
+            return false;
+        }
+
+        if (requiredRole === 'ADMIN' && !this.isUserAdmin()) {
+            this.showAlert('Acceso denegado. Solo administradores pueden acceder a esta página.', 'error');
+            setTimeout(() => {
+                window.location.href = redirectTo;
+            }, 2000);
+            return false;
+        }
+
+        return true;
     }
 }
 

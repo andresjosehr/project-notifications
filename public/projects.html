@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Proyectos - Sistema Freelance</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/early-init.js"></script>
 </head>
 <body>
     <div class="container">
@@ -18,6 +19,7 @@
                     <a href="users.html" class="nav-link">👥 Usuarios</a>
                     <a href="projects.html" class="nav-link active">📋 Proyectos</a>
                     <a href="control.html" class="nav-link">⚙️ Control Panel</a>
+                    <a href="profile.html" class="nav-link">👤 Mi Perfil</a>
                     <div class="header-user">
                         <span id="currentUser">Cargando...</span>
                         <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
@@ -863,11 +865,13 @@
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is authenticated
-            if (!Utils.isAuthenticated()) {
-                Utils.checkAuthRedirect();
+            // Check page access (any authenticated user)
+            if (!Utils.checkPageAccess()) {
                 return;
             }
+
+            // Hide admin navigation for non-admin users
+            Utils.hideAdminNavigation();
 
             // Display current user info
             const userInfo = Utils.getUserInfo();
