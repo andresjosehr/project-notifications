@@ -59,7 +59,7 @@ export interface ProjectFilters {
     providedIn: 'root'
 })
 export class ApiService {
-    private readonly baseUrl = environment.apiUrl || 'http://localhost:3000';
+    private readonly baseUrl = environment.apiUrl;
 
     constructor(private http: HttpClient) {}
 

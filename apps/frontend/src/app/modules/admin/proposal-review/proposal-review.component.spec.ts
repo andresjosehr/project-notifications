@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { of } from 'rxjs';
+import { provideMockMatIconRegistry } from '../../../../testing/mock-icon-registry';
 
 import { ProposalReviewComponent } from './proposal-review.component';
 
@@ -43,7 +44,8 @@ describe('ProposalReviewComponent (Admin)', () => {
             queryParams: of({}),
             snapshot: { params: { id: '123' }, queryParams: {} }
           }
-        }
+        },
+        provideMockMatIconRegistry()
       ]
     }).compileComponents();
 
