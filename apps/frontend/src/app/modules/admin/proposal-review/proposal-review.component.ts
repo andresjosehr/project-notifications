@@ -16,6 +16,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ProposalConfirmDialogComponent } from './proposal-confirm-dialog/proposal-confirm-dialog.component';
 
 @Component({
+    
     selector: 'app-proposal-review',
     templateUrl: './proposal-review.component.html',
     styleUrls: ['./proposal-review.component.scss'],
@@ -33,7 +34,6 @@ import { ProposalConfirmDialogComponent } from './proposal-confirm-dialog/propos
         MatSnackBarModule,
         FuseCardComponent,
         FuseAlertComponent,
-        ProposalConfirmDialogComponent,
     ],
 })
 export class ProposalReviewComponent implements OnInit {

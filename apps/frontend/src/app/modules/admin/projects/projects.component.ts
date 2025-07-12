@@ -206,9 +206,8 @@ export class ProjectsComponent implements OnInit {
     async generateProposal(project: Project): Promise<void> {
         try {
             const result = await this.apiService.generateProposal({
-                projectId: project.id,
-                projectTitle: project.title,
-                projectDescription: project.description,
+                projectId: project.id.toString(),
+                userId: this.currentUser?.id?.toString() || '',
                 platform: project.platform,
             }).toPromise();
 

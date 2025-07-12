@@ -50,7 +50,6 @@ interface Token {
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        RouterLink,
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,

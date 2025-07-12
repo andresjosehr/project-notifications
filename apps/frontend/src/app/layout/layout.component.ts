@@ -43,7 +43,6 @@ import { ThinLayoutComponent } from './layouts/vertical/thin/thin.component';
         DenseLayoutComponent,
         FuturisticLayoutComponent,
         ThinLayoutComponent,
-        SettingsComponent,
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {

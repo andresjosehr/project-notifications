@@ -24,7 +24,6 @@ import { Router } from '@angular/router';
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        RouterLink,
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
@@ -33,7 +32,6 @@ import { Router } from '@angular/router';
         MatTabsModule,
         MatDialogModule,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class ProfileComponent implements OnInit {
