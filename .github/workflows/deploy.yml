@@ -33,6 +33,13 @@ jobs:
     - name: Build frontend
       run: npm run build:frontend
       
+    - name: Debug SSH connection
+      run: |
+        echo "HOST is set: ${{ secrets.HOST != '' }}"
+        echo "USERNAME is set: ${{ secrets.USERNAME != '' }}"
+        echo "PORT is set: ${{ secrets.PORT != '' }}"
+        echo "SSH_PRIVATE_KEY is set: ${{ secrets.SSH_PRIVATE_KEY != '' }}"
+      
     - name: Run database migrations
       run: |
         cd apps/api
