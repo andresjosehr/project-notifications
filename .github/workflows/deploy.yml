@@ -51,6 +51,9 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
+        timeout: 60s
+        command_timeout: 10m
+        debug: true
         envs: NODE_ENV,DB_HOST,DB_USER,DB_PASSWORD,DB_DATABASE
         script: |
           cd /var/www/projects/jobs
