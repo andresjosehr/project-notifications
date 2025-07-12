@@ -69,5 +69,5 @@ jobs:
           npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          pm2 restart jobs-api
+          pm2 restart jobs-api || pm2 start apps/api/dist/index.js --name jobs-api
           pm2 save
