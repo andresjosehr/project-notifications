@@ -1,0 +1,181 @@
+<!-- Alert Component -->
+<fuse-alert
+    *ngIf="showAlert"
+    [type]="alertType"
+    [appearance]="'border'"
+    [showIcon]="true"
+    [dismissible]="true"
+    (dismissed)="showAlert = false"
+    class="mb-4">
+    {{ alertMessage }}
+</fuse-alert>
+
+<!-- Loading State -->
+<div *ngIf="isLoading" class="flex flex-col items-center justify-center min-h-96 space-y-4">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p class="text-lg text-gray-600">Generando propuesta con IA...</p>
+</div>
+
+<!-- Proposal Review Section -->
+<div *ngIf="!isLoading && !isSending" class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">📝 Revisar Propuesta</h1>
+            <p class="mt-1 text-gray-600">Revisa y edita la propuesta antes de enviarla a {{ platform | titlecase }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <button 
+                mat-stroked-button
+                color="primary"
+                (click)="goToProjects()">
+                <mat-icon>arrow_back</mat-icon>
+                Volver a Proyectos
+            </button>
+            <button 
+                mat-stroked-button
+                (click)="logout()">
+                <mat-icon>logout</mat-icon>
+                Cerrar Sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Project Information Column -->
+        <div class="space-y-6">
+            <fuse-card class="p-6">
+                <div class="flex flex-col space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">📋 Información del Proyecto</h2>
+                        <span 
+                            class="px-3 py-1 text-xs font-medium rounded-full"
+                            [ngClass]="getPlatformBadgeClass(currentProject?.platform || 'workana')">
+                            {{ currentProject?.platform | titlecase }}
+                        </span>
+                    </div>
+
+                    <div *ngIf="currentProject" class="space-y-4">
+                        <!-- Project Title -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ currentProject.title }}</h3>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span>📅 {{ formatDate(currentProject.createdAt) }}</span>
+                                <span *ngIf="currentProject.price">💰 {{ currentProject.price }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Project Description -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Descripción:</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ currentProject.description }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Project Details -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div *ngIf="currentProject.category">
+                                <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Categoría</h4>
+                                <p class="text-sm text-gray-900">{{ currentProject.category }}</p>
+                            </div>
+                            <div *ngIf="currentProject.skills">
+                                <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Habilidades</h4>
+                                <p class="text-sm text-gray-900">{{ currentProject.skills }}</p>
+                            </div>
+                            <div *ngIf="currentUser">
+                                <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Usuario Asignado</h4>
+                                <p class="text-sm text-gray-900">{{ currentUser.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fuse-card>
+        </div>
+
+        <!-- Proposal Editor Column -->
+        <div class="space-y-6">
+            <fuse-card class="p-6">
+                <div class="space-y-4">
+                    <!-- Editor Header -->
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">✏️ Editar Propuesta</h2>
+                        <div class="flex space-x-2">
+                            <button 
+                                mat-stroked-button
+                                color="accent"
+                                [disabled]="isGenerating"
+                                (click)="regenerateProposal()">
+                                <mat-icon>refresh</mat-icon>
+                                {{ isGenerating ? 'Generando...' : 'Regenerar' }}
+                            </button>
+                            <button 
+                                mat-stroked-button
+                                [disabled]="!originalProposal"
+                                (click)="resetProposal()">
+                                <mat-icon>undo</mat-icon>
+                                Restaurar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Proposal Editor -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>📝 Contenido de la Propuesta</mat-label>
+                        <textarea 
+                            matInput
+                            [(ngModel)]="proposalContent"
+                            (input)="onProposalContentChange($event)"
+                            placeholder="La propuesta se está generando..."
+                            rows="20"
+                            class="min-h-96 font-mono text-sm">
+                        </textarea>
+                        <mat-hint>Puedes editar el texto de la propuesta antes de enviarla</mat-hint>
+                    </mat-form-field>
+
+                    <!-- Proposal Statistics -->
+                    <div class="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ charCount }}</div>
+                            <div class="text-xs text-gray-500">Caracteres</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">{{ wordCount }}</div>
+                            <div class="text-xs text-gray-500">Palabras</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600">{{ lineCount }}</div>
+                            <div class="text-xs text-gray-500">Líneas</div>
+                        </div>
+                    </div>
+                </div>
+            </fuse-card>
+
+            <!-- Action Buttons -->
+            <fuse-card class="p-6">
+                <div class="flex justify-center">
+                    <button 
+                        mat-raised-button
+                        color="primary"
+                        size="large"
+                        [disabled]="!proposalContent.trim() || isSending"
+                        (click)="sendProposal()"
+                        class="px-8 py-3">
+                        <mat-icon>send</mat-icon>
+                        📤 Enviar Propuesta
+                    </button>
+                </div>
+            </fuse-card>
+        </div>
+    </div>
+</div>
+
+<!-- Sending State -->
+<div *ngIf="isSending" class="flex flex-col items-center justify-center min-h-96 space-y-4">
+    <mat-spinner diameter="40"></mat-spinner>
+    <div class="text-center">
+        <p class="text-lg font-medium text-gray-900">Enviando propuesta a {{ platform | titlecase }}...</p>
+        <p class="text-sm text-gray-600 mt-2">Conectando con la plataforma</p>
+    </div>
+</div>

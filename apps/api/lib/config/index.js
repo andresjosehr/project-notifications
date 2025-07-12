@@ -63,7 +63,8 @@ class Config {
     return {
       environment: process.env.NODE_ENV || 'development',
       port: parseInt(process.env.PORT) || 3000,
-      apiUrl: process.env.API_URL || 'https://workana-notifications.andresjosehr.com'
+      apiUrl: process.env.API_URL || 'https://workana-notifications.andresjosehr.com',
+      frontendUrl: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:4200' : 'https://workana-notifications.andresjosehr.com')
     };
   }
 

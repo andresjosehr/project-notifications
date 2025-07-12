@@ -218,14 +218,23 @@ export class ApiService {
     // Proposals
     // =============================
 
-    generateProposal(projectData: any): Observable<ApiResponse> {
-        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/generate`, projectData)
+    generateProposal(data: { projectId: string; userId: string; platform?: string }): Observable<ApiResponse> {
+        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/generate`, data)
             .pipe(catchError(this.handleError));
     }
 
     sendWorkanaProposal(data: { projectId: string; userId: number; autoLogin?: boolean; proposalContent?: string }): Observable<ApiResponse> {
         return this.http.post<ApiResponse>(`${this.baseUrl}/api/workana/proposal`, data)
             .pipe(catchError(this.handleError));
+    }
+
+    sendProposalWithCustomContent(projectId: string, userId: number, proposalContent: string, options: { platform?: string } = {}): Observable<ApiResponse> {
+        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/send`, {
+            projectId,
+            userId,
+            proposalContent,
+            ...options
+        }).pipe(catchError(this.handleError));
     }
 
     // =============================

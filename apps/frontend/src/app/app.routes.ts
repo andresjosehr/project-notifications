@@ -64,6 +64,10 @@ export const appRoutes: Route[] = [
             // Admin projects route - redirects to projects
             {path: 'admin/projects', loadChildren: () => import('app/modules/admin/projects/projects.routes')},
             
+            // Proposal review - available to all users
+            {path: 'proposal-review', loadChildren: () => import('app/modules/admin/proposal-review/proposal-review.routes')},
+            {path: 'admin/proposal-review', loadChildren: () => import('app/modules/admin/proposal-review/proposal-review.routes')},
+            
             // User profile - available to all users
             {path: 'profile', loadChildren: () => import('app/modules/user/profile/profile.routes')},
             

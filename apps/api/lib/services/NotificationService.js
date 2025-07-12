@@ -101,15 +101,16 @@ class NotificationService {
       message += `📝 *Descripción:*\n${project.description}\n\n`;
       message += `🔗 *Enlace del proyecto:*\n${project.link}\n\n`;
       
-      // Agregar enlaces de propuesta con userId específico
+      // Agregar enlaces de propuesta con userId específico - Frontend Angular URL
       if (project.id) {
-        let proposalUrl = `${config.app.apiUrl}/build-bid/${project.id}/${project.platform}`;
-        // Only add port if it's not standard HTTP/HTTPS ports (80/443) and not null/empty
-        if (config.app.environment == 'development') {
-          proposalUrl = `${config.app.apiUrl}:${config.app.port}/build-bid/${project.id}/${project.platform}`;
-        } else{
-          proposalUrl = `${config.app.apiUrl}/build-bid/${project.id}/${project.platform}`;
-        }
+        let frontendUrl = config.app.frontendUrl || config.app.apiUrl.replace('/api', '');
+        
+        // Construir URL del frontend Angular con parámetros de query
+        let proposalUrl = `${frontendUrl}/proposal-review`;
+        const queryParams = new URLSearchParams({
+          projectId: project.id.toString(),
+          platform: project.platform
+        });
         
         // Si hay un usuario específico, obtener su ID para incluirlo en la URL
         if (user) {
@@ -117,12 +118,14 @@ class NotificationService {
             const users = await userRepository.findActive();
             const userData = users.find(u => u.telegramUser === user);
             if (userData) {
-              proposalUrl += `?userId=${userData.id}`;
+              queryParams.append('userId', userData.id.toString());
             }
           } catch (error) {
             logger.warn('Error obteniendo ID de usuario para URL de propuesta', error);
           }
         }
+        
+        proposalUrl += `?${queryParams.toString()}`;
         
         message += `📄 *Generar propuesta:*\n${proposalUrl}`;
       }
