@@ -26,7 +26,6 @@ class ExternalCredential extends Model
     protected $casts = [
         'session_expires_at' => 'datetime',
         'is_active' => 'boolean',
-        'password' => 'hashed',
     ];
 
     public function user()

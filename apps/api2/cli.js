@@ -215,7 +215,7 @@ program
 
       // Crear instancia del servicio de Workana
       const workanaService = new WorkanaService({
-        headless: true,
+        headless: false,
         debug: false
       });
 
@@ -270,7 +270,7 @@ program
   .description('Iniciar sesión en Workana y obtener datos de sesión')
   .argument('<username>', 'Email del usuario de Workana')
   .argument('<password>', 'Contraseña del usuario de Workana')
-  .option('--headless', 'Ejecutar en modo headless', true)
+  .option('--headless [value]', 'Ejecutar en modo headless', 'true')
   .option('--debug', 'Modo debug con más logs', false)
   .action(async (username, password, options) => {
     try {
@@ -283,7 +283,7 @@ program
 
       // Crear instancia del servicio de Workana
       const workanaService = new WorkanaService({
-        headless: options.headless,
+        headless: false, // options.headless === 'true' || options.headless === true,
         debug: options.debug
       });
 

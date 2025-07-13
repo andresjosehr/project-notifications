@@ -33,12 +33,12 @@ class SendWorkanaProposal extends Command
         
         try {
             // Ruta al CLI
-            $cliPath = base_path('apps/api2/cli.js');
+            $cliPath = base_path('../../apps/api2/cli.js');
             
             // Construir comando
             $command = "node {$cliPath} sendProposal " .
-                "'" . addslashes($session) . "' " .
-                "'" . addslashes($proposalText) . "'";
+                escapeshellarg($session) . " " .
+                escapeshellarg($proposalText);
             
             $this->line("Ejecutando: {$command}");
             

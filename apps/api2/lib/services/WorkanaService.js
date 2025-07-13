@@ -19,7 +19,16 @@ class WorkanaService extends BaseScraper {
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
-        '--window-size=1920,1080'
+        '--window-size=1920,1080',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-blink-features=AutomationControlled',
+        '--no-first-run',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
       ]
     };
     
@@ -59,8 +68,25 @@ class WorkanaService extends BaseScraper {
   async _configurePage() {
     if (!this.page) return;
     
+    // Remove automation indicators
+    await this.page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      window.chrome = { runtime: {} };
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5]
+      });
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-US', 'en', 'es']
+      });
+    });
+    
     await this.page.setExtraHTTPHeaders({
-      'User-Agent': this.pageConfig.userAgent
+      'User-Agent': this.pageConfig.userAgent,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Accept-Encoding': 'gzip, deflate',
+      'Connection': 'keep-alive',
+      'DNT': '1'
     });
     
     await this.page.setViewportSize(this.pageConfig.viewport);
@@ -237,23 +263,6 @@ class WorkanaService extends BaseScraper {
 
       await this._ensureBrowserReady();
       
-      // Check if already logged in
-      const currentUrl = this.page.url();
-      if (!currentUrl.includes('/login') && !currentUrl.includes('/signin')) {
-        const alreadyLoggedIn = await this._checkLoggedInElements();
-        if (alreadyLoggedIn) {
-          if (this.debug) {
-            logger.info('Ya estamos logueados');
-          }
-          this.isLoggedIn = true;
-          return {
-            success: true,
-            user: await this._getUserInfo(),
-            message: 'Ya estaba logueado'
-          };
-        }
-      }
-      
       await this._navigateToLogin();
       await this._handleCookieConsent();
       await this._checkForCaptcha();
@@ -287,14 +296,26 @@ class WorkanaService extends BaseScraper {
       logger.debug(`Navegando a página de login: ${this.loginUrl}`);
     }
     
-    await this.page.goto(this.loginUrl, { 
-      waitUntil: 'networkidle',
-      timeout: 30000 
-    });
+    try {
+      // First try with networkidle
+      await this.page.goto(this.loginUrl, { 
+        waitUntil: 'networkidle',
+        timeout: 20000 
+      });
+    } catch (error) {
+      if (this.debug) {
+        logger.debug('Fallback: intentando con domcontentloaded');
+      }
+      // Fallback to domcontentloaded if networkidle fails
+      await this.page.goto(this.loginUrl, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 15000 
+      });
+    }
     
     // Wait for form to be ready
     await this.page.waitForSelector('input[type="email"], input[type="text"]', { timeout: 10000 });
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(3000);
     
     if (this.debug) {
       logger.debug('Página de login cargada correctamente');
@@ -414,9 +435,6 @@ class WorkanaService extends BaseScraper {
       
       // Check for login errors first
       const errorSelectors = [
-        '.alert-danger',
-        '.error-message',
-        '.login-error',
         'text=Usuario o contraseña incorrectos',
         'text=Invalid credentials',
         'text=Credenciales inválidas'
@@ -475,6 +493,7 @@ class WorkanaService extends BaseScraper {
     try {
       // Look for user name/button in navigation
       const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user/i }).first();
+      
       if (await userButton.count() > 0) {
         const userName = await userButton.textContent();
         if (userName && userName.trim()) {
@@ -487,6 +506,7 @@ class WorkanaService extends BaseScraper {
       
       // Try to find user avatar with alt text
       const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
+      
       if (await userAvatar.count() > 0) {
         const altText = await userAvatar.getAttribute('alt');
         if (altText) {
@@ -499,6 +519,7 @@ class WorkanaService extends BaseScraper {
       
       // Check current URL for user information
       const currentUrl = this.page.url();
+      
       if (currentUrl.includes('/dashboard')) {
         return { 
           name: 'Usuario de Workana',
