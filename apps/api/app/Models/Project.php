@@ -14,6 +14,7 @@ class Project extends Model
         'description',
         'price',
         'skills',
+        'info',
         'link',
         'platform',
         'language',

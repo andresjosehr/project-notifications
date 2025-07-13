@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
-
-class SendWorkanaProposal extends Command
+class SendWorkanaProposal extends BaseCommand
 {
     /**
      * The name and signature of the console command.
@@ -26,96 +23,78 @@ class SendWorkanaProposal extends Command
      */
     public function handle()
     {
-        $session = $this->argument('session');
-        $proposalText = $this->argument('proposalText');
-        $projectLink = $this->argument('projectLink');
-        
-        $this->info('Enviando propuesta a Workana...');
-        
         try {
-            // Verificar si el primer argumento es un archivo de sesión en storage
-            $sessionData = $session;
-            if (file_exists($session) && is_readable($session)) {
-                // Si es un archivo de sesión, pasar la ruta directamente
-                $sessionData = $session;
-                $this->line("Usando archivo de sesión en storage: {$session}");
+            if (!$this->validateRequiredArguments(['session', 'proposalText', 'projectLink'])) {
+                return 1;
             }
+
+            $session = $this->argument('session');
+            $proposalText = $this->argument('proposalText');
+            $projectLink = $this->argument('projectLink');
             
-            // Ruta al CLI
-            $cliPath = base_path('cli.js');
+            $this->info('Enviando propuesta a Workana...');
             
-            // Construir comando
-            $command = "node {$cliPath} sendProposal " .
-                escapeshellarg($sessionData) . " " .
-                escapeshellarg($proposalText) . " " .
-                escapeshellarg($projectLink);
+            $startTime = microtime(true);
+            $sessionData = $this->prepareSessionData($session);
+            $result = $this->executeProposalCommand($sessionData, $proposalText, $projectLink);
+            $duration = (microtime(true) - $startTime) * 1000;
             
-            $this->line("Ejecutando: {$command}");
-            
-            // Ejecutar comando
-            $output = shell_exec($command);
-            $result = json_decode($output, true);
-            
-            if ($result && $result['success']) {
-                $this->info('✅ Propuesta enviada exitosamente');
-                
-                // Handle new standardized response format
-                if (isset($result['duration'])) {
-                    $this->line("Duración: {$result['duration']}ms");
-                }
-                
-                if (isset($result['platform'])) {
-                    $this->line("Plataforma: {$result['platform']}");
-                }
-                
-                if (isset($result['operation'])) {
-                    $this->line("Operación: {$result['operation']}");
-                }
-                
-                // Check for data in new format
-                $data = $result['data'] ?? [];
-                if (isset($data['projectLink'])) {
-                    $this->line("Proyecto: {$data['projectLink']}");
-                }
-                
-                // Legacy format support
-                if (isset($result['projectLink'])) {
-                    $this->line("Proyecto: {$result['projectLink']}");
-                }
-                
-                if (isset($result['message'])) {
-                    $this->line("Mensaje: {$result['message']}");
-                }
-                
-                return 0;
-            } else {
-                // Handle new standardized error format
+            if (!$result['success']) {
                 $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
-                $errorType = $result['error']['type'] ?? 'unknown';
                 
-                $this->error("❌ Error enviando propuesta: {$errorMessage}");
-                
-                Log::error('Error enviando propuesta a Workana', [
+                $this->logWarning('Error enviando propuesta a Workana', [
                     'error' => $errorMessage,
-                    'error_type' => $errorType,
-                    'platform' => $result['platform'] ?? 'workana',
-                    'operation' => $result['operation'] ?? 'send_proposal',
-                    'result' => $result
+                    'error_type' => $result['error']['type'] ?? 'unknown',
+                    'operation' => 'send_proposal'
                 ]);
                 
+                $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'send_proposal_failed', [
+                    'operation' => 'send_proposal'
+                ]);
+                
+                $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
                 return 1;
             }
             
-        } catch (\Exception $e) {
-            $this->error("❌ Error ejecutando comando: {$e->getMessage()}");
-            
-            Log::error('Error ejecutando comando de propuesta', [
-                'error' => $e->getMessage(),
-                'session' => $session,
-                'proposalText' => $proposalText
+            return $this->handleSuccess([
+                'operation' => 'send_proposal',
+                'message' => 'Propuesta enviada exitosamente',
+                'data' => [
+                    'projectLink' => $result['data']['projectLink'] ?? $result['projectLink'] ?? $projectLink
+                ],
+                'duration' => round($duration, 2)
             ]);
             
-            return 1;
+        } catch (\Exception $e) {
+            return $this->handleError($e, [
+                'operation' => 'send_proposal',
+                'session' => $this->argument('session'),
+                'proposalText' => substr($this->argument('proposalText'), 0, 100) . '...'
+            ]);
         }
+    }
+
+    private function prepareSessionData(string $session): string
+    {
+        if (file_exists($session) && is_readable($session)) {
+            $this->line("Usando archivo de sesión en storage: {$session}");
+            return $session;
+        }
+        
+        return $session;
+    }
+
+    private function executeProposalCommand(string $sessionData, string $proposalText, string $projectLink): array
+    {
+        $cliPath = base_path('cli.js');
+        
+        $command = "cd " . base_path() . " && node {$cliPath} sendProposal " .
+            escapeshellarg($sessionData) . " " .
+            escapeshellarg($proposalText) . " " .
+            escapeshellarg($projectLink);
+        
+        $this->line("Ejecutando: {$command}");
+        
+        return $this->executeNodeCommand($command, ['operation' => 'send_proposal']);
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\ExternalCredential;
-use Illuminate\Support\Facades\Log;
 
-class LoginWorkana extends Command
+class LoginWorkana extends BaseCommand
 {
     /**
      * The name and signature of the console command.
@@ -24,113 +22,105 @@ class LoginWorkana extends Command
     public function handle()
     {
         try {
+            if (!$this->validateRequiredArguments(['userId', 'email', 'password'])) {
+                return 1;
+            }
+
             $userId = $this->argument('userId');
             $email = $this->argument('email');
             $password = $this->argument('password');
 
-            // Intentar login real con múltiples reintentos
+            $startTime = microtime(true);
             $maxAttempts = 1;
             $response = null;
             
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-                $command = "node " . base_path('cli.js') . " login " . 
+                $command = "cd " . base_path() . " && node " . base_path('cli.js') . " login " . 
                     escapeshellarg($email) . " " . 
                     escapeshellarg($password) . " --debug 2>&1";
 
-                $output = shell_exec($command);
-                
-                $response = json_decode($output, true);
+                $response = $this->executeNodeCommand($command, [
+                    'attempt' => $attempt,
+                    'userId' => $userId,
+                    'operation' => 'login'
+                ]);
 
-                // Get last json parser error
-                $lastJsonParserError = json_last_error_msg();
-
-                // Si el login es exitoso, salir del loop - handle new standardized format
-                if ($response && $response['success']) {
+                if ($response['success']) {
                     // Handle new standardized response format
                     if (isset($response['data']['sessionData'])) {
                         $response['sessionData'] = $response['data']['sessionData'];
                     }
-                    
                     break;
                 }
                 
-                // Si no es el último intento, esperar antes del siguiente
                 if ($attempt < $maxAttempts) {
                     $errorMessage = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
-                    Log::warning("Intento #{$attempt} falló, esperando antes del siguiente intento", [
+                    $this->logWarning("Intento #{$attempt} falló, esperando antes del siguiente intento", [
                         'error' => $errorMessage,
                         'error_type' => $response['error']['type'] ?? 'unknown',
-                        'platform' => $response['platform'] ?? 'workana',
-                        'operation' => $response['operation'] ?? 'login'
+                        'operation' => 'login'
                     ]);
-                    sleep(2); // Esperar 2 segundos entre intentos
+                    sleep(2);
                 }
             }
 
-            // Si todos los intentos fallaron, retornar error
-            if (!$response || !$response['success']) {
-                $finalError = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
-                Log::error('Todos los intentos de login real fallaron', [
-                    'finalError' => $finalError,
+            if (!$response['success']) {
+                $errorMessage = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
+                $this->logWarning('Todos los intentos de login fallaron', [
+                    'error' => $errorMessage,
                     'error_type' => $response['error']['type'] ?? 'unknown',
-                    'attempts' => $maxAttempts,
-                    'platform' => $response['platform'] ?? 'workana'
+                    'attempts' => $maxAttempts
                 ]);
                 
-                $this->error(json_encode([
-                    'success' => false,
-                    'error' => $finalError,
-                    'error_type' => $response['error']['type'] ?? 'unknown',
-                    'platform' => $response['platform'] ?? 'workana'
-                ]));
-
+                $error = $this->standardError($errorMessage, $response['error']['type'] ?? 'login_failed', [
+                    'attempts' => $maxAttempts,
+                    'operation' => 'login'
+                ]);
+                
+                $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
                 return 1;
             }
 
-            // Guardar o actualizar session_data
-            $credential = ExternalCredential::where('user_id', $userId)
-                ->where('platform', 'workana')
-                ->first();
+            $this->saveCredentials($userId, $email, $password, $response['sessionData']);
 
-            if ($credential) {
-                // Actualizar credencial existente
-                $credential->update([
-                    'session_data' => $response['sessionData'],
-                    'session_expires_at' => now()->addHours(24)
-                ]);
-            } else {
-                // Crear nueva credencial
-                ExternalCredential::create([
-                    'user_id' => $userId,
-                    'platform' => 'workana',
-                    'email' => $email,
-                    'password' => $password,
-                    'session_data' => $response['sessionData'],
-                    'session_expires_at' => now()->addHours(24),
-                    'is_active' => true
-                ]);
-            }
-
-            $this->info(json_encode([
-                'success' => true,
+            $duration = (microtime(true) - $startTime) * 1000;
+            
+            return $this->handleSuccess([
+                'operation' => 'login',
                 'message' => 'Login exitoso y session_data guardada',
-                'sessionData' => $response['sessionData']
-            ]));
-
-            return 0;
-
-        } catch (\Exception $e) {
-            Log::error('Error en comando workana:login', [
-                'error' => $e->getMessage(),
-                'userId' => $this->argument('userId')
+                'data' => ['sessionData' => $response['sessionData']],
+                'duration' => round($duration, 2)
             ]);
 
-            $this->error(json_encode([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]));
+        } catch (\Exception $e) {
+            return $this->handleError($e, [
+                'userId' => $this->argument('userId'),
+                'operation' => 'login'
+            ]);
+        }
+    }
 
-            return 1;
+    private function saveCredentials(string $userId, string $email, string $password, array $sessionData): void
+    {
+        $credential = ExternalCredential::where('user_id', $userId)
+            ->where('platform', 'workana')
+            ->first();
+
+        if ($credential) {
+            $credential->update([
+                'session_data' => $sessionData,
+                'session_expires_at' => now()->addHours(24)
+            ]);
+        } else {
+            ExternalCredential::create([
+                'user_id' => $userId,
+                'platform' => 'workana',
+                'email' => $email,
+                'password' => $password,
+                'session_data' => $sessionData,
+                'session_expires_at' => now()->addHours(24),
+                'is_active' => true
+            ]);
         }
     }
 }

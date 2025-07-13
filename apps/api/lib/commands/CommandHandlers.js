@@ -183,7 +183,6 @@ class CommandHandlers {
       if (session.includes('storage/app/sessions/') || session.includes('session_')) {
         if (fs.existsSync(session)) {
           const fileContent = fs.readFileSync(session, 'utf8');
-          console.log(`Leyendo datos de sesión desde archivo en storage: ${session}`);
           return JSON.parse(fileContent);
         } else {
           throw new Error(`Archivo de sesión no encontrado: ${session}`);

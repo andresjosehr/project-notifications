@@ -14,7 +14,7 @@ class ScraperService
     public function __construct()
     {
         $this->nodePath = env('NODE_PATH', 'node');
-        $this->scriptPath = base_path('apps/api2/cli.js');
+        $this->scriptPath = base_path('cli.js');
     }
 
     /**
@@ -26,31 +26,63 @@ class ScraperService
             Log::info('Solicitando scraping de Workana desde Node.js', $options);
 
             $quietFlag = isset($options['silent']) && $options['silent'] ? '--quiet' : '';
-            $command = "{$this->nodePath} {$this->scriptPath} scrape-workana {$quietFlag} 2>&1";
+            $command = "cd " . base_path() . " && {$this->nodePath} {$this->scriptPath} scrape-workana {$quietFlag} 2>&1";
             
             $output = shell_exec($command);
             $returnCode = $this->getLastReturnCode();
+
+            Log::info('Output del comando: ' . $output);
             
             if ($returnCode !== 0) {
                 throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}, Output: {$output}");
             }
             
+            // Convertir output a array
             $result = json_decode($output, true);
+            
+            if ($result === null) {
+                throw new \Exception("No se encontró JSON válido en el output: {$output}");
+            }
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg() . "\nOutput: {$output}");
             }
             
-            if (!$result['success']) {
-                throw new \Exception("Error en scraping: " . ($result['error']['message'] ?? 'Error desconocido'));
+            // Verificar el nuevo formato de respuesta estandarizado
+            if (!isset($result['success'])) {
+                throw new \Exception("Formato de respuesta inválido: falta campo 'success'");
             }
             
+            if (!$result['success']) {
+                $errorMessage = $result['error']['message'] ?? 'Error desconocido';
+                $errorType = $result['error']['type'] ?? 'UnknownError';
+                throw new \Exception("Error en scraping ({$errorType}): {$errorMessage}");
+            }
+            
+            // Extraer datos del nuevo formato
+            $projects = $result['data']['projects'] ?? [];
+            $stats = $result['data']['stats'] ?? [];
+            $duration = $result['duration'] ?? 0;
+            
             Log::info('Scraping de Workana completado', [
-                'projects_count' => count($result['projects']),
-                'duration' => $result['duration'] ?? 0
+                'projects_count' => count($projects),
+                'duration' => $duration,
+                'stats' => $stats,
+                'platform' => $result['platform'] ?? 'unknown',
+                'operation' => $result['operation'] ?? 'unknown'
             ]);
             
-            return $result;
+            // Mantener compatibilidad con el formato anterior
+            return [
+                'success' => true,
+                'projects' => $projects,
+                'duration' => $duration,
+                'stats' => $stats,
+                'platform' => $result['platform'] ?? 'workana',
+                'operation' => $result['operation'] ?? 'scrape',
+                'message' => $result['message'] ?? 'Scraping completed successfully',
+                'timestamp' => $result['timestamp'] ?? now()->toISOString()
+            ];
             
         } catch (\Exception $e) {
             Log::error('Error solicitando scraping de Workana', ['error' => $e->getMessage()]);
@@ -98,67 +130,7 @@ class ScraperService
         }
     }
 
-    /**
-     * Verificar salud del servicio de scraping
-     */
-    public function healthCheck()
-    {
-        try {
-            // Verificar que Node.js esté disponible
-            $nodeVersion = shell_exec("{$this->nodePath} --version 2>&1");
-            $nodeAvailable = !empty($nodeVersion) && strpos($nodeVersion, 'v') === 0;
-            
-            // Verificar que el script existe
-            $scriptExists = file_exists($this->scriptPath);
-            
-            // Verificar que las dependencias estén instaladas
-            $packageJsonExists = file_exists(dirname($this->scriptPath) . '/package.json');
-            $nodeModulesExists = file_exists(dirname($this->scriptPath) . '/node_modules');
-            
-            $status = 'healthy';
-            $issues = [];
-            
-            if (!$nodeAvailable) {
-                $status = 'unhealthy';
-                $issues[] = 'Node.js no disponible';
-            }
-            
-            if (!$scriptExists) {
-                $status = 'unhealthy';
-                $issues[] = 'Script de scraping no encontrado';
-            }
-            
-            if (!$packageJsonExists) {
-                $status = 'unhealthy';
-                $issues[] = 'package.json no encontrado';
-            }
-            
-            if (!$nodeModulesExists) {
-                $status = 'unhealthy';
-                $issues[] = 'Dependencias de Node.js no instaladas';
-            }
-            
-            return [
-                'node_scraper' => [
-                    'status' => $status,
-                    'node_version' => $nodeVersion ? trim($nodeVersion) : null,
-                    'script_path' => $this->scriptPath,
-                    'script_exists' => $scriptExists,
-                    'package_json_exists' => $packageJsonExists,
-                    'node_modules_exists' => $nodeModulesExists,
-                    'issues' => $issues
-                ]
-            ];
-            
-        } catch (\Exception $e) {
-            return [
-                'node_scraper' => [
-                    'status' => 'unreachable',
-                    'error' => $e->getMessage()
-                ]
-            ];
-        }
-    }
+
 
     /**
      * Obtener estadísticas del scraping
@@ -186,5 +158,79 @@ class ScraperService
     private function getLastReturnCode()
     {
         return $GLOBALS['?'] ?? 0;
+    }
+
+    /**
+     * Extraer JSON válido del output del comando
+     */
+    private function extractJsonFromOutput(string $output): ?string
+    {
+        Log::info('Output del comando: ' . $output);
+        // Patrones para encontrar el inicio del JSON
+        $patterns = [
+            '/\{\s*"success"/',           // {"success" con espacios opcionales
+            '/\{\n\s*"success"/',         // { con nueva línea y espacios
+            '/\{\r?\n\s*"success"/',      // { con CRLF y espacios
+            '/\{\s*\n\s*"success"/',      // { con espacios, nueva línea y espacios
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $output, $matches, PREG_OFFSET_CAPTURE)) {
+                $startPos = $matches[0][1];
+                $jsonPart = substr($output, $startPos);
+                
+                // Intentar parsear el JSON para verificar que es válido
+                $result = json_decode($jsonPart, true);
+                if (json_last_error() === JSON_ERROR_NONE && isset($result['success'])) {
+                    return $jsonPart;
+                }
+            }
+        }
+        
+        // Si no se encuentra con patrones específicos, buscar cualquier JSON válido
+        $braceCount = 0;
+        $startPos = -1;
+        $inString = false;
+        $escapeNext = false;
+        
+        for ($i = 0; $i < strlen($output); $i++) {
+            $char = $output[$i];
+            
+            if ($escapeNext) {
+                $escapeNext = false;
+                continue;
+            }
+            
+            if ($char === '\\') {
+                $escapeNext = true;
+                continue;
+            }
+            
+            if ($char === '"' && !$escapeNext) {
+                $inString = !$inString;
+                continue;
+            }
+            
+            if (!$inString) {
+                if ($char === '{') {
+                    if ($braceCount === 0) {
+                        $startPos = $i;
+                    }
+                    $braceCount++;
+                } elseif ($char === '}') {
+                    $braceCount--;
+                    if ($braceCount === 0 && $startPos !== -1) {
+                        $jsonPart = substr($output, $startPos, $i - $startPos + 1);
+                        $result = json_decode($jsonPart, true);
+                        if (json_last_error() === JSON_ERROR_NONE && isset($result['success'])) {
+                            return $jsonPart;
+                        }
+                        $startPos = -1;
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
 }

@@ -774,20 +774,6 @@ class WorkanaService extends BaseScraper {
             // Verificar si es proyecto max
             const isMaxProject = element.querySelector(selectors.MAX_PROJECT_LABEL) !== null;
             
-            // Debug logging para entender qué está pasando
-            console.log('Project extraction debug:', {
-              title: title.substring(0, 50),
-              clientName,
-              clientCountry,
-              clientRating,
-              paymentVerified,
-              isFeatured,
-              isMaxProject,
-              hasProjectAuthor: !!element.querySelector('.project-author'),
-              hasAuthorInfo: !!element.querySelector('.author-info'),
-              hasPopover: !!element.querySelector('.js-popover-stay')
-            });
-            
             return {
               title,
               description,

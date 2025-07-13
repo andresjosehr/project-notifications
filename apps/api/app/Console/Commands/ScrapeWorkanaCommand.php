@@ -2,15 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use App\Services\ScraperService;
 use App\Services\ProjectService;
 use App\Services\NotificationService;
 use App\Models\User;
 use App\Models\Project;
 
-class ScrapeWorkanaCommand extends Command
+class ScrapeWorkanaCommand extends BaseCommand
 {
     /**
      * The name and signature of the console command.
@@ -35,100 +33,86 @@ class ScrapeWorkanaCommand extends Command
             $this->info('🚀 Iniciando scraping de Workana...');
             
             $startTime = microtime(true);
-            
-            // Ejecutar scraper de Node.js
             $result = $this->executeNodeScraper();
             
-            $duration = (microtime(true) - $startTime) * 1000;
-            
-            if ($result['success']) {
-                $this->info("✅ Scraping completado en {$duration}ms");
-                
-                // Handle new standardized response format
-                $projects = $result['data']['projects'] ?? $result['projects'] ?? [];
-                $stats = $result['data']['stats'] ?? null;
-                
-                if ($stats) {
-                    $this->info("📊 Proyectos encontrados: {$stats['total']} | Procesados: {$stats['processed']} | Errores: {$stats['errors']}");
-                } else {
-                    $this->info("📊 Proyectos encontrados: " . count($projects));
-                }
-                
-                // Procesar proyectos en Laravel
-                $this->processProjects($projects);
-                
-                $this->info('✅ Procesamiento completado');
-            } else {
+            if (!$result['success']) {
                 $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido';
-                $this->error('❌ Error en scraping: ' . $errorMessage);
                 
-                // Log additional error details if available
-                if (isset($result['error']['type'])) {
-                    Log::error('Error details from Node.js scraper', [
-                        'type' => $result['error']['type'],
-                        'message' => $errorMessage,
-                        'platform' => $result['platform'] ?? 'workana',
-                        'operation' => $result['operation'] ?? 'scrape'
-                    ]);
-                }
+                $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'scrape_failed', ['operation' => 'scrape']);
                 
+                $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
                 return 1;
             }
+
             
-            return 0;
+            $projects = $result['data']['projects'] ?? $result['projects'] ?? [];
+            $stats = $result['data']['stats'] ?? null;
+
+            
+            $insertedCount = $this->processProjects($projects);
+            
+            return $this->handleSuccess([
+                'operation' => 'scrape',
+                'message' => 'Scraping y procesamiento completado',
+                'data' => [
+                    'projects_found' => count($projects),
+                    'projects_inserted' => $insertedCount,
+                    'stats' => $stats
+                ],
+                'duration' => round($duration, 2)
+            ]);
             
         } catch (\Exception $e) {
-            $this->error('❌ Error: ' . $e->getMessage());
-            Log::error('Error en comando ScrapeWorkanaCommand', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return 1;
+            return $this->handleError($e, ['operation' => 'scrape']);
         }
     }
     
     /**
      * Ejecutar el scraper de Node.js
      */
-    private function executeNodeScraper()
+    private function executeNodeScraper(): array
     {
         $nodePath = env('NODE_PATH', 'node');
-        $scriptPath = __DIR__ . '/../../../cli.js';
+        $scriptPath = base_path('cli.js');
         $quietFlag = $this->option('silent') ? '--quiet' : '';
         
-        $command = "{$nodePath} {$scriptPath} scrape-workana {$quietFlag} 2>&1";
+        $command = "cd " . base_path() . " && {$nodePath} {$scriptPath} scrape-workana {$quietFlag} 2>&1";
         
         $this->info("Ejecutando: {$command}");
         
-        $output = shell_exec($command);
-        $returnCode = $this->getLastReturnCode();
-        
-        if ($returnCode !== 0) {
-            throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}, Output: {$output}");
-        }
-        
-        $result = json_decode($output, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg() . "\nOutput: {$output}");
-        }
-        
-        return $result;
+        return $this->executeNodeCommand($command, ['operation' => 'scrape']);
     }
     
     /**
      * Procesar los proyectos obtenidos
      */
-    private function processProjects(array $projects)
+    private function processProjects(array $projects): int
     {
         $this->info("Procesando " . count($projects) . " proyectos...");
 
         $projectService = new ProjectService();
         $notificationService = new NotificationService();
-
-        // 1. Identificar proyectos nuevos (por link y plataforma)
-        $links = array_column($projects, 'link');
         $platform = 'workana';
+
+        $newProjectsMapped = $this->identifyAndMapNewProjects($projects, $projectService, $platform);
+        $this->info("Nuevos proyectos detectados: " . count($newProjectsMapped));
+
+        $inserted = 0;
+        if (count($newProjectsMapped) > 0) {
+            $inserted = $projectService->createMany($newProjectsMapped, $platform);
+            $this->info("Proyectos nuevos guardados: $inserted");
+            
+            if ($inserted > 0) {
+                $this->sendNotifications($newProjectsMapped, $notificationService, $platform);
+            }
+        }
+
+        return $inserted;
+    }
+
+    private function identifyAndMapNewProjects(array $projects, ProjectService $projectService, string $platform): array
+    {
+        $links = array_column($projects, 'link');
         $existingProjects = $projectService->findByLinks($links, $platform);
         $existingLinks = $existingProjects->pluck('link')->toArray();
 
@@ -136,8 +120,7 @@ class ScrapeWorkanaCommand extends Command
             return !in_array($project['link'], $existingLinks);
         });
 
-        // Mapear campos con soporte para ambos formatos (camelCase y snake_case)
-        $newProjectsMapped = array_map(function($project) {
+        return array_map(function($project) {
             return [
                 'title' => $project['title'] ?? null,
                 'description' => $project['description'] ?? null,
@@ -159,67 +142,55 @@ class ScrapeWorkanaCommand extends Command
                 'updated_at' => now(),
             ];
         }, array_values($newProjects));
+    }
 
-        $this->info("Nuevos proyectos detectados: " . count($newProjectsMapped));
-
-        // 2. Guardar los proyectos nuevos
-        $inserted = 0;
-        if (count($newProjectsMapped) > 0) {
-            $inserted = $projectService->createMany($newProjectsMapped, $platform);
-            $this->info("Proyectos nuevos guardados: $inserted");
+    private function sendNotifications(array $newProjectsMapped, NotificationService $notificationService, string $platform): void
+    {
+        $users = User::whereNotNull('telegram_user')->get();
+        
+        if ($users->count() === 0) {
+            $this->warn("⚠️ No hay usuarios con telegram_user configurado");
+            return;
         }
 
-        // 3. Notificar a los usuarios con telegram_user
-        if ($inserted > 0) {
-            $users = User::whereNotNull('telegram_user')->get();
+        $this->info("Enviando notificaciones a " . $users->count() . " usuarios...");
+        
+        foreach ($newProjectsMapped as $projectData) {
+            $project = Project::where('link', $projectData['link'])
+                ->where('platform', $platform)
+                ->first();
             
-            if ($users->count() > 0) {
-                $this->info("Enviando notificaciones a " . $users->count() . " usuarios...");
+            if (!$project) {
+                $this->warn("⚠️ No se encontró el proyecto guardado para notificar");
+                continue;
+            }
+
+            $this->sendProjectNotifications($project, $users, $notificationService);
+        }
+        
+        $this->info("✅ Notificaciones completadas");
+    }
+
+    private function sendProjectNotifications(Project $project, $users, NotificationService $notificationService): void
+    {
+        foreach ($users as $user) {
+            try {
+                $result = $notificationService->sendProjectNotification($project, $user);
                 
-                foreach ($newProjectsMapped as $projectData) {
-                    // Buscar el proyecto recién guardado para pasar un modelo a NotificationService
-                    $project = Project::where('link', $projectData['link'])
-                        ->where('platform', $platform)
-                        ->first();
-                    
-                    if ($project) {
-                        foreach ($users as $user) {
-                            try {
-                                $result = $notificationService->sendProjectNotification($project, $user);
-                                
-                                if ($result['success']) {
-                                    $this->info("✅ Notificación enviada a {$user->telegram_user}");
-                                } else {
-                                    $this->warn("⚠️ Error enviando notificación a {$user->telegram_user}: " . ($result['error'] ?? 'Error desconocido'));
-                                }
-                            } catch (\Exception $e) {
-                                $this->error("❌ Error enviando notificación a {$user->telegram_user}: " . $e->getMessage());
-                                Log::error('Error enviando notificación', [
-                                    'user_id' => $user->id,
-                                    'project_id' => $project->id,
-                                    'error' => $e->getMessage()
-                                ]);
-                            }
-                        }
-                    } else {
-                        $this->warn("⚠️ No se encontró el proyecto guardado para notificar");
-                    }
+                if ($result['success']) {
+                    $this->info("✅ Notificación enviada a {$user->telegram_user}");
+                } else {
+                    $this->warn("⚠️ Error enviando notificación a {$user->telegram_user}: " . ($result['error'] ?? 'Error desconocido'));
                 }
-                
-                $this->info("✅ Notificaciones completadas");
-            } else {
-                $this->warn("⚠️ No hay usuarios con telegram_user configurado");
+            } catch (\Exception $e) {
+                $this->error("❌ Error enviando notificación a {$user->telegram_user}: " . $e->getMessage());
+                $this->logWarning('Error enviando notificación', [
+                    'user_id' => $user->id,
+                    'project_id' => $project->id,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
-
-
     }
     
-    /**
-     * Obtener el código de retorno del último comando ejecutado
-     */
-    private function getLastReturnCode()
-    {
-        return $GLOBALS['?'] ?? 0;
-    }
 } 
