@@ -212,14 +212,7 @@ class ScrapeWorkanaCommand extends Command
             }
         }
 
-        // Log para todos los proyectos procesados
-        foreach ($projects as $project) {
-            Log::info('Proyecto procesado', [
-                'title' => $project['title'],
-                'platform' => $project['platform'],
-                'link' => $project['link']
-            ]);
-        }
+
     }
     
     /**

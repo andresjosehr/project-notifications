@@ -33,33 +33,19 @@ class LoginWorkana extends Command
             $response = null;
             
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-                Log::info("Intento de login #{$attempt} de {$maxAttempts}");
-                
                 $command = "node " . base_path('cli.js') . " login " . 
                     escapeshellarg($email) . " " . 
                     escapeshellarg($password) . " --debug 2>&1";
 
-                Log::info('Ejecutando comando: ' . $command);
                 $output = shell_exec($command);
-                Log::info('Output del comando: ' . $output);
-                Log::info('Tipo de output: ' . gettype($output));
                 
                 $response = json_decode($output, true);
 
                 // Get last json parser error
                 $lastJsonParserError = json_last_error_msg();
-                Log::info('Último error de JSON: ' . $lastJsonParserError);
 
-                Log::info('Tipo despues de haberlo convertido a json: ' . gettype($response));
-
-                // gET JSON
-
-                Log::info('Response en LoginWorkana: ' . json_encode($response));
-                
                 // Si el login es exitoso, salir del loop - handle new standardized format
                 if ($response && $response['success']) {
-                    Log::info("Login exitoso en intento #{$attempt}");
-                    
                     // Handle new standardized response format
                     if (isset($response['data']['sessionData'])) {
                         $response['sessionData'] = $response['data']['sessionData'];
@@ -81,32 +67,24 @@ class LoginWorkana extends Command
                 }
             }
 
-            // Si todos los intentos fallaron, usar simulación como último recurso
+            // Si todos los intentos fallaron, retornar error
             if (!$response || !$response['success']) {
                 $finalError = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
-                Log::error('Todos los intentos de login real fallaron, usando simulación como último recurso', [
+                Log::error('Todos los intentos de login real fallaron', [
                     'finalError' => $finalError,
                     'error_type' => $response['error']['type'] ?? 'unknown',
                     'attempts' => $maxAttempts,
                     'platform' => $response['platform'] ?? 'workana'
                 ]);
                 
-                $dummySessionData = [
-                    'userId' => $userId,
-                    'email' => $email,
-                    'cookies' => [],
-                    'localStorage' => [],
-                    'sessionStorage' => [],
-                    'userAgent' => 'dummy',
-                    'loginTimestamp' => time(),
-                    'loginMethod' => 'simulated_last_resort',
-                    'originalError' => $finalError
-                ];
+                $this->error(json_encode([
+                    'success' => false,
+                    'error' => $finalError,
+                    'error_type' => $response['error']['type'] ?? 'unknown',
+                    'platform' => $response['platform'] ?? 'workana'
+                ]));
 
-                $response = [
-                    'success' => true,
-                    'sessionData' => $dummySessionData
-                ];
+                return 1;
             }
 
             // Guardar o actualizar session_data
