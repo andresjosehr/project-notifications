@@ -49,23 +49,21 @@ class ProposalController extends Controller
             
             // Obtener datos de sesión del usuario
             $sessionData = $this->getUserSessionData($userId, $platform);
-            // if (!$sessionData) {
-            //     Log::info('No se encontraron datos de sesión');
-            //     // Intentar hacer login y obtener session_data
-            //     $loginResult = $this->attemptLogin($userId, $platform);
-            //     if (!$loginResult['success']) {
-            //         return response()->json([
-            //             'success' => false,
-            //             'error' => 'No se encontraron datos de sesión y falló el login: ' . $loginResult['error']
-            //         ], 400);
-            //     }
-            //     $sessionData = $loginResult['sessionData'];
-            // }
+            if (!$sessionData) {
+                Log::info('No se encontraron datos de sesión');
+                // Intentar hacer login y obtener session_data
+                $loginResult = $this->attemptLogin($userId, $platform);
+                if (!$loginResult['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'No se encontraron datos de sesión y falló el login: ' . $loginResult['error']
+                    ], 400);
+                }
+                $sessionData = $loginResult['sessionData'];
+            }
             
-            // Ejecutar comando Artisan
-            // $project->link = https://www.workana.com/job/consultor-de-ia-para-automatizacion-y-optimizacion-de-procesos-empresariales
-            // Transformed link https://www.workana.com/messages/bid/consultor-de-ia-para-automatizacion-y-optimizacion-de-procesos-empresariales/?tab=message&ref=project_view
-            // Necesitamos transformar la url
+            $sessionData = $this->getUserSessionData($userId, $platform);
+            
             $projectLink = str_replace('https://www.workana.com/job/', 'https://www.workana.com/messages/bid/', $project->link);
             $projectLink = str_replace('?tab=message&ref=project_view', '', $projectLink);
             $projectLink = str_replace('https://www.workana.com/messages/bid/', 'https://www.workana.com/messages/bid/', $projectLink);

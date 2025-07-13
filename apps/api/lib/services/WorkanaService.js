@@ -278,7 +278,6 @@ class WorkanaService extends BaseScraper {
       
       return {
         success: true,
-        user: await this._getUserInfo(),
         message: 'Login exitoso'
       };
     } catch (error) {
@@ -489,106 +488,11 @@ class WorkanaService extends BaseScraper {
     }
   }
 
-  async _getUserInfo() {
-    try {
-      // Look for user name/button in navigation
-      const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user/i }).first();
-      
-      if (await userButton.count() > 0) {
-        const userName = await userButton.textContent();
-        if (userName && userName.trim()) {
-          return { 
-            name: userName.trim(),
-            email: 'usuario@workana.com' // Default since email is not easily accessible
-          };
-        }
-      }
-      
-      // Try to find user avatar with alt text
-      const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
-      
-      if (await userAvatar.count() > 0) {
-        const altText = await userAvatar.getAttribute('alt');
-        if (altText) {
-          return { 
-            name: altText,
-            email: 'usuario@workana.com'
-          };
-        }
-      }
-      
-      // Check current URL for user information
-      const currentUrl = this.page.url();
-      
-      if (currentUrl.includes('/dashboard')) {
-        return { 
-          name: 'Usuario de Workana',
-          email: 'usuario@workana.com',
-          status: 'logueado'
-        };
-      }
-      
-      return { 
-        name: 'Usuario de Workana',
-        email: 'usuario@workana.com'
-      };
-    } catch (error) {
-      logger.errorWithStack('Error obteniendo información del usuario', error);
-      return { 
-        name: 'Usuario de Workana',
-        email: 'usuario@workana.com'
-      };
-    }
-  }
 
   // ===========================================
   // AUTHENTICATION METHODS
   // ===========================================
 
-  async loginByUserId(userId) {
-    try {
-      this._validateUserId(userId);
-      
-      const user = await this._getUserForLogin(userId);
-      logger.info(`Iniciando sesión en Workana con usuario ${user.workanaEmail}...`);
-      
-      const result = await this.login(user.workanaEmail, user.workanaPassword);
-      
-      if (result.success) {
-        await this.saveSession(userId);
-        return {
-          ...result,
-          userId: userId,
-          userEmail: user.workanaEmail
-        };
-      }
-      
-      return result;
-    } catch (error) {
-      logger.errorWithStack('Error en login por userId', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  async _getUserForLogin(userId) {
-    // Para el CLI, simulamos un usuario con credenciales
-    // En una implementación real, esto vendría de la base de datos
-    const user = {
-      id: userId,
-      workanaEmail: process.env.WORKANA_USERNAME,
-      workanaPassword: process.env.WORKANA_PASSWORD,
-      isActive: true
-    };
-    
-    if (!user.workanaEmail || !user.workanaPassword) {
-      throw new Error('Se requieren credenciales de Workana. Configurar WORKANA_USERNAME y WORKANA_PASSWORD en .env');
-    }
-    
-    return user;
-  }
 
   async saveSession(userId) {
     try {
@@ -1023,149 +927,7 @@ class WorkanaService extends BaseScraper {
     }
   }
 
-  _validateProjectId(projectId) {
-    if (!projectId || typeof projectId !== 'string') {
-      throw new Error('projectId debe ser una cadena válida');
-    }
-  }
 
-  async _getProjectData(projectId) {
-    // Para el CLI, asumimos que el projectId es la URL completa o el slug del proyecto
-    const projectUrl = projectId.startsWith('http') ? projectId : `${this.baseUrl}/job/${projectId}`;
-    
-    try {
-      await this.page.goto(projectUrl, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 30000 
-      });
-      
-      await this.page.waitForTimeout(2000);
-      
-      const title = await this.page.locator('h1, .project-title, [data-testid="project-title"]').first().textContent() || 'Proyecto de Workana';
-      const description = await this.page.locator('.project-description, .description, [data-testid="project-description"]').first().textContent() || '';
-      
-      return {
-        title: title.trim(),
-        description: description.trim(),
-        link: projectUrl
-      };
-    } catch (error) {
-      logger.errorWithStack('Error obteniendo datos del proyecto', error);
-      return {
-        title: 'Proyecto de Workana',
-        description: '',
-        link: projectUrl
-      };
-    }
-  }
-
-  async _navigateToProposal(project) {
-    const jobSlug = project.link.split('/job/')[1];
-    const projectUrl = `${this.baseUrl}/messages/bid/${jobSlug}/?tab=message&ref=project_view`;
-    
-    if (this.debug) {
-      logger.info(`URL de propuesta construida: ${projectUrl}`);
-    }
-    
-    await this.page.goto(projectUrl, { 
-      waitUntil: 'domcontentloaded',
-      timeout: 60000 
-    });
-    
-    await this.page.waitForTimeout(3000);
-  }
-
-  async _navigateToProposalPage() {
-    try {
-      // Asumimos que ya estamos en la página del proyecto
-      // Buscar el botón de "Enviar propuesta" o "Aplicar"
-      const proposalButtonSelectors = [
-        'a:has-text("Enviar propuesta")',
-        'a:has-text("Send proposal")',
-        'a:has-text("Aplicar")',
-        'a:has-text("Apply")',
-        'button:has-text("Enviar propuesta")',
-        'button:has-text("Send proposal")',
-        'button:has-text("Aplicar")',
-        'button:has-text("Apply")',
-        '.proposal-btn',
-        '.apply-btn',
-        '[data-testid="send-proposal-btn"]'
-      ];
-      
-      let proposalButton = null;
-      for (const selector of proposalButtonSelectors) {
-        const button = this.page.locator(selector).first();
-        if (await button.count() > 0) {
-          proposalButton = button;
-          break;
-        }
-      }
-      
-      if (!proposalButton) {
-        // Si no encontramos el botón, intentar navegar directamente a la URL de propuesta
-        const currentUrl = this.page.url();
-        if (currentUrl.includes('/job/')) {
-          const jobSlug = currentUrl.split('/job/')[1]?.split('?')[0];
-          if (jobSlug) {
-            const proposalUrl = `${this.baseUrl}/messages/bid/${jobSlug}/?tab=message&ref=project_view`;
-            await this.page.goto(proposalUrl, { 
-              waitUntil: 'domcontentloaded',
-              timeout: 60000 
-            });
-            await this.page.waitForTimeout(3000);
-            return;
-          }
-        }
-        throw new Error('No se encontró el botón de propuesta ni se pudo navegar a la página de propuesta');
-      }
-      
-      await proposalButton.click();
-      await this.page.waitForTimeout(3000);
-      
-    } catch (error) {
-      logger.errorWithStack('Error navegando a la página de propuesta', error);
-      throw error;
-    }
-  }
-
-  async _verifyProposalPage() {
-    try {
-      const proposalSelectors = [
-        'textarea',
-        '.proposal-text',
-        '[data-testid="proposal-text"]',
-        'textarea[name="message"]',
-        'textarea[placeholder*="propuesta"]'
-      ];
-      
-      let found = false;
-      for (const selector of proposalSelectors) {
-        const element = this.page.locator(selector).first();
-        if (await element.count() > 0) {
-          found = true;
-          break;
-        }
-      }
-      
-      if (!found) {
-        throw new Error('No se encontró el área de texto de la propuesta');
-      }
-    } catch (error) {
-      logger.errorWithStack('Error verificando página de propuesta', error);
-      throw error;
-    }
-  }
-
-  async _generateDefaultProposal(project) {
-    return `Hola, he revisado tu proyecto "${project.title}" y me interesa mucho participar. 
-
-Tengo experiencia en este tipo de trabajos y puedo ofrecerte una solución de calidad. 
-
-¿Podrías proporcionarme más detalles sobre los requisitos específicos del proyecto?
-
-Saludos.`;
-  }
 
   async _fillAndSubmitProposal(proposalText) {
     const proposalTextArea = this.page.locator('textarea, .proposal-text, [data-testid="proposal-text"]').first();
@@ -1177,20 +939,19 @@ Saludos.`;
     await proposalTextArea.fill(proposalText);
     await this.page.waitForTimeout(1000);
     
-    const sendButton = this._getSubmitButtonLocator();
-    
-    if (await sendButton.count() === 0) {
-      await this._debugAvailableButtons();
-      throw new Error('No se encontró el botón de enviar');
+    const sendButton = this._getSubmitProposalButtonLocator();
+
+    if(!sendButton) {
+      throw new Error('No se encontró el botón de envío de propuesta');
     }
-    
+
     await sendButton.click();
     await this.page.waitForTimeout(5000);
     
     await this._verifySubmissionSuccess();
   }
 
-  _getSubmitButtonLocator() {
+  _getSubmitProposalButtonLocator() {
     return this.page.locator(`
       button:has-text("Enviar"):not(.search-submit):not([class*="search"]), 
       button:has-text("Enviar propuesta"),
@@ -1207,16 +968,7 @@ Saludos.`;
     `).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
   }
 
-  async _debugAvailableButtons() {
-    if (!this.debug) return;
-    
-    const buttons = await this.page.locator('button, input[type="submit"]').all();
-    logger.info(`Botones disponibles: ${buttons.length}`);
-    for (let i = 0; i < Math.min(buttons.length, 10); i++) {
-      const text = await buttons[i].textContent();
-      logger.info(`Botón ${i}: "${text}"`);
-    }
-  }
+
 
   async _verifySubmissionSuccess() {
     try {
