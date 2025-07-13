@@ -58,24 +58,48 @@ class SendWorkanaProposal extends Command
             
             if ($result && $result['success']) {
                 $this->info('✅ Propuesta enviada exitosamente');
-                $this->line("Duración: {$result['duration']}ms");
-                $this->line("Plataforma: {$result['platform']}");
                 
-                if (isset($result['data']['projectTitle'])) {
-                    $this->line("Proyecto: {$result['data']['projectTitle']}");
+                // Handle new standardized response format
+                if (isset($result['duration'])) {
+                    $this->line("Duración: {$result['duration']}ms");
                 }
                 
-                if (isset($result['data']['userEmail'])) {
-                    $this->line("Usuario: {$result['data']['userEmail']}");
+                if (isset($result['platform'])) {
+                    $this->line("Plataforma: {$result['platform']}");
+                }
+                
+                if (isset($result['operation'])) {
+                    $this->line("Operación: {$result['operation']}");
+                }
+                
+                // Check for data in new format
+                $data = $result['data'] ?? [];
+                if (isset($data['projectLink'])) {
+                    $this->line("Proyecto: {$data['projectLink']}");
+                }
+                
+                // Legacy format support
+                if (isset($result['projectLink'])) {
+                    $this->line("Proyecto: {$result['projectLink']}");
+                }
+                
+                if (isset($result['message'])) {
+                    $this->line("Mensaje: {$result['message']}");
                 }
                 
                 return 0;
             } else {
-                $errorMessage = $result['error']['message'] ?? 'Error desconocido enviando propuesta';
+                // Handle new standardized error format
+                $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
+                $errorType = $result['error']['type'] ?? 'unknown';
+                
                 $this->error("❌ Error enviando propuesta: {$errorMessage}");
                 
                 Log::error('Error enviando propuesta a Workana', [
                     'error' => $errorMessage,
+                    'error_type' => $errorType,
+                    'platform' => $result['platform'] ?? 'workana',
+                    'operation' => $result['operation'] ?? 'send_proposal',
                     'result' => $result
                 ]);
                 

@@ -5,11 +5,120 @@ const logger = require('../utils/logger');
 const { franc } = require('franc');
 
 class WorkanaService extends BaseScraper {
+  // ===========================================
+  // HTML SELECTORS & CSS CLASSES
+  // ===========================================
+  
+  static SELECTORS = {
+    // Project selectors
+    PROJECT_ITEM: '.project-item',
+    PROJECT_TITLE: '.project-title span span',
+    PROJECT_TITLE_LINK: '.project-title a',
+    PROJECT_DESCRIPTION: '.project-details p',
+    PROJECT_BUDGET: '.budget span span',
+    PROJECT_SKILLS: '.skills .skill h3',
+    PROJECT_VIEW_MORE: '.project-details p a[href="#"]',
+    
+    // Client info selectors
+    CLIENT_NAME: '.author-info a span',
+    CLIENT_COUNTRY: '.project-author .country .country-name a, .country .country-name a, .country-name a',
+    CLIENT_POPOVER: '.project-author .author-info .js-popover-stay, .author-info .js-popover-stay, .js-popover-stay',
+    CLIENT_RATING: '.stars-bg',
+    PAYMENT_VERIFIED: '.payment-verified, .payment .payment-verified',
+    
+    // Project features
+    FEATURED_PROJECT: '.project-item-featured',
+    MAX_PROJECT_LABEL: '.label-max',
+    
+    // Login form selectors
+    LOGIN_FORM: 'form, .login-form',
+    EMAIL_INPUT: 'input[type="email"], input[type="text"]',
+    
+    // Cookie consent selectors
+    COOKIE_BUTTONS: [
+      'button:has-text("Aceptar")',
+      'button:has-text("Accept")',
+      'button:has-text("Aceitar")',
+      '.cookie-accept',
+      '[data-testid="cookie-accept"]',
+      '#cookie-accept',
+      '.btn-accept-cookies'
+    ],
+    
+    // CAPTCHA selectors
+    CAPTCHA_SELECTORS: [
+      'iframe[src*="recaptcha"]',
+      '.g-recaptcha',
+      '[data-testid="captcha"]'
+    ],
+    
+    // Login error selectors
+    LOGIN_ERRORS: [
+      'text=Usuario o contraseña incorrectos',
+      'text=Invalid credentials',
+      'text=Credenciales inválidas'
+    ],
+    
+    // Logged in navigation elements
+    LOGGED_IN_NAV: [
+      'text=Contrata',
+      'text=Mis proyectos',
+      'text=Mis finanzas',
+      'button:has-text("Contrata")',
+      'button:has-text("Mis proyectos")'
+    ],
+    
+    // Proposal form selectors
+    PROPOSAL_TEXT_AREA: 'textarea, .proposal-text, [data-testid="proposal-text"]',
+    PROPOSAL_SUBMIT_BUTTON: `
+      button:has-text("Enviar"):not(.search-submit):not([class*="search"]), 
+      button:has-text("Enviar propuesta"),
+      button:has-text("Send"), 
+      button:has-text("Send proposal"),
+      button:has-text("Envía"),
+      button:has-text("Aplicar"),
+      button:has-text("Apply"),
+      .send-btn, 
+      .submit-btn,
+      [data-testid="send-proposal-btn"],
+      input[type="submit"]:not(.search-submit):not([class*="search"]),
+      button[type="submit"]:not(.search-submit):not([class*="search"])
+    `,
+    
+    // Success message selectors
+    SUCCESS_MESSAGES: [
+      '.success-message',
+      '.alert-success',
+      '[data-testid="success-message"]',
+      'div:has-text("Propuesta enviada")',
+      'div:has-text("Proposal sent")'
+    ]
+  };
+
+  static URLS = {
+    BASE: 'https://www.workana.com',
+    LOGIN: 'https://www.workana.com/login',
+    JOBS: 'https://www.workana.com/jobs?category=it-programming&language=en%2Ces'
+  };
+
+  static TIMEOUTS = {
+    DEFAULT: 30000,
+    LOGIN_NAVIGATION: 20000,
+    ELEMENT_WAIT: 10000,
+    SHORT_WAIT: 3000,
+    FORM_WAIT: 500,
+    PROPOSAL_SUBMIT: 5000
+  };
+
+  // ===========================================
+  // CONSTRUCTOR & CONFIGURATION
+  // ===========================================
+  
   constructor(options = {}) {
     super('workana');
     
-    this.baseUrl = 'https://www.workana.com';
-    this.loginUrl = `${this.baseUrl}/login`;
+    this.baseUrl = WorkanaService.URLS.BASE;
+    this.loginUrl = WorkanaService.URLS.LOGIN;
     
     this.browserConfig = {
       headless: options.headless !== false,
@@ -35,8 +144,8 @@ class WorkanaService extends BaseScraper {
     this.pageConfig = {
       viewport: { width: 1920, height: 1080 },
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      timeout: 30000,
-      waitTimeout: 3000
+      timeout: WorkanaService.TIMEOUTS.DEFAULT,
+      waitTimeout: WorkanaService.TIMEOUTS.SHORT_WAIT
     };
 
     this.isLoggedIn = false;
@@ -71,7 +180,10 @@ class WorkanaService extends BaseScraper {
     // Remove automation indicators
     await this.page.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-      window.chrome = { runtime: {} };
+      Object.defineProperty(window, 'chrome', { 
+        value: { runtime: {} },
+        writable: true
+      });
       Object.defineProperty(navigator, 'plugins', {
         get: () => [1, 2, 3, 4, 5]
       });
@@ -145,111 +257,8 @@ class WorkanaService extends BaseScraper {
   }
 
   // ===========================================
-  // SESSION MANAGEMENT
+  // AUTHENTICATION METHODS
   // ===========================================
-
-  async loadSessionData(sessionData) {
-    try {
-      if (!sessionData || !sessionData.cookies) {
-        return false;
-      }
-
-      await this._ensureBrowserReady();
-      await this.page.context().addCookies(sessionData.cookies);
-      
-      const isValid = await this.validateSession();
-      if (isValid) {
-        this.isLoggedIn = true;
-        if (this.debug) {
-          logger.info('Sesión de Workana cargada exitosamente');
-        }
-        return true;
-      } else {
-        if (this.debug) {
-          logger.info('Sesión de Workana inválida');
-        }
-        return false;
-      }
-    } catch (error) {
-      logger.errorWithStack('Error cargando sesión', error);
-      return false;
-    }
-  }
-
-  async validateSession() {
-    try {
-      await this.page.goto(this.baseUrl, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 30000 
-      });
-      
-      await this.page.waitForTimeout(2000);
-      
-      return await this._checkLoggedInElements();
-    } catch (error) {
-      logger.errorWithStack('Error validando sesión', error);
-      return false;
-    }
-  }
-
-  async _checkLoggedInElements() {
-    try {
-      // Check current URL first - most reliable indicator
-      const currentUrl = this.page.url();
-      if (this.debug) {
-        logger.debug(`URL actual: ${currentUrl}`);
-      }
-      
-      // If we're on dashboard or not on login page, we're likely logged in
-      if (currentUrl.includes('/dashboard') || currentUrl.includes('/messages') || currentUrl.includes('/projects')) {
-        logger.debug('Usuario logueado - detectado por URL');
-        return true;
-      }
-      
-      // If still on login page, we failed
-      if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
-        logger.debug('Aún en página de login');
-        return false;
-      }
-      
-      // Look for user avatar/profile button in navigation
-      const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user|perfil|profile/i }).first();
-      if (await userButton.count() > 0) {
-        logger.debug('Botón de usuario encontrado en navegación');
-        return true;
-      }
-      
-      // Look for user avatar image
-      const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
-      if (await userAvatar.count() > 0) {
-        logger.debug('Avatar de usuario encontrado');
-        return true;
-      }
-      
-      // Look for navigation elements that only appear when logged in
-      const loggedInNavElements = [
-        'text=Contrata',
-        'text=Mis proyectos',
-        'text=Mis finanzas',
-        'button:has-text("Contrata")',
-        'button:has-text("Mis proyectos")'
-      ];
-      
-      for (const selector of loggedInNavElements) {
-        const element = this.page.locator(selector).first();
-        if (await element.count() > 0) {
-          logger.debug(`Elemento de navegación logueado encontrado: ${selector}`);
-          return true;
-        }
-      }
-      
-      logger.debug('No se detectó sesión activa');
-      return false;
-    } catch (error) {
-      logger.errorWithStack('Error verificando elementos de login', error);
-      return false;
-    }
-  }
 
   async login(username, password) {
     try {
@@ -299,7 +308,7 @@ class WorkanaService extends BaseScraper {
       // First try with networkidle
       await this.page.goto(this.loginUrl, { 
         waitUntil: 'networkidle',
-        timeout: 20000 
+        timeout: WorkanaService.TIMEOUTS.LOGIN_NAVIGATION
       });
     } catch (error) {
       if (this.debug) {
@@ -313,8 +322,8 @@ class WorkanaService extends BaseScraper {
     }
     
     // Wait for form to be ready
-    await this.page.waitForSelector('input[type="email"], input[type="text"]', { timeout: 10000 });
-    await this.page.waitForTimeout(3000);
+    await this.page.waitForSelector(WorkanaService.SELECTORS.EMAIL_INPUT, { timeout: WorkanaService.TIMEOUTS.ELEMENT_WAIT });
+    await this.page.waitForTimeout(WorkanaService.TIMEOUTS.SHORT_WAIT);
     
     if (this.debug) {
       logger.debug('Página de login cargada correctamente');
@@ -327,17 +336,7 @@ class WorkanaService extends BaseScraper {
       await this.page.waitForTimeout(1000);
       
       // Look for cookie consent buttons with more specific selectors
-      const cookieSelectors = [
-        'button:has-text("Aceptar")',
-        'button:has-text("Accept")',
-        'button:has-text("Aceitar")',
-        '.cookie-accept',
-        '[data-testid="cookie-accept"]',
-        '#cookie-accept',
-        '.btn-accept-cookies'
-      ];
-      
-      for (const selector of cookieSelectors) {
+      for (const selector of WorkanaService.SELECTORS.COOKIE_BUTTONS) {
         const cookieButton = this.page.locator(selector).first();
         if (await cookieButton.count() > 0 && await cookieButton.isVisible()) {
           if (this.debug) {
@@ -357,13 +356,7 @@ class WorkanaService extends BaseScraper {
 
   async _checkForCaptcha() {
     try {
-      const captchaSelectors = [
-        'iframe[src*="recaptcha"]',
-        '.g-recaptcha',
-        '[data-testid="captcha"]'
-      ];
-      
-      for (const selector of captchaSelectors) {
+      for (const selector of WorkanaService.SELECTORS.CAPTCHA_SELECTORS) {
         const captcha = this.page.locator(selector).first();
         if (await captcha.count() > 0) {
           throw new Error('CAPTCHA detectado. No se puede proceder automáticamente.');
@@ -378,7 +371,7 @@ class WorkanaService extends BaseScraper {
 
   async _fillLoginForm(username, password) {
     // Wait for the form to be fully loaded
-    await this.page.waitForSelector('form, .login-form', { timeout: 10000 });
+    await this.page.waitForSelector(WorkanaService.SELECTORS.LOGIN_FORM, { timeout: WorkanaService.TIMEOUTS.ELEMENT_WAIT });
     
     // Use more specific and reliable selectors based on actual Workana structure
     const emailInput = this.page.getByRole('textbox', { name: /email/i }).first();
@@ -395,11 +388,11 @@ class WorkanaService extends BaseScraper {
     // Clear and fill the fields
     await emailInput.clear();
     await emailInput.fill(username);
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(WorkanaService.TIMEOUTS.FORM_WAIT);
     
     await passwordInput.clear();
     await passwordInput.fill(password);
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(WorkanaService.TIMEOUTS.FORM_WAIT);
     
     if (this.debug) {
       logger.debug('Campos de login completados');
@@ -420,7 +413,7 @@ class WorkanaService extends BaseScraper {
     
     // Click and wait for navigation
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
+      this.page.waitForURL('**/login', { waitUntil: 'domcontentloaded', timeout: WorkanaService.TIMEOUTS.DEFAULT }),
       submitButton.click()
     ]);
     
@@ -430,16 +423,10 @@ class WorkanaService extends BaseScraper {
   async _verifyLoginSuccess() {
     try {
       // Wait for page to settle after navigation
-      await this.page.waitForTimeout(3000);
+      await this.page.waitForTimeout(WorkanaService.TIMEOUTS.SHORT_WAIT);
       
       // Check for login errors first
-      const errorSelectors = [
-        'text=Usuario o contraseña incorrectos',
-        'text=Invalid credentials',
-        'text=Credenciales inválidas'
-      ];
-      
-      for (const selector of errorSelectors) {
+      for (const selector of WorkanaService.SELECTORS.LOGIN_ERRORS) {
         const errorElement = this.page.locator(selector).first();
         if (await errorElement.count() > 0) {
           const errorText = await errorElement.textContent();
@@ -488,11 +475,104 @@ class WorkanaService extends BaseScraper {
     }
   }
 
+  async _checkLoggedInElements() {
+    try {
+      // Check current URL first - most reliable indicator
+      const currentUrl = this.page.url();
+      if (this.debug) {
+        logger.debug(`URL actual: ${currentUrl}`);
+      }
+      
+      // If we're on dashboard or not on login page, we're likely logged in
+      if (currentUrl.includes('/dashboard') || currentUrl.includes('/messages') || currentUrl.includes('/projects')) {
+        logger.debug('Usuario logueado - detectado por URL');
+        return true;
+      }
+      
+      // If still on login page, we failed
+      if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
+        logger.debug('Aún en página de login');
+        return false;
+      }
+      
+      // Look for user avatar/profile button in navigation
+      const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user|perfil|profile/i }).first();
+      if (await userButton.count() > 0) {
+        logger.debug('Botón de usuario encontrado en navegación');
+        return true;
+      }
+      
+      // Look for user avatar image
+      const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
+      if (await userAvatar.count() > 0) {
+        logger.debug('Avatar de usuario encontrado');
+        return true;
+      }
+      
+      // Look for navigation elements that only appear when logged in
+      for (const selector of WorkanaService.SELECTORS.LOGGED_IN_NAV) {
+        const element = this.page.locator(selector).first();
+        if (await element.count() > 0) {
+          logger.debug(`Elemento de navegación logueado encontrado: ${selector}`);
+          return true;
+        }
+      }
+      
+      logger.debug('No se detectó sesión activa');
+      return false;
+    } catch (error) {
+      logger.errorWithStack('Error verificando elementos de login', error);
+      return false;
+    }
+  }
 
   // ===========================================
-  // AUTHENTICATION METHODS
+  // SESSION MANAGEMENT
   // ===========================================
 
+  async loadSessionData(sessionData) {
+    try {
+      if (!sessionData || !sessionData.cookies) {
+        return false;
+      }
+
+      await this._ensureBrowserReady();
+      await this.page.context().addCookies(sessionData.cookies);
+      
+      const isValid = await this.validateSession();
+      if (isValid) {
+        this.isLoggedIn = true;
+        if (this.debug) {
+          logger.info('Sesión de Workana cargada exitosamente');
+        }
+        return true;
+      } else {
+        if (this.debug) {
+          logger.info('Sesión de Workana inválida');
+        }
+        return false;
+      }
+    } catch (error) {
+      logger.errorWithStack('Error cargando sesión', error);
+      return false;
+    }
+  }
+
+  async validateSession() {
+    try {
+      await this.page.goto(this.baseUrl, { 
+        waitUntil: 'domcontentloaded',
+        timeout: WorkanaService.TIMEOUTS.DEFAULT
+      });
+      
+      await this.page.waitForTimeout(2000);
+      
+      return await this._checkLoggedInElements();
+    } catch (error) {
+      logger.errorWithStack('Error validando sesión', error);
+      return false;
+    }
+  }
 
   async saveSession(userId) {
     try {
@@ -523,12 +603,7 @@ class WorkanaService extends BaseScraper {
   async _createSessionData() {
     try {
       const cookies = await this.page.context().cookies();
-      const localStorage = await this.page.evaluate(() => {
-        return Object.keys(localStorage).reduce((acc, key) => {
-          acc[key] = localStorage.getItem(key);
-          return acc;
-        }, {});
-      });
+      const localStorage = []
       
       return {
         cookies: cookies,
@@ -549,8 +624,16 @@ class WorkanaService extends BaseScraper {
   }
 
   // ===========================================
-  // PROJECT SCRAPING
+  // PROJECT SCRAPING METHODS
   // ===========================================
+
+  getUrl() {
+    return WorkanaService.URLS.JOBS;
+  }
+
+  getProjectSelector() {
+    return WorkanaService.SELECTORS.PROJECT_ITEM;
+  }
 
   detectLanguage(text) {
     try {
@@ -588,14 +671,6 @@ class WorkanaService extends BaseScraper {
     }
   }
 
-  getUrl() {
-    return 'https://www.workana.com/jobs?category=it-programming&language=en%2Ces';
-  }
-
-  getProjectSelector() {
-    return '.project-item';
-  }
-
   async scrapeProjects() {
     logger.info('Scraping projects is starting');
     try {
@@ -604,19 +679,19 @@ class WorkanaService extends BaseScraper {
       // Expandir detalles de proyectos
       await this.expandProjectDetails();
       
-      const projects = await this.page.$$eval(this.getProjectSelector(), (elements) => {
+      const projects = await this.page.$$eval(this.getProjectSelector(), (elements, selectors) => {
         return elements.map((element) => {
           try {
-            const titleElement = element.querySelector('.project-title span span');
+            const titleElement = element.querySelector(selectors.PROJECT_TITLE);
             const title = titleElement?.getAttribute('title') || titleElement?.innerText || '';
             
-            let description = element.querySelector('.project-details p')?.textContent || '';
+            let description = element.querySelector(selectors.PROJECT_DESCRIPTION)?.textContent || '';
             description = description.replace('Ver menos', '').replace('Ver más', '').trim();
             
-            const priceElement = element.querySelector('.budget span span');
+            const priceElement = element.querySelector(selectors.PROJECT_BUDGET);
             const price = priceElement?.innerHTML || priceElement?.innerText || '';
             
-            const linkElement = element.querySelector('.project-title a');
+            const linkElement = element.querySelector(selectors.PROJECT_TITLE_LINK);
             let link = linkElement?.href || '';
             
             // Limpiar URL
@@ -628,7 +703,7 @@ class WorkanaService extends BaseScraper {
             description = description.trim();
             
             // Extraer skills
-            const skillElements = element.querySelectorAll('.skills .skill h3');
+            const skillElements = element.querySelectorAll(selectors.PROJECT_SKILLS);
             let skills = Array.from(skillElements).map(skill => skill.textContent.trim()).join(', ')
 
             // Check if skills is array
@@ -643,29 +718,35 @@ class WorkanaService extends BaseScraper {
             let paymentVerified = false;
             
             // Intentar múltiples selectores para el nombre del cliente
-            const clientNameElement = element.querySelector('.author-info a span');
+            const clientNameElement = element.querySelector(selectors.CLIENT_NAME);
             if (clientNameElement) {
               clientName = clientNameElement.textContent.trim();
             }
             
-            // Intentar múltiples selectores para el país
-            const countryElement = element.querySelector('.project-author .country .country-name a') ||
-                                 element.querySelector('.country .country-name a') ||
-                                 element.querySelector('.country-name a');
+            // Intentar múltiples selectores para el país - usar primer selector que funcione
+            const countrySelectors = selectors.CLIENT_COUNTRY.split(', ');
+            let countryElement = null;
+            for (const selector of countrySelectors) {
+              countryElement = element.querySelector(selector);
+              if (countryElement) break;
+            }
             if (countryElement) {
               clientCountry = countryElement.textContent.trim();
             }
             
             // Extraer rating del cliente (del data-content del popover)
-            const popoverElement = element.querySelector('.project-author .author-info .js-popover-stay') ||
-                                 element.querySelector('.author-info .js-popover-stay') ||
-                                 element.querySelector('.js-popover-stay');
+            const popoverSelectors = selectors.CLIENT_POPOVER.split(', ');
+            let popoverElement = null;
+            for (const selector of popoverSelectors) {
+              popoverElement = element.querySelector(selector);
+              if (popoverElement) break;
+            }
             
             if (popoverElement) {
               const popoverContent = popoverElement.getAttribute('data-content') || '';
               
               // Buscar rating en el contenido del popover
-              const ratingMatch = element.querySelector('.stars-bg');
+              const ratingMatch = element.querySelector(selectors.CLIENT_RATING);
               if (ratingMatch) {
                 // get title attribute value
                 clientRating = parseFloat(ratingMatch.getAttribute('title'));
@@ -677,16 +758,21 @@ class WorkanaService extends BaseScraper {
             
             // También verificar si está verificado directamente en el DOM visible
             if (!paymentVerified) {
-              const paymentVerifiedElement = element.querySelector('.payment-verified') || 
-                                           element.querySelector('.payment .payment-verified');
-              paymentVerified = paymentVerifiedElement !== null;
+              const paymentVerifiedSelectors = selectors.PAYMENT_VERIFIED.split(', ');
+              for (const selector of paymentVerifiedSelectors) {
+                const paymentVerifiedElement = element.querySelector(selector);
+                if (paymentVerifiedElement) {
+                  paymentVerified = true;
+                  break;
+                }
+              }
             }
             
             // Verificar si es proyecto destacado
-            const isFeatured = element.classList.contains('project-item-featured');
+            const isFeatured = element.classList.contains(selectors.FEATURED_PROJECT.replace('.', ''));
             
             // Verificar si es proyecto max
-            const isMaxProject = element.querySelector('.label-max') !== null;
+            const isMaxProject = element.querySelector(selectors.MAX_PROJECT_LABEL) !== null;
             
             // Debug logging para entender qué está pasando
             console.log('Project extraction debug:', {
@@ -722,7 +808,7 @@ class WorkanaService extends BaseScraper {
             return null;
           }
         }).filter(Boolean);
-      });
+      }, WorkanaService.SELECTORS);
 
       logger.info('Projects scraped, now we are going to detect the language');
       
@@ -752,10 +838,10 @@ class WorkanaService extends BaseScraper {
   async expandProjectDetails() {
     try {
       // Expandir todos los links "Ver más detalles"
-      await this.page.$$eval(this.getProjectSelector(), (projects) => {
+      await this.page.$$eval(this.getProjectSelector(), (projects, selector) => {
         projects.forEach(project => {
           // Buscar el link "Ver más detalles" en el párrafo de la descripción
-          const viewMoreLink = project.querySelector('.project-details p a[href="#"]');
+          const viewMoreLink = project.querySelector(selector);
           if (viewMoreLink && (viewMoreLink.innerText.includes('Ver más') 
             || viewMoreLink.innerText.includes('Ver más detalles')
             || viewMoreLink.innerText.includes('View more')
@@ -764,7 +850,7 @@ class WorkanaService extends BaseScraper {
             viewMoreLink.click();
           }
         });
-      });
+      }, WorkanaService.SELECTORS.PROJECT_VIEW_MORE);
       
       // Esperar un poco para que se expandan los detalles
       await this.page.waitForTimeout(2000);
@@ -777,7 +863,7 @@ class WorkanaService extends BaseScraper {
 
   async waitForProjects() {
     try {
-      await this.page.waitForSelector(this.getProjectSelector(), { timeout: 10000 });
+      await this.page.waitForSelector(this.getProjectSelector(), { timeout: WorkanaService.TIMEOUTS.ELEMENT_WAIT });
       return true;
     } catch (error) {
       logger.warn(`No se encontraron proyectos en ${this.platform} o timeout`, error);
@@ -896,7 +982,7 @@ class WorkanaService extends BaseScraper {
       // Navegar al proyecto usando el link proporcionado
       await this.page.goto(projectLink, { 
         waitUntil: 'domcontentloaded',
-        timeout: 30000 
+        timeout: WorkanaService.TIMEOUTS.DEFAULT
       });
       
       await this.page.waitForTimeout(2000);
@@ -921,16 +1007,8 @@ class WorkanaService extends BaseScraper {
     }
   }
 
-  _validateUserId(userId) {
-    if (!userId || isNaN(parseInt(userId))) {
-      throw new Error('userId debe ser un número válido');
-    }
-  }
-
-
-
   async _fillAndSubmitProposal(proposalText) {
-    const proposalTextArea = this.page.locator('textarea, .proposal-text, [data-testid="proposal-text"]').first();
+    const proposalTextArea = this.page.locator(WorkanaService.SELECTORS.PROPOSAL_TEXT_AREA).first();
     
     if (await proposalTextArea.count() === 0) {
       throw new Error('No se encontró el área de texto de la propuesta');
@@ -946,44 +1024,21 @@ class WorkanaService extends BaseScraper {
     }
 
     await sendButton.click();
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(WorkanaService.TIMEOUTS.PROPOSAL_SUBMIT);
     
     await this._verifySubmissionSuccess();
   }
 
   _getSubmitProposalButtonLocator() {
-    return this.page.locator(`
-      button:has-text("Enviar"):not(.search-submit):not([class*="search"]), 
-      button:has-text("Enviar propuesta"),
-      button:has-text("Send"), 
-      button:has-text("Send proposal"),
-      button:has-text("Envía"),
-      button:has-text("Aplicar"),
-      button:has-text("Apply"),
-      .send-btn, 
-      .submit-btn,
-      [data-testid="send-proposal-btn"],
-      input[type="submit"]:not(.search-submit):not([class*="search"]),
-      button[type="submit"]:not(.search-submit):not([class*="search"])
-    `).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
+    return this.page.locator(WorkanaService.SELECTORS.PROPOSAL_SUBMIT_BUTTON).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
   }
-
-
 
   async _verifySubmissionSuccess() {
     try {
       // Esperar a que la página cambie o aparezca un mensaje de éxito
-      await this.page.waitForTimeout(3000);
+      await this.page.waitForTimeout(WorkanaService.TIMEOUTS.SHORT_WAIT);
       
-      const successSelectors = [
-        '.success-message',
-        '.alert-success',
-        '[data-testid="success-message"]',
-        'div:has-text("Propuesta enviada")',
-        'div:has-text("Proposal sent")'
-      ];
-      
-      for (const selector of successSelectors) {
+      for (const selector of WorkanaService.SELECTORS.SUCCESS_MESSAGES) {
         const element = this.page.locator(selector).first();
         if (await element.count() > 0) {
           return true;
@@ -1004,4 +1059,4 @@ class WorkanaService extends BaseScraper {
   }
 }
 
-module.exports = WorkanaService; 
+module.exports = WorkanaService;

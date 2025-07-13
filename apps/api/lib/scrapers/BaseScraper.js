@@ -17,6 +17,13 @@ class BaseScraper {
 
   async initialize() {
     try {
+      // Check if subclass has its own initBrowser method
+      if (this.initBrowser && typeof this.initBrowser === 'function') {
+        await this.initBrowser();
+        return;
+      }
+      
+      // Default initialization for basic scrapers
       chromium.use(stealth);
       
       this.browser = await chromium.launch({
@@ -39,6 +46,12 @@ class BaseScraper {
 
   async navigateTo(url) {
     try {
+      // Check if subclass has its own navigateTo method
+      if (this.constructor.prototype.hasOwnProperty('navigateTo') && this.constructor !== BaseScraper) {
+        // If subclass overrides this method, let it handle navigation
+        return;
+      }
+      
       await this.page.goto(url);
       await this.page.waitForLoadState('networkidle');
       logger.scraperLog(this.platform, `Navegado a ${url}`);
@@ -88,6 +101,12 @@ class BaseScraper {
 
   async close() {
     try {
+      // Check if subclass has its own close method with specific logic
+      if (this.constructor.prototype.hasOwnProperty('close') && this.constructor !== BaseScraper) {
+        // Let subclass handle its own cleanup
+        return;
+      }
+      
       if (this.browser) {
         await this.browser.close();
         logger.scraperLog(this.platform, 'Navegador cerrado');
@@ -106,7 +125,7 @@ class BaseScraper {
     throw new Error('El método getUrl debe ser implementado por la clase hija');
   }
 
-  parseProject(element) {
+  parseProject() {
     throw new Error('El método parseProject debe ser implementado por la clase hija');
   }
 

@@ -43,14 +43,35 @@ class ScrapeWorkanaCommand extends Command
             
             if ($result['success']) {
                 $this->info("✅ Scraping completado en {$duration}ms");
-                $this->info("📊 Proyectos encontrados: " . count($result['projects']));
+                
+                // Handle new standardized response format
+                $projects = $result['data']['projects'] ?? $result['projects'] ?? [];
+                $stats = $result['data']['stats'] ?? null;
+                
+                if ($stats) {
+                    $this->info("📊 Proyectos encontrados: {$stats['total']} | Procesados: {$stats['processed']} | Errores: {$stats['errors']}");
+                } else {
+                    $this->info("📊 Proyectos encontrados: " . count($projects));
+                }
                 
                 // Procesar proyectos en Laravel
-                $this->processProjects($result['projects']);
+                $this->processProjects($projects);
                 
                 $this->info('✅ Procesamiento completado');
             } else {
-                $this->error('❌ Error en scraping: ' . $result['error']['message']);
+                $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido';
+                $this->error('❌ Error en scraping: ' . $errorMessage);
+                
+                // Log additional error details if available
+                if (isset($result['error']['type'])) {
+                    Log::error('Error details from Node.js scraper', [
+                        'type' => $result['error']['type'],
+                        'message' => $errorMessage,
+                        'platform' => $result['platform'] ?? 'workana',
+                        'operation' => $result['operation'] ?? 'scrape'
+                    ]);
+                }
+                
                 return 1;
             }
             
@@ -115,7 +136,7 @@ class ScrapeWorkanaCommand extends Command
             return !in_array($project['link'], $existingLinks);
         });
 
-        // Mapear campos camelCase a snake_case
+        // Mapear campos con soporte para ambos formatos (camelCase y snake_case)
         $newProjectsMapped = array_map(function($project) {
             return [
                 'title' => $project['title'] ?? null,
@@ -123,18 +144,19 @@ class ScrapeWorkanaCommand extends Command
                 'price' => $project['price'] ?? null,
                 'skills' => $project['skills'] ?? null,
                 'link' => $project['link'] ?? null,
-                'platform' => $project['platform'] ?? null,
-                'language' => $project['language'] ?? null,
-                'client_name' => $project['clientName'] ?? null,
-                'client_country' => $project['clientCountry'] ?? null,
-                'client_rating' => $project['clientRating'] ?? null,
-                'payment_verified' => $project['paymentVerified'] ?? null,
-                'is_featured' => $project['isFeatured'] ?? null,
-                'is_max_project' => $project['isMaxProject'] ?? null,
+                'platform' => $project['platform'] ?? 'workana',
+                'language' => $project['language'] ?? 'unknown',
+                'client_name' => $project['client_name'] ?? $project['clientName'] ?? null,
+                'client_country' => $project['client_country'] ?? $project['clientCountry'] ?? null,
+                'client_rating' => $project['client_rating'] ?? $project['clientRating'] ?? 0,
+                'payment_verified' => $project['payment_verified'] ?? $project['paymentVerified'] ?? false,
+                'is_featured' => $project['is_featured'] ?? $project['isFeatured'] ?? false,
+                'is_max_project' => $project['is_max_project'] ?? $project['isMaxProject'] ?? false,
                 'date' => $project['date'] ?? null,
-                'time_ago' => $project['timeAgo'] ?? null,
-                'created_at' => $project['createdAt'] ?? now(),
-                'updated_at' => $project['updatedAt'] ?? now(),
+                'time_ago' => $project['time_ago'] ?? $project['timeAgo'] ?? null,
+                'info' => $project['info'] ?? '',
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
         }, array_values($newProjects));
 

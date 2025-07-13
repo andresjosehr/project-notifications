@@ -42,21 +42,40 @@ class LoginWorkana extends Command
                 Log::info('Ejecutando comando: ' . $command);
                 $output = shell_exec($command);
                 Log::info('Output del comando: ' . $output);
+                Log::info('Tipo de output: ' . gettype($output));
                 
                 $response = json_decode($output, true);
 
+                // Get last json parser error
+                $lastJsonParserError = json_last_error_msg();
+                Log::info('Último error de JSON: ' . $lastJsonParserError);
+
+                Log::info('Tipo despues de haberlo convertido a json: ' . gettype($response));
+
+                // gET JSON
+
                 Log::info('Response en LoginWorkana: ' . json_encode($response));
                 
-                // Si el login es exitoso, salir del loop
+                // Si el login es exitoso, salir del loop - handle new standardized format
                 if ($response && $response['success']) {
                     Log::info("Login exitoso en intento #{$attempt}");
+                    
+                    // Handle new standardized response format
+                    if (isset($response['data']['sessionData'])) {
+                        $response['sessionData'] = $response['data']['sessionData'];
+                    }
+                    
                     break;
                 }
                 
                 // Si no es el último intento, esperar antes del siguiente
                 if ($attempt < $maxAttempts) {
+                    $errorMessage = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
                     Log::warning("Intento #{$attempt} falló, esperando antes del siguiente intento", [
-                        'error' => $response['error'] ?? 'Error parseando respuesta'
+                        'error' => $errorMessage,
+                        'error_type' => $response['error']['type'] ?? 'unknown',
+                        'platform' => $response['platform'] ?? 'workana',
+                        'operation' => $response['operation'] ?? 'login'
                     ]);
                     sleep(2); // Esperar 2 segundos entre intentos
                 }
@@ -64,9 +83,12 @@ class LoginWorkana extends Command
 
             // Si todos los intentos fallaron, usar simulación como último recurso
             if (!$response || !$response['success']) {
+                $finalError = $response['error']['message'] ?? $response['error'] ?? 'Error parseando respuesta';
                 Log::error('Todos los intentos de login real fallaron, usando simulación como último recurso', [
-                    'finalError' => $response['error'] ?? 'Error parseando respuesta',
-                    'attempts' => $maxAttempts
+                    'finalError' => $finalError,
+                    'error_type' => $response['error']['type'] ?? 'unknown',
+                    'attempts' => $maxAttempts,
+                    'platform' => $response['platform'] ?? 'workana'
                 ]);
                 
                 $dummySessionData = [
@@ -78,7 +100,7 @@ class LoginWorkana extends Command
                     'userAgent' => 'dummy',
                     'loginTimestamp' => time(),
                     'loginMethod' => 'simulated_last_resort',
-                    'originalError' => $response['error'] ?? 'Multiple login attempts failed'
+                    'originalError' => $finalError
                 ];
 
                 $response = [
