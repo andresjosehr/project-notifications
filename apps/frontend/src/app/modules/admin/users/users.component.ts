@@ -13,7 +13,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
 import { ApiService, User } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
@@ -61,15 +60,11 @@ interface Token {
         MatSelectModule,
         MatTabsModule,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class UsersComponent implements OnInit {
     // State
     isLoading = false;
-    showAlert = false;
-    alertMessage = '';
-    alertType: 'success' | 'error' | 'info' = 'info';
 
     // Data
     users: User[] = [];
@@ -135,10 +130,10 @@ export class UsersComponent implements OnInit {
             if (result?.success) {
                 this.users = result.data || [];
             } else {
-                this.showError(result?.error || 'Error cargando usuarios');
+                this.snackbarService.showError(result?.error || 'Error cargando usuarios');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error cargando usuarios');
+            this.snackbarService.showError(error.message || 'Error cargando usuarios');
         } finally {
             this.isLoading = false;
         }
@@ -155,11 +150,11 @@ export class UsersComponent implements OnInit {
                 console.log('Component tokens array:', this.tokens);
                 this.cdr.detectChanges(); // Force change detection
             } else {
-                this.showError(result?.error || 'Error cargando tokens');
+                this.snackbarService.showError(result?.error || 'Error cargando tokens');
             }
         } catch (error: any) {
             console.error('Error loading tokens:', error);
-            this.showError(error.message || 'Error cargando tokens');
+            this.snackbarService.showError(error.message || 'Error cargando tokens');
         }
     }
 
@@ -192,17 +187,17 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.generateToken().toPromise();
             
             if (result?.success) {
-                this.showSuccess('Token generado exitosamente');
+                this.snackbarService.showSuccess('Token generado exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
                 
                 // Show the token details in a dialog
                 this.showTokenDialog(result.data);
             } else {
-                this.showError(result?.error || 'Error generando token');
+                this.snackbarService.showError(result?.error || 'Error generando token');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error generando token');
+            this.snackbarService.showError(error.message || 'Error generando token');
         }
     }
 
@@ -232,14 +227,14 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.deleteToken(tokenId).toPromise();
             
             if (result?.success) {
-                this.showSuccess('Token eliminado exitosamente');
+                this.snackbarService.showSuccess('Token eliminado exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
             } else {
-                this.showError(result?.error || 'Error eliminando token');
+                this.snackbarService.showError(result?.error || 'Error eliminando token');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error eliminando token');
+            this.snackbarService.showError(error.message || 'Error eliminando token');
         }
     }
 
@@ -251,14 +246,14 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.cleanupTokens(30).toPromise();
             
             if (result?.success) {
-                this.showSuccess(result.message || 'Tokens limpiados exitosamente');
+                this.snackbarService.showSuccess(result.message || 'Tokens limpiados exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
             } else {
-                this.showError(result?.error || 'Error limpiando tokens');
+                this.snackbarService.showError(result?.error || 'Error limpiando tokens');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error limpiando tokens');
+            this.snackbarService.showError(error.message || 'Error limpiando tokens');
         }
     }
 
@@ -283,15 +278,15 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.updateUser(this.editingUser.id, formData).toPromise();
             
             if (result?.success) {
-                this.showSuccess('Usuario actualizado exitosamente');
+                this.snackbarService.showSuccess('Usuario actualizado exitosamente');
                 this.editingUser = null;
                 this.editUserForm.reset();
                 this.loadUsers();
             } else {
-                this.showError(result?.error || 'Error actualizando usuario');
+                this.snackbarService.showError(result?.error || 'Error actualizando usuario');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error actualizando usuario');
+            this.snackbarService.showError(error.message || 'Error actualizando usuario');
         }
     }
 
@@ -305,14 +300,14 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.toggleUserStatus(user.id, !user.isActive).toPromise();
             
             if (result?.success) {
-                this.showSuccess(result.message || 'Estado del usuario actualizado');
+                this.snackbarService.showSuccess(result.message || 'Estado del usuario actualizado');
                 this.loadUsers();
                 this.loadUserStats();
             } else {
-                this.showError(result?.error || 'Error actualizando estado');
+                this.snackbarService.showError(result?.error || 'Error actualizando estado');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error actualizando estado');
+            this.snackbarService.showError(error.message || 'Error actualizando estado');
         }
     }
 
@@ -324,31 +319,31 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.deleteUser(user.id).toPromise();
             
             if (result?.success) {
-                this.showSuccess('Usuario eliminado exitosamente');
+                this.snackbarService.showSuccess('Usuario eliminado exitosamente');
                 this.loadUsers();
                 this.loadUserStats();
             } else {
-                this.showError(result?.error || 'Error eliminando usuario');
+                this.snackbarService.showError(result?.error || 'Error eliminando usuario');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error eliminando usuario');
+            this.snackbarService.showError(error.message || 'Error eliminando usuario');
         }
     }
 
     copyToken(token: string): void {
         navigator.clipboard.writeText(token).then(() => {
-            this.showSuccess('Token copiado al portapapeles');
+            this.snackbarService.showSuccess('Token copiado al portapapeles');
         }).catch(() => {
-            this.showError('Error copiando token');
+            this.snackbarService.showError('Error copiando token');
         });
     }
 
     copyRegistrationLink(token: string): void {
         const link = `${window.location.origin}/register?token=${token}`;
         navigator.clipboard.writeText(link).then(() => {
-            this.showSuccess('Link de registro copiado al portapapeles');
+            this.snackbarService.showSuccess('Link de registro copiado al portapapeles');
         }).catch(() => {
-            this.showError('Error copiando link');
+            this.snackbarService.showError('Error copiando link');
         });
     }
 

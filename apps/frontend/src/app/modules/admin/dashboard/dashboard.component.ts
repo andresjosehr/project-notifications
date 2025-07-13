@@ -11,7 +11,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
@@ -46,7 +46,6 @@ interface SystemLogs {
         MatTabsModule,
         MatDialogModule,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class DashboardComponent implements OnInit {
@@ -55,9 +54,6 @@ export class DashboardComponent implements OnInit {
 
     // State
     isLoading = false;
-    showAlert = false;
-    alertMessage = '';
-    alertType: 'success' | 'error' | 'info' = 'info';
 
     // Loading states
     loadingStates = {
@@ -87,7 +83,8 @@ export class DashboardComponent implements OnInit {
         private fb: FormBuilder,
         private apiService: ApiService,
         private authService: AuthService,
-        private router: Router
+        private router: Router,
+        private snackbarService: SnackbarService
     ) {
         this.currentUser = this.authService.currentUser;
         this.createForms();
@@ -119,12 +116,12 @@ export class DashboardComponent implements OnInit {
                     telegram: result.data?.telegram || false,
                     scrapers: result.data?.scrapers || false,
                 };
-                this.showSuccess('Estado del sistema actualizado');
+                this.snackbarService.showSuccess('Estado del sistema actualizado');
             } else {
-                this.showError(result?.error || 'Error verificando salud del sistema');
+                this.snackbarService.showError(result?.error || 'Error verificando salud del sistema');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error verificando salud del sistema');
+            this.snackbarService.showError(error.message || 'Error verificando salud del sistema');
         } finally {
             this.loadingStates.health = false;
         }
@@ -148,10 +145,10 @@ export class DashboardComponent implements OnInit {
                     this.systemLogs.error = logLines;
                 }
             } else {
-                this.showError(result?.error || 'Error cargando logs');
+                this.snackbarService.showError(result?.error || 'Error cargando logs');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error cargando logs');
+            this.snackbarService.showError(error.message || 'Error cargando logs');
         } finally {
             this.loadingStates.logs = false;
         }
@@ -186,12 +183,12 @@ export class DashboardComponent implements OnInit {
             }
 
             if (result?.success) {
-                this.showSuccess(`Scraping completado: ${result.data?.newProjects || 0} nuevos proyectos encontrados`);
+                this.snackbarService.showSuccess(`Scraping completado: ${result.data?.newProjects || 0} nuevos proyectos encontrados`);
             } else {
-                this.showError(result?.error || 'Error ejecutando scraping');
+                this.snackbarService.showError(result?.error || 'Error ejecutando scraping');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error ejecutando scraping');
+            this.snackbarService.showError(error.message || 'Error ejecutando scraping');
         } finally {
             this.loadingStates.scraping = false;
         }
@@ -207,12 +204,12 @@ export class DashboardComponent implements OnInit {
             const result = await this.apiService.cleanup().toPromise();
             
             if (result?.success) {
-                this.showSuccess('Base de datos limpiada exitosamente');
+                this.snackbarService.showSuccess('Base de datos limpiada exitosamente');
             } else {
-                this.showError(result?.error || 'Error limpiando base de datos');
+                this.snackbarService.showError(result?.error || 'Error limpiando base de datos');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error limpiando base de datos');
+            this.snackbarService.showError(error.message || 'Error limpiando base de datos');
         } finally {
             this.loadingStates.cleanup = false;
         }
@@ -228,13 +225,13 @@ export class DashboardComponent implements OnInit {
             const result = await this.apiService.clearLogs(logType).toPromise();
             
             if (result?.success) {
-                this.showSuccess(`Logs de ${logType} limpiados exitosamente`);
+                this.snackbarService.showSuccess(`Logs de ${logType} limpiados exitosamente`);
                 this.loadLogs(logType);
             } else {
-                this.showError(result?.error || 'Error limpiando logs');
+                this.snackbarService.showError(result?.error || 'Error limpiando logs');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error limpiando logs');
+            this.snackbarService.showError(error.message || 'Error limpiando logs');
         }
     }
 
@@ -243,7 +240,7 @@ export class DashboardComponent implements OnInit {
         const logs = logType === 'app' ? this.systemLogs.app : this.systemLogs.error;
         
         if (logs.length === 0) {
-            this.showError('No hay logs para descargar');
+            this.snackbarService.showError('No hay logs para descargar');
             return;
         }
 
@@ -252,7 +249,7 @@ export class DashboardComponent implements OnInit {
         const fileName = `${logType}-logs_${timestamp}.txt`;
         
         this.downloadFile(content, fileName, 'text/plain');
-        this.showSuccess(`Logs de ${logType} descargados`);
+        this.snackbarService.showSuccess(`Logs de ${logType} descargados`);
     }
 
     private downloadFile(content: string, fileName: string, contentType: string): void {
@@ -273,26 +270,6 @@ export class DashboardComponent implements OnInit {
         return status ? 'text-green-600' : 'text-red-600';
     }
 
-    showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
 
     logout(): void {
         this.authService.signOut().subscribe(() => {

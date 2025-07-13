@@ -15,7 +15,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ProposalReviewComponent } from './proposal-review/proposal-review.component';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService, Project, ProjectFilters } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
@@ -51,16 +51,12 @@ interface ProjectStats {
         MatTooltipModule,
         ProposalReviewComponent,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class ProjectsComponent implements OnInit {
     projects: Project[] = [];
     filteredProjects: Project[] = [];
     isLoading = false;
-    showAlert = false;
-    alertMessage = '';
-    alertType: 'success' | 'error' | 'info' = 'info';
 
     // Stats
     stats: ProjectStats = {
@@ -88,7 +84,8 @@ export class ProjectsComponent implements OnInit {
         private apiService: ApiService,
         private authService: AuthService,
         private router: Router,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private snackbarService: SnackbarService
     ) {
         this.currentUser = this.authService.currentUser;
         this.createFiltersForm();
@@ -157,10 +154,10 @@ export class ProjectsComponent implements OnInit {
                 this.totalProjects = result.data.total || 0;
                 this.filteredProjects = this.projects;
             } else {
-                this.showError(result?.error || 'Error cargando proyectos');
+                this.snackbarService.showError(result?.error || 'Error cargando proyectos');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error cargando proyectos');
+            this.snackbarService.showError(error.message || 'Error cargando proyectos');
         } finally {
             this.isLoading = false;
         }
@@ -222,16 +219,16 @@ export class ProjectsComponent implements OnInit {
 
         dialogRef.afterClosed().subscribe(result => {
             if (result) {
-                this.showSuccess('Propuesta enviada exitosamente');
+                this.snackbarService.showSuccess('Propuesta enviada exitosamente');
             }
         });
     }
 
     copyProjectUrl(project: Project): void {
         navigator.clipboard.writeText(project.link).then(() => {
-            this.showSuccess('URL copiada al portapapeles');
+            this.snackbarService.showSuccess('URL copiada al portapapeles');
         }).catch(() => {
-            this.showError('Error copiando URL');
+            this.snackbarService.showError('Error copiando URL');
         });
     }
 
@@ -243,7 +240,7 @@ export class ProjectsComponent implements OnInit {
 
     async exportProjects(): Promise<void> {
         if (this.projects.length === 0) {
-            this.showError('No hay proyectos para exportar');
+            this.snackbarService.showError('No hay proyectos para exportar');
             return;
         }
 
@@ -261,7 +258,7 @@ export class ProjectsComponent implements OnInit {
         const csvContent = this.convertToCSV(csvData);
         const timestamp = new Date().toISOString().split('T')[0];
         this.downloadFile(csvContent, `proyectos_${timestamp}.csv`, 'text/csv');
-        this.showSuccess('Proyectos exportados correctamente');
+        this.snackbarService.showSuccess('Proyectos exportados correctamente');
     }
 
     private convertToCSV(data: any[]): string {
@@ -302,26 +299,6 @@ export class ProjectsComponent implements OnInit {
         return date.toLocaleDateString();
     }
 
-    showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
 
     logout(): void {
         this.authService.signOut().subscribe(() => {

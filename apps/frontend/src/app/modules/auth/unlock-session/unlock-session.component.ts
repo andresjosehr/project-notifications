@@ -14,7 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { UserService } from 'app/core/user/user.service';
 
@@ -24,7 +24,6 @@ import { UserService } from 'app/core/user/user.service';
     encapsulation: ViewEncapsulation.None,
     animations: fuseAnimations,
     imports: [
-        FuseAlertComponent,
         FormsModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -38,12 +37,7 @@ import { UserService } from 'app/core/user/user.service';
 export class AuthUnlockSessionComponent implements OnInit {
     @ViewChild('unlockSessionNgForm') unlockSessionNgForm: NgForm;
 
-    alert: { type: FuseAlertType; message: string } = {
-        type: 'success',
-        message: '',
-    };
     name: string;
-    showAlert: boolean = false;
     unlockSessionForm: UntypedFormGroup;
     private _email: string;
 
@@ -55,6 +49,7 @@ export class AuthUnlockSessionComponent implements OnInit {
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
         private _router: Router,
+        private _snackbarService: SnackbarService,
         private _userService: UserService
     ) {}
 
@@ -100,8 +95,6 @@ export class AuthUnlockSessionComponent implements OnInit {
         // Disable the form
         this.unlockSessionForm.disable();
 
-        // Hide the alert
-        this.showAlert = false;
 
         this._authService
             .unlockSession({
@@ -134,14 +127,8 @@ export class AuthUnlockSessionComponent implements OnInit {
                         },
                     });
 
-                    // Set the alert
-                    this.alert = {
-                        type: 'error',
-                        message: 'Invalid password',
-                    };
-
-                    // Show the alert
-                    this.showAlert = true;
+                    // Show error message
+                    this._snackbarService.error('Invalid password');
                 }
             );
     }

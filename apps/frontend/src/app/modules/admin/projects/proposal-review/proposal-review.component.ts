@@ -10,7 +10,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService, Project } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -37,7 +37,6 @@ export interface ProposalReviewData {
         MatDialogModule,
         MatTooltipModule,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class ProposalReviewComponent implements OnInit {
@@ -53,9 +52,6 @@ export class ProposalReviewComponent implements OnInit {
     // States
     isLoading = false;
     isSending = false;
-    showAlert = false;
-    alertMessage = '';
-    alertType: 'success' | 'error' | 'info' = 'info';
 
     // Proposal content
     originalProposal = '';
@@ -79,6 +75,7 @@ export class ProposalReviewComponent implements OnInit {
         private authService: AuthService,
         private route: ActivatedRoute,
         private router: Router,
+        private snackbarService: SnackbarService,
         @Optional() private dialogRef?: MatDialogRef<ProposalReviewComponent>,
         @Optional() @Inject(MAT_DIALOG_DATA) private dialogData?: ProposalReviewData
     ) {
@@ -111,11 +108,11 @@ export class ProposalReviewComponent implements OnInit {
                 if (result?.success) {
                     this.project = result.data;
                 } else {
-                    this.showError('Proyecto no encontrado');
+                    this.snackbarService.showError('Proyecto no encontrado');
                     this.router.navigate(['/admin/projects']);
                 }
             } catch (error: any) {
-                this.showError('Error cargando proyecto');
+                this.snackbarService.showError('Error cargando proyecto');
                 this.router.navigate(['/admin/projects']);
             }
         }
@@ -153,7 +150,6 @@ export class ProposalReviewComponent implements OnInit {
         if (!this.project) return;
 
         this.isLoading = true;
-        this.showAlert = false;
 
         try {
             const result = await this.apiService.generateProposal({
@@ -168,10 +164,10 @@ export class ProposalReviewComponent implements OnInit {
                 this.proposalForm.patchValue({ content: this.currentProposal });
                 this.updateProposalStats(this.currentProposal);
             } else {
-                this.showError(result?.error || 'Error generando propuesta');
+                this.snackbarService.showError(result?.error || 'Error generando propuesta');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error generando propuesta');
+            this.snackbarService.showError(error.message || 'Error generando propuesta');
         } finally {
             this.isLoading = false;
         }
@@ -181,7 +177,6 @@ export class ProposalReviewComponent implements OnInit {
         if (!this.project) return;
 
         this.isLoading = true;
-        this.showAlert = false;
 
         try {
             const result = await this.apiService.generateProposal({
@@ -195,12 +190,12 @@ export class ProposalReviewComponent implements OnInit {
                 this.currentProposal = this.originalProposal;
                 this.proposalForm.patchValue({ content: this.currentProposal });
                 this.updateProposalStats(this.currentProposal);
-                this.showSuccess('Propuesta regenerada exitosamente');
+                this.snackbarService.showSuccess('Propuesta regenerada exitosamente');
             } else {
-                this.showError(result?.error || 'Error regenerando propuesta');
+                this.snackbarService.showError(result?.error || 'Error regenerando propuesta');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error regenerando propuesta');
+            this.snackbarService.showError(error.message || 'Error regenerando propuesta');
         } finally {
             this.isLoading = false;
         }
@@ -210,7 +205,7 @@ export class ProposalReviewComponent implements OnInit {
         this.currentProposal = this.originalProposal;
         this.proposalForm.patchValue({ content: this.currentProposal });
         this.updateProposalStats(this.currentProposal);
-        this.showInfo('Propuesta restaurada a la versión original');
+        this.snackbarService.showInfo('Propuesta restaurada a la versión original');
     }
 
     async sendProposal(): Promise<void> {
@@ -218,7 +213,7 @@ export class ProposalReviewComponent implements OnInit {
 
         const content = this.proposalForm.get('content')?.value;
         if (!content || content.trim().length === 0) {
-            this.showError('La propuesta no puede estar vacía');
+            this.snackbarService.showError('La propuesta no puede estar vacía');
             return;
         }
 
@@ -235,17 +230,17 @@ export class ProposalReviewComponent implements OnInit {
             ).toPromise();
             
             if (result?.success) {
-                this.showSuccess('Propuesta enviada exitosamente');
+                this.snackbarService.showSuccess('Propuesta enviada exitosamente');
                 this.proposalSent.emit(result.data);
                 
                 if (this.isModal && this.dialogRef) {
                     this.dialogRef.close(result.data);
                 }
             } else {
-                this.showError(result?.error || 'Error enviando propuesta');
+                this.snackbarService.showError(result?.error || 'Error enviando propuesta');
             }
         } catch (error: any) {
-            this.showError(error.message || 'Error enviando propuesta');
+            this.snackbarService.showError(error.message || 'Error enviando propuesta');
         } finally {
             this.isSending = false;
         }
@@ -259,27 +254,6 @@ export class ProposalReviewComponent implements OnInit {
         }
     }
 
-    // Alert methods
-    showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => this.showAlert = false, 5000);
-    }
-
-    showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => this.showAlert = false, 5000);
-    }
-
-    showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => this.showAlert = false, 5000);
-    }
 
     // Utility methods
     formatRelativeTime(dateString: string): string {

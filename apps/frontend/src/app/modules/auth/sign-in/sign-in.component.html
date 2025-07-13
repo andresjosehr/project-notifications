@@ -32,31 +32,6 @@
                 </div>
             }
 
-            <!-- Welcome Alert -->
-            @if (!loading) {
-                <fuse-alert
-                    class="mt-8"
-                    [appearance]="'outline'"
-                    [showIcon]="false"
-                    [type]="'info'"
-                >
-                    Bienvenido al <strong>Sistema de Notificaciones Freelance</strong>. 
-                    Ingresa tus credenciales para acceder al dashboard.
-                </fuse-alert>
-            }
-
-            <!-- Alert -->
-            @if (showAlert) {
-                <fuse-alert
-                    class="mt-8"
-                    [appearance]="'outline'"
-                    [showIcon]="false"
-                    [type]="alert.type"
-                    [@shake]="alert.type === 'error'"
-                >
-                    {{ alert.message }}
-                </fuse-alert>
-            }
 
             <!-- Sign in form -->
             @if (!loading) {

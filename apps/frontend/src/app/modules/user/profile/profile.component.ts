@@ -10,7 +10,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
 import { ApiService } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { SnackbarService } from 'app/core/services/snackbar.service';

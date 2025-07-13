@@ -15,7 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 
 @Component({
@@ -25,7 +25,6 @@ import { AuthService } from 'app/core/auth/auth.service';
     animations: fuseAnimations,
     imports: [
         RouterLink,
-        FuseAlertComponent,
         FormsModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -39,12 +38,7 @@ import { AuthService } from 'app/core/auth/auth.service';
 export class AuthSignUpComponent implements OnInit {
     @ViewChild('signUpNgForm') signUpNgForm: NgForm;
 
-    alert: { type: FuseAlertType; message: string } = {
-        type: 'success',
-        message: '',
-    };
     signUpForm: UntypedFormGroup;
-    showAlert: boolean = false;
 
     /**
      * Constructor
@@ -52,7 +46,8 @@ export class AuthSignUpComponent implements OnInit {
     constructor(
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router
+        private _router: Router,
+        private _snackbarService: SnackbarService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -89,8 +84,6 @@ export class AuthSignUpComponent implements OnInit {
         // Disable the form
         this.signUpForm.disable();
 
-        // Hide the alert
-        this.showAlert = false;
 
         // Sign up
         this._authService.signUp(this.signUpForm.value).subscribe(
@@ -105,14 +98,8 @@ export class AuthSignUpComponent implements OnInit {
                 // Reset the form
                 this.signUpNgForm.resetForm();
 
-                // Set the alert
-                this.alert = {
-                    type: 'error',
-                    message: 'Something went wrong, please try again.',
-                };
-
-                // Show the alert
-                this.showAlert = true;
+                // Show error message
+                this._snackbarService.error('Something went wrong, please try again.');
             }
         );
     }

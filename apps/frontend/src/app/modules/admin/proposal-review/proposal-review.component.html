@@ -1,15 +1,5 @@
 <div class="flex flex-col w-full">
 
-    <!-- Alert -->
-    @if (showAlert) {
-        <fuse-alert
-            class="m-6 mb-0"
-            [appearance]="'outline'"
-            [showIcon]="false"
-            [type]="alertType">
-            {{ alertMessage }}
-        </fuse-alert>
-    }
 
     <!-- Loading State -->
     @if (isLoading) {

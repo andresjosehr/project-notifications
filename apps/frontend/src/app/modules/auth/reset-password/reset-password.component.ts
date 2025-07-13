@@ -14,7 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { FuseValidators } from '@fuse/validators';
 import { AuthService } from 'app/core/auth/auth.service';
 import { finalize } from 'rxjs';
@@ -25,7 +25,6 @@ import { finalize } from 'rxjs';
     encapsulation: ViewEncapsulation.None,
     animations: fuseAnimations,
     imports: [
-        FuseAlertComponent,
         FormsModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -39,19 +38,15 @@ import { finalize } from 'rxjs';
 export class AuthResetPasswordComponent implements OnInit {
     @ViewChild('resetPasswordNgForm') resetPasswordNgForm: NgForm;
 
-    alert: { type: FuseAlertType; message: string } = {
-        type: 'success',
-        message: '',
-    };
     resetPasswordForm: UntypedFormGroup;
-    showAlert: boolean = false;
 
     /**
      * Constructor
      */
     constructor(
         private _authService: AuthService,
-        private _formBuilder: UntypedFormBuilder
+        private _formBuilder: UntypedFormBuilder,
+        private _snackbarService: SnackbarService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -93,8 +88,6 @@ export class AuthResetPasswordComponent implements OnInit {
         // Disable the form
         this.resetPasswordForm.disable();
 
-        // Hide the alert
-        this.showAlert = false;
 
         // Send the request to the server
         this._authService
@@ -106,25 +99,16 @@ export class AuthResetPasswordComponent implements OnInit {
 
                     // Reset the form
                     this.resetPasswordNgForm.resetForm();
-
-                    // Show the alert
-                    this.showAlert = true;
                 })
             )
             .subscribe(
                 (response) => {
-                    // Set the alert
-                    this.alert = {
-                        type: 'success',
-                        message: 'Your password has been reset.',
-                    };
+                    // Show success message
+                    this._snackbarService.success('Your password has been reset.');
                 },
                 (response) => {
-                    // Set the alert
-                    this.alert = {
-                        type: 'error',
-                        message: 'Something went wrong, please try again.',
-                    };
+                    // Show error message
+                    this._snackbarService.error('Something went wrong, please try again.');
                 }
             );
     }

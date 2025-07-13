@@ -15,7 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 
 @Component({
@@ -25,7 +25,6 @@ import { AuthService } from 'app/core/auth/auth.service';
     animations: fuseAnimations,
     imports: [
         RouterLink,
-        FuseAlertComponent,
         FormsModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -39,12 +38,7 @@ import { AuthService } from 'app/core/auth/auth.service';
 export class AuthSignInComponent implements OnInit {
     @ViewChild('signInNgForm') signInNgForm: NgForm;
 
-    alert: { type: FuseAlertType; message: string } = {
-        type: 'success',
-        message: '',
-    };
     signInForm: UntypedFormGroup;
-    showAlert: boolean = false;
     loading: boolean = false;
 
     /**
@@ -54,7 +48,8 @@ export class AuthSignInComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router
+        private _router: Router,
+        private _snackbarService: SnackbarService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -95,11 +90,7 @@ export class AuthSignInComponent implements OnInit {
             }
         } catch (error) {
             // If there's an error checking initialization, show error but allow login
-            this.alert = {
-                type: 'error',
-                message: 'Error verificando estado del sistema. Puedes intentar iniciar sesión.'
-            };
-            this.showAlert = true;
+            this._snackbarService.showError('Error verificando estado del sistema. Puedes intentar iniciar sesión.');
         } finally {
             this.loading = false;
         }
@@ -120,9 +111,6 @@ export class AuthSignInComponent implements OnInit {
 
         // Disable the form
         this.signInForm.disable();
-
-        // Hide the alert
-        this.showAlert = false;
 
         // Sign in
         this._authService.signIn(this.signInForm.value).subscribe(
@@ -146,14 +134,8 @@ export class AuthSignInComponent implements OnInit {
                 // Reset the form
                 this.signInNgForm.resetForm();
 
-                // Set the alert
-                this.alert = {
-                    type: 'error',
-                    message: 'Correo electrónico o contraseña incorrectos',
-                };
-
-                // Show the alert
-                this.showAlert = true;
+                // Show error message
+                this._snackbarService.showError('Correo electrónico o contraseña incorrectos');
             }
         );
     }

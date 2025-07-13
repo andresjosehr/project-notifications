@@ -2,33 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Project;
+use App\Http\Requests\BuildProposalRequest;
+use App\Http\Requests\ScrapingCycleRequest;
+use App\Http\Requests\SearchProjectsRequest;
+use App\Http\Requests\GetProjectsRequest;
+use App\Http\Responses\ApiResponse;
 use App\Services\ProjectService;
-use App\Services\AIService;
-use App\Services\NotificationService;
 use App\Services\ScraperService;
+use App\Services\ProposalService;
+use App\Services\LogManagementService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
     protected $projectService;
-    protected $aiService;
-    protected $notificationService;
     protected $scraperService;
+    protected $proposalService;
+    protected $logManagementService;
 
-    public function __construct()
-    {
-        $this->projectService = new ProjectService();
-        $this->aiService = new AIService();
-        $this->notificationService = new NotificationService();
-        $this->scraperService = new ScraperService();
+    public function __construct(
+        ProjectService $projectService,
+        ScraperService $scraperService,
+        ProposalService $proposalService,
+        LogManagementService $logManagementService
+    ) {
+        $this->projectService = $projectService;
+        $this->scraperService = $scraperService;
+        $this->proposalService = $proposalService;
+        $this->logManagementService = $logManagementService;
     }
 
-    public function runScrapingCycle(Request $request)
+    public function runScrapingCycle(ScrapingCycleRequest $request)
     {
         try {
-            $options = $request->all();
+            $options = $request->validated();
             $iteration = $options['iteration'] ?? 0;
             
             Log::info("Iniciando ciclo de scraping #{$iteration}");
@@ -37,24 +45,18 @@ class ProjectController extends Controller
 
             Log::info("Ciclo de scraping #{$iteration} completado", ['results' => $results]);
             
-            return response()->json([
-                'success' => true,
-                'data' => $results
-            ]);
+            return ApiResponse::success($results);
         } catch (\Exception $error) {
             Log::error("Error en ciclo de scraping #{$iteration}", ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
-    public function runSinglePlatform(Request $request, $platform)
+    public function runSinglePlatform(ScrapingCycleRequest $request, $platform)
     {
         try {
-            $options = $request->all();
+            $options = $request->validated();
             
             Log::info("Ejecutando scraping para {$platform}");
 
@@ -62,95 +64,29 @@ class ProjectController extends Controller
 
             Log::info("Scraping de {$platform} completado", ['results' => $results]);
             
-            return response()->json([
-                'success' => true,
-                'data' => $results
-            ]);
+            return ApiResponse::success($results);
         } catch (\Exception $error) {
             Log::error("Error en scraping de {$platform}", ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
-    public function buildProposal(Request $request)
+    public function buildProposal(BuildProposalRequest $request)
     {
         try {
-            $projectId = $request->input('projectId') ?? $request->input('project_id');
-            $userId = $request->input('userId');
-            $platform = $request->input('platform', 'workana');
-            $options = $request->except(['projectId', 'project_id', 'userId', 'platform']);
+            $projectId = $request->getProjectId();
+            $userId = $request->getUserId();
+            $platform = $request->getPlatform();
+            $options = $request->getOptions();
 
-            // Validar campos requeridos
-            if (!$projectId || !$userId) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Se requieren projectId y userId'
-                ], 400);
-            }
-
-            Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId} de {$platform}");
-
-            // Obtener proyecto
-            $project = $this->projectService->getProjectById($projectId, $platform);
+            $result = $this->proposalService->buildProposal($projectId, $userId, $platform, $options);
             
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'error' => "Proyecto {$projectId} no encontrado en {$platform}"
-                ], 404);
-            }
-
-            // Obtener usuario
-            $user = \App\Models\User::find($userId);
-            
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'error' => "Usuario {$userId} no encontrado"
-                ], 404);
-            }
-
-            // Generar propuesta usando perfil del usuario si está disponible
-            if ($user->professional_profile && $user->proposal_directives) {
-                $proposal = $this->aiService->generateProposalWithUserProfile(
-                    $project->title,
-                    $project->description,
-                    $user->professional_profile,
-                    $user->proposal_directives,
-                    array_merge($options, ['language' => $project->language ?? 'es'])
-                );
-            } else {
-                $proposal = $this->aiService->buildProposal(
-                    $project->description,
-                    array_merge($options, ['language' => $project->language ?? 'es'])
-                );
-            }
-            
-            Log::info("Propuesta generada exitosamente para proyecto {$projectId}");
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Propuesta generada exitosamente',
-                'data' => [
-                    'projectId' => $projectId,
-                    'userId' => $userId,
-                    'proposal' => $proposal,
-                    'projectTitle' => $project->title,
-                    'userEmail' => $user->email,
-                    'platform' => $platform
-                ]
-            ]);
+            return ApiResponse::success($result, 'Propuesta generada exitosamente');
         } catch (\Exception $error) {
-            Log::error("Error generando propuesta para proyecto {$projectId}", ['error' => $error->getMessage()]);
+            Log::error("Error generando propuesta", ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
@@ -160,77 +96,61 @@ class ProjectController extends Controller
             $platform = $request->query('platform');
             $stats = $this->projectService->getProjectStats($platform);
             
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'stats' => $stats,
-                    'generated_at' => now()->toISOString(),
-                    'platform' => $platform ?? 'all'
-                ]
+            return ApiResponse::success([
+                'stats' => $stats,
+                'generated_at' => now()->toISOString(),
+                'platform' => $platform ?? 'all'
             ]);
         } catch (\Exception $error) {
             Log::error('Error obteniendo estadísticas', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
-    public function search(Request $request)
+    public function search(SearchProjectsRequest $request)
     {
         try {
-            $query = $request->query('query');
-            $platform = $request->query('platform');
-            $limit = $request->query('limit', 10);
+            $data = $request->validated();
+            $query = $data['query'] ?? null;
+            $platform = $data['platform'] ?? null;
+            $limit = $data['limit'] ?? 10;
             
             $projects = $this->projectService->searchProjects($query, $platform, ['limit' => $limit]);
             
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'platform' => $platform ?? 'all',
-                    'results' => $projects,
-                    'count' => count($projects),
-                    'searched_at' => now()->toISOString()
-                ]
+            return ApiResponse::success([
+                'query' => $query,
+                'platform' => $platform ?? 'all',
+                'results' => $projects,
+                'count' => count($projects),
+                'searched_at' => now()->toISOString()
             ]);
         } catch (\Exception $error) {
             Log::error('Error buscando proyectos', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
-    public function getRecent(Request $request)
+    public function getRecent(GetProjectsRequest $request)
     {
         try {
-            $platform = $request->query('platform');
-            $limit = $request->query('limit', 10);
+            $data = $request->validated();
+            $platform = $data['platform'] ?? null;
+            $limit = $data['limit'] ?? 10;
             
             $projects = $this->projectService->getAllProjects($platform, ['limit' => $limit]);
             
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'projects' => $projects,
-                    'platform' => $platform ?? 'all',
-                    'limit' => $limit,
-                    'retrieved_at' => now()->toISOString()
-                ]
+            return ApiResponse::success([
+                'projects' => $projects,
+                'platform' => $platform ?? 'all',
+                'limit' => $limit,
+                'retrieved_at' => now()->toISOString()
             ]);
         } catch (\Exception $error) {
             Log::error('Error obteniendo proyectos recientes', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
@@ -242,23 +162,14 @@ class ProjectController extends Controller
             $project = $this->projectService->getProjectById($id, $platform);
             
             if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Proyecto no encontrado'
-                ], 404);
+                return ApiResponse::notFound('Proyecto no encontrado');
             }
             
-            return response()->json([
-                'success' => true,
-                'data' => $project
-            ]);
+            return ApiResponse::success($project);
         } catch (\Exception $error) {
             Log::error('Error obteniendo proyecto', ['error' => $error->getMessage(), 'id' => $id]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
@@ -267,17 +178,11 @@ class ProjectController extends Controller
         try {
             $health = $this->projectService->healthCheck();
             
-            return response()->json([
-                'success' => true,
-                'data' => $health
-            ]);
+            return ApiResponse::success($health);
         } catch (\Exception $error) {
             Log::error('Error en health check', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
@@ -287,102 +192,50 @@ class ProjectController extends Controller
             $options = $request->all();
             $results = $this->projectService->cleanup($options);
             
-            return response()->json([
-                'success' => true,
-                'data' => $results
-            ]);
+            return ApiResponse::success($results);
         } catch (\Exception $error) {
             Log::error('Error en limpieza', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
     public function getAppLogs(Request $request)
     {
         try {
-            $logPath = storage_path('logs/laravel.log');
+            $content = $this->logManagementService->getAppLogs();
             
-            if (file_exists($logPath)) {
-                $content = file_get_contents($logPath);
-                return response()->json([
-                    'success' => true,
-                    'data' => $content
-                ]);
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'data' => 'No hay logs disponibles'
-                ]);
-            }
+            return ApiResponse::success($content);
         } catch (\Exception $error) {
             Log::error('Error obteniendo logs de la aplicación', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
     public function getErrorLogs(Request $request)
     {
         try {
-            $logPath = storage_path('logs/error.log');
+            $content = $this->logManagementService->getErrorLogs();
             
-            if (file_exists($logPath)) {
-                $content = file_get_contents($logPath);
-                return response()->json([
-                    'success' => true,
-                    'data' => $content
-                ]);
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'data' => 'No hay logs de errores'
-                ]);
-            }
+            return ApiResponse::success($content);
         } catch (\Exception $error) {
             Log::error('Error obteniendo logs de errores', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 
     public function clearLogs(Request $request)
     {
         try {
-            $logFiles = [
-                storage_path('logs/laravel.log'),
-                storage_path('logs/error.log')
-            ];
+            $result = $this->logManagementService->clearLogs();
             
-            $clearedCount = 0;
-            foreach ($logFiles as $logFile) {
-                if (file_exists($logFile)) {
-                    file_put_contents($logFile, '');
-                    $clearedCount++;
-                }
-            }
-            
-            return response()->json([
-                'success' => true,
-                'message' => "{$clearedCount} archivos de log limpiados",
-                'data' => ['clearedCount' => $clearedCount]
-            ]);
+            return ApiResponse::success($result, $result['message']);
         } catch (\Exception $error) {
             Log::error('Error limpiando logs', ['error' => $error->getMessage()]);
             
-            return response()->json([
-                'success' => false,
-                'error' => $error->getMessage()
-            ], 500);
+            return ApiResponse::error($error->getMessage());
         }
     }
 }

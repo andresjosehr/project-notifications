@@ -14,7 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 
@@ -26,7 +26,6 @@ import { CommonModule } from '@angular/common';
     imports: [
         CommonModule,
         RouterLink,
-        FuseAlertComponent,
         FormsModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -39,12 +38,7 @@ import { CommonModule } from '@angular/common';
 export class AuthRegisterComponent implements OnInit {
     @ViewChild('registerNgForm') registerNgForm: NgForm;
 
-    alert: { type: FuseAlertType; message: string } = {
-        type: 'success',
-        message: '',
-    };
     registerForm: UntypedFormGroup;
-    showAlert: boolean = false;
     isTokenMode: boolean = false;
     isSystemInitialized: boolean = true;
     token: string = '';
@@ -55,7 +49,8 @@ export class AuthRegisterComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router
+        private _router: Router,
+        private _snackbarService: SnackbarService
     ) {}
 
     ngOnInit(): void {
@@ -89,26 +84,14 @@ export class AuthRegisterComponent implements OnInit {
             
             if (result?.success) {
                 this.tokenValid = true;
-                this.alert = {
-                    type: 'success',
-                    message: 'Token válido. Completa tu registro.'
-                };
-                this.showAlert = true;
+                this._snackbarService.showSuccess('Token válido. Completa tu registro.');
             } else {
                 this.tokenValid = false;
-                this.alert = {
-                    type: 'error',
-                    message: result?.error || 'Token inválido o expirado.'
-                };
-                this.showAlert = true;
+                this._snackbarService.showError(result?.error || 'Token inválido o expirado.');
             }
         } catch (error) {
             this.tokenValid = false;
-            this.alert = {
-                type: 'error',
-                message: 'Error validando token.'
-            };
-            this.showAlert = true;
+            this._snackbarService.showError('Error validando token.');
         } finally {
             this.loading = false;
         }
@@ -125,18 +108,10 @@ export class AuthRegisterComponent implements OnInit {
             } else {
                 // System not initialized, allow admin setup
                 this.isSystemInitialized = false;
-                this.alert = {
-                    type: 'info',
-                    message: 'Configuración inicial del sistema. Registra el primer administrador.'
-                };
-                this.showAlert = true;
+                this._snackbarService.showInfo('Configuración inicial del sistema. Registra el primer administrador.');
             }
         } catch (error) {
-            this.alert = {
-                type: 'error',
-                message: 'Error verificando estado del sistema.'
-            };
-            this.showAlert = true;
+            this._snackbarService.showError('Error verificando estado del sistema.');
         } finally {
             this.loading = false;
         }
@@ -148,7 +123,6 @@ export class AuthRegisterComponent implements OnInit {
         }
 
         this.registerForm.disable();
-        this.showAlert = false;
         this.loading = true;
 
         const formData = this.registerForm.value;
@@ -163,11 +137,7 @@ export class AuthRegisterComponent implements OnInit {
             this._authService.registerWithToken(userData).subscribe({
                 next: (response) => {
                     if (response.success) {
-                        this.alert = {
-                            type: 'success',
-                            message: 'Registro completado exitosamente.'
-                        };
-                        this.showAlert = true;
+                        this._snackbarService.showSuccess('Registro completado exitosamente.');
                         
                         // Auto-redirect to profile after successful registration
                         setTimeout(() => {
@@ -186,11 +156,7 @@ export class AuthRegisterComponent implements OnInit {
             this._authService.registerAdmin(formData).subscribe({
                 next: (response) => {
                     if (response.success) {
-                        this.alert = {
-                            type: 'success',
-                            message: 'Administrador registrado exitosamente. Redirigiendo al login...'
-                        };
-                        this.showAlert = true;
+                        this._snackbarService.showSuccess('Administrador registrado exitosamente. Redirigiendo al login...');
                         
                         setTimeout(() => {
                             this._router.navigate(['/sign-in']);
@@ -209,11 +175,7 @@ export class AuthRegisterComponent implements OnInit {
     private handleError(message: string): void {
         this.registerForm.enable();
         this.loading = false;
-        this.alert = {
-            type: 'error',
-            message: message
-        };
-        this.showAlert = true;
+        this._snackbarService.showError(message);
         
         // Reset form
         this.registerNgForm.resetForm();

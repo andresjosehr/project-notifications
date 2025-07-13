@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { FuseCardComponent } from '@fuse/components/card';
-import { FuseAlertComponent } from '@fuse/components/alert';
+import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService, Project, User } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -33,7 +33,6 @@ import { ProposalConfirmDialogComponent } from './proposal-confirm-dialog/propos
         MatDialogModule,
         MatSnackBarModule,
         FuseCardComponent,
-        FuseAlertComponent,
     ],
 })
 export class ProposalReviewComponent implements OnInit {
@@ -47,9 +46,6 @@ export class ProposalReviewComponent implements OnInit {
     isLoading = false;
     isGenerating = false;
     isSending = false;
-    showAlert = false;
-    alertMessage = '';
-    alertType: 'success' | 'error' | 'info' = 'info';
 
     // URL parameters
     projectId: string | null = null;
@@ -71,7 +67,8 @@ export class ProposalReviewComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private snackbarService: SnackbarService
     ) {
         this.authUser = this.authService.currentUser;
     }
@@ -84,7 +81,7 @@ export class ProposalReviewComponent implements OnInit {
             this.platform = params['platform'] || 'workana';
 
             if (!this.projectId || !this.userId) {
-                this.showError('❌ Faltan parámetros requeridos (projectId, userId)');
+                this.snackbarService.showError('❌ Faltan parámetros requeridos (projectId, userId)');
                 setTimeout(() => {
                     this.router.navigate(['/admin/projects']);
                 }, 3000);
@@ -113,7 +110,7 @@ export class ProposalReviewComponent implements OnInit {
 
         } catch (error: any) {
             console.error('Error initializing proposal review:', error);
-            this.showError(`❌ Error iniciando revisión: ${error.message}`);
+            this.snackbarService.showError(`❌ Error iniciando revisión: ${error.message}`);
         }
     }
 
@@ -162,13 +159,13 @@ export class ProposalReviewComponent implements OnInit {
                 this.proposalContent = this.originalProposal;
                 this.updateProposalStats();
                 
-                this.showSuccess('✅ Propuesta generada exitosamente');
+                this.snackbarService.showSuccess('✅ Propuesta generada exitosamente');
             } else {
                 throw new Error(result?.error || 'Error generando propuesta');
             }
         } catch (error: any) {
             console.error('Error generating proposal:', error);
-            this.showError(`❌ Error generando propuesta: ${error.message}`);
+            this.snackbarService.showError(`❌ Error generando propuesta: ${error.message}`);
             throw error;
         } finally {
             this.isGenerating = false;
@@ -197,7 +194,7 @@ export class ProposalReviewComponent implements OnInit {
         if (this.isGenerating) return;
         
         try {
-            this.showInfo('🔄 Regenerando propuesta...');
+            this.snackbarService.showInfo('🔄 Regenerando propuesta...');
             
             // Clear current content
             this.proposalContent = '';
@@ -207,7 +204,7 @@ export class ProposalReviewComponent implements OnInit {
             
         } catch (error: any) {
             console.error('Error regenerating proposal:', error);
-            this.showError(`❌ Error regenerando propuesta: ${error.message}`);
+            this.snackbarService.showError(`❌ Error regenerando propuesta: ${error.message}`);
         }
     }
 
@@ -215,9 +212,9 @@ export class ProposalReviewComponent implements OnInit {
         if (this.originalProposal) {
             this.proposalContent = this.originalProposal;
             this.updateProposalStats();
-            this.showInfo('↩️ Propuesta restaurada al contenido original');
+            this.snackbarService.showInfo('↩️ Propuesta restaurada al contenido original');
         } else {
-            this.showError('❌ No hay propuesta original para restaurar');
+            this.snackbarService.showError('❌ No hay propuesta original para restaurar');
         }
     }
 
@@ -227,7 +224,7 @@ export class ProposalReviewComponent implements OnInit {
         const proposalContent = this.proposalContent.trim();
         
         if (!proposalContent) {
-            this.showError('❌ La propuesta no puede estar vacía');
+            this.snackbarService.showError('❌ La propuesta no puede estar vacía');
             return;
         }
         
@@ -277,7 +274,7 @@ export class ProposalReviewComponent implements OnInit {
             
             setTimeout(() => {
                 this.showProposalReview();
-                this.showError(`❌ Error enviando propuesta: ${error.message}`);
+                this.snackbarService.showError(`❌ Error enviando propuesta: ${error.message}`);
             }, 3000);
             
         } finally {
@@ -301,7 +298,7 @@ export class ProposalReviewComponent implements OnInit {
     }
 
     private showSuccessOptions(): void {
-        this.showSuccess('✅ ¡Propuesta Enviada! La propuesta ha sido enviada exitosamente a Workana.');
+        this.snackbarService.showSuccess('✅ ¡Propuesta Enviada! La propuesta ha sido enviada exitosamente a Workana.');
         
         // Show success snackbar with action
         const snackBarRef = this.snackBar.open(
@@ -341,27 +338,6 @@ export class ProposalReviewComponent implements OnInit {
         return platform === 'workana' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
     }
 
-    // Alert methods
-    showSuccess(message: string): void {
-        this.alertType = 'success';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showError(message: string): void {
-        this.alertType = 'error';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
-
-    showInfo(message: string): void {
-        this.alertType = 'info';
-        this.alertMessage = message;
-        this.showAlert = true;
-        setTimeout(() => { this.showAlert = false; }, 5000);
-    }
 
     logout(): void {
         this.authService.signOut().subscribe(() => {
