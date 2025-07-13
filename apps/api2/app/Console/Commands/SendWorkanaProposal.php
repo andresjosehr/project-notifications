@@ -12,7 +12,7 @@ class SendWorkanaProposal extends Command
      *
      * @var string
      */
-    protected $signature = 'workana:send-proposal {session} {proposalText}';
+    protected $signature = 'workana:send-proposal {session} {proposalText} {projectLink}';
 
     /**
      * The console command description.
@@ -28,17 +28,27 @@ class SendWorkanaProposal extends Command
     {
         $session = $this->argument('session');
         $proposalText = $this->argument('proposalText');
+        $projectLink = $this->argument('projectLink');
         
         $this->info('Enviando propuesta a Workana...');
         
         try {
+            // Verificar si el primer argumento es un archivo de sesión en storage
+            $sessionData = $session;
+            if (file_exists($session) && is_readable($session)) {
+                // Si es un archivo de sesión, pasar la ruta directamente
+                $sessionData = $session;
+                $this->line("Usando archivo de sesión en storage: {$session}");
+            }
+            
             // Ruta al CLI
-            $cliPath = base_path('../../apps/api2/cli.js');
+            $cliPath = base_path('cli.js');
             
             // Construir comando
             $command = "node {$cliPath} sendProposal " .
-                escapeshellarg($session) . " " .
-                escapeshellarg($proposalText);
+                escapeshellarg($sessionData) . " " .
+                escapeshellarg($proposalText) . " " .
+                escapeshellarg($projectLink);
             
             $this->line("Ejecutando: {$command}");
             

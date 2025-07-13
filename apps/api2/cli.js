@@ -78,137 +78,33 @@ program
     }
   });
 
-// Comando para enviar propuesta a Workana
-program
-  .command('send-proposal')
-  .description('Enviar propuesta a Workana usando datos de sesión proporcionados por Laravel')
-  .requiredOption('--project-id <id>', 'ID del proyecto en Workana')
-  .requiredOption('--user-id <id>', 'ID del usuario que enviará la propuesta')
-  .option('--session-data <json>', 'Datos de sesión en formato JSON (cookies, localStorage, etc.)')
-  .option('--username <email>', 'Email del usuario de Workana')
-  .option('--password <password>', 'Contraseña del usuario de Workana')
-  .option('--proposal-content <text>', 'Contenido personalizado de la propuesta')
-  .option('--auto-login', 'Intentar auto-login si no hay sesión activa', false)
-  .option('--headless', 'Ejecutar en modo headless', true)
-  .option('--debug', 'Modo debug con más logs', false)
-  .action(async (options) => {
-    try {
-      const startTime = Date.now();
-      
-      // Validar parámetros requeridos
-      if (!options.projectId) {
-        throw new Error('Se requiere projectId');
-      }
-
-      if (!options.userId) {
-        throw new Error('Se requiere userId');
-      }
-
-      // Parsear datos de sesión si se proporcionan
-      let sessionData = null;
-      if (options.sessionData) {
-        try {
-          sessionData = JSON.parse(options.sessionData);
-        } catch (parseError) {
-          throw new Error(`Error parseando session-data: ${parseError.message}`);
-        }
-      }
-
-      // Crear instancia del servicio de Workana
-      const workanaService = new WorkanaService({
-        headless: options.headless,
-        debug: options.debug
-      });
-
-      // Configurar datos de usuario para la propuesta
-      const proposalOptions = {
-        userId: parseInt(options.userId),
-        username: options.username,
-        password: options.password,
-        autoLogin: options.autoLogin,
-        customProposal: options.proposalContent,
-        sessionData: sessionData
-      };
-
-      // Enviar propuesta usando sendProposalByUserId
-      const result = await workanaService.sendProposalByUserId(
-        options.projectId, 
-        parseInt(options.userId), 
-        proposalOptions
-      );
-
-      const duration = Date.now() - startTime;
-
-      // Crear respuesta estructurada
-      const response = {
-        success: result.success,
-        platform: 'workana',
-        timestamp: new Date().toISOString(),
-        duration: duration,
-        projectId: options.projectId,
-        userId: options.userId,
-        data: {
-          projectId: result.projectId,
-          userId: result.userId,
-          userEmail: result.userEmail,
-          projectTitle: result.title,
-          message: result.message,
-          proposalText: result.proposalText
-        },
-        error: result.error ? {
-          message: result.error,
-          type: 'ProposalError'
-        } : null
-      };
-
-      // Imprimir resultado en formato JSON
-      console.log(JSON.stringify(response, null, 2));
-
-      // Cerrar el navegador
-      await workanaService.close();
-
-      process.exit(result.success ? 0 : 1);
-
-    } catch (error) {
-      logger.errorWithStack('Error enviando propuesta a Workana', error);
-
-      const errorResponse = {
-        success: false,
-        platform: 'workana',
-        timestamp: new Date().toISOString(),
-        projectId: options.projectId,
-        userId: options.userId,
-        error: {
-          message: error.message,
-          type: error.constructor.name
-        },
-        data: null
-      };
-
-      console.log(JSON.stringify(errorResponse, null, 2));
-
-      if (options.debug) {
-        console.error(`❌ Error: ${error.message}`);
-      }
-
-      process.exit(1);
-    }
-  });
-
 // Comando simple para enviar propuesta con sesión y texto
 program
   .command('sendProposal')
   .description('Enviar propuesta simple con sesión y texto')
-  .argument('<session>', 'Datos de sesión en formato JSON')
+  .argument('<session>', 'Datos de sesión en formato JSON o ruta a archivo temporal')
   .argument('<proposalText>', 'Texto de la propuesta')
-  .action(async (session, proposalText) => {
+  .argument('<projectLink>', 'Link del proyecto en Workana')
+  .action(async (session, proposalText, projectLink) => {
     try {
       const startTime = Date.now();
       
-      // Parsear datos de sesión
+      // Parsear datos de sesión - puede ser JSON directo o archivo de sesión
       let sessionData;
       try {
-        sessionData = JSON.parse(session);
+        // Verificar si es un archivo de sesión en storage
+        if (session.includes('storage/app/sessions/') || session.includes('session_')) {
+          const fs = require('fs');
+          if (fs.existsSync(session)) {
+            sessionData = JSON.parse(fs.readFileSync(session, 'utf8'));
+            console.log(`Leyendo datos de sesión desde archivo en storage: ${session}`);
+          } else {
+            throw new Error(`Archivo de sesión no encontrado: ${session}`);
+          }
+        } else {
+          // Intentar parsear como JSON directo
+          sessionData = JSON.parse(session);
+        }
       } catch (parseError) {
         throw new Error(`Error parseando session: ${parseError.message}`);
       }
@@ -219,8 +115,8 @@ program
         debug: false
       });
 
-      // Enviar propuesta usando el método simplificado
-      const result = await workanaService.sendProposalByUserId(sessionData, proposalText);
+      // Enviar propuesta usando el método simplificado con link del proyecto
+      const result = await workanaService.sendProposal(sessionData, proposalText, projectLink);
 
       const duration = Date.now() - startTime;
 
@@ -231,6 +127,7 @@ program
         timestamp: new Date().toISOString(),
         duration: duration,
         message: result.message,
+        projectLink: projectLink,
         error: result.error ? {
           message: result.error,
           type: 'ProposalError'

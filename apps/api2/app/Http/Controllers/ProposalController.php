@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Models\Project;
 use App\Models\ExternalCredential;
 
 class ProposalController extends Controller
@@ -27,6 +28,15 @@ class ProposalController extends Controller
             $userId = $request->input('userId');
             $proposalContent = $request->input('proposalContent');
             $platform = $request->input('platform');
+
+            // Get project link from database
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Proyecto no encontrado'
+                ], 404);
+            }
             
             // Verificar que el usuario existe
             $user = User::find($userId);
@@ -39,7 +49,6 @@ class ProposalController extends Controller
             
             // Obtener datos de sesión del usuario
             $sessionData = $this->getUserSessionData($userId, $platform);
-            Log::info('Session data: ' . json_encode($sessionData));
             // if (!$sessionData) {
             //     Log::info('No se encontraron datos de sesión');
             //     // Intentar hacer login y obtener session_data
@@ -54,7 +63,15 @@ class ProposalController extends Controller
             // }
             
             // Ejecutar comando Artisan
-            $result = $this->executeProposalCommand($sessionData, $proposalContent);
+            // $project->link = https://www.workana.com/job/consultor-de-ia-para-automatizacion-y-optimizacion-de-procesos-empresariales
+            // Transformed link https://www.workana.com/messages/bid/consultor-de-ia-para-automatizacion-y-optimizacion-de-procesos-empresariales/?tab=message&ref=project_view
+            // Necesitamos transformar la url
+            $projectLink = str_replace('https://www.workana.com/job/', 'https://www.workana.com/messages/bid/', $project->link);
+            $projectLink = str_replace('?tab=message&ref=project_view', '', $projectLink);
+            $projectLink = str_replace('https://www.workana.com/messages/bid/', 'https://www.workana.com/messages/bid/', $projectLink);
+            $projectLink = str_replace('https://www.workana.com/messages/bid/', 'https://www.workana.com/messages/bid/', $projectLink);
+            $projectLink .= '/?tab=message&ref=project_view';
+            $result = $this->executeProposalCommand($sessionData, $proposalContent, $projectLink);
             
             if ($result['success']) {
                 return response()->json([
@@ -102,7 +119,6 @@ class ProposalController extends Controller
             ->where('platform', $platform)
             ->first();
             
-            Log::info('Session data: ' . json_encode($credentials));
         if ($credentials && $credentials->session_data) {
             return $credentials->session_data;
         }
@@ -173,18 +189,37 @@ class ProposalController extends Controller
     /**
      * Ejecutar comando Artisan para enviar propuesta
      */
-    private function executeProposalCommand($sessionData, $proposalContent)
+    private function executeProposalCommand($sessionData, $proposalContent, $projectLink)
     {
         try {
-            Log::info('Session data: ' . $sessionData);
-            // Intentar envío real primero
+            
+            // Crear archivo en storage de Laravel para los datos de sesión
+            $sessionFileName = 'session_' . uniqid() . '.json';
+            $sessionFilePath = storage_path('app/sessions/' . $sessionFileName);
+            
+            // Crear directorio si no existe
+            $sessionDir = storage_path('app/sessions');
+            if (!file_exists($sessionDir)) {
+                mkdir($sessionDir, 0755, true);
+            }
+            
+            // Escribir datos de sesión al archivo
+            file_put_contents($sessionFilePath, $sessionData);
+            
+            // Intentar envío real usando archivo en storage
             $command = "cd " . base_path() . " && php artisan workana:send-proposal " .
-                escapeshellarg($sessionData) . " " .
-                escapeshellarg($proposalContent);
+                escapeshellarg($sessionFilePath) . " " .
+                escapeshellarg($proposalContent) . " " .
+                escapeshellarg($projectLink);
             
             Log::info('Ejecutando comando de envío: ' . $command);
             $output = shell_exec($command . " 2>&1");
             Log::info('Output del comando de envío: ' . $output);
+            
+            // Limpiar archivo de sesión
+            if (file_exists($sessionFilePath)) {
+                unlink($sessionFilePath);
+            }
             
             // Intentar parsear como JSON primero
             $jsonResponse = json_decode($output, true);
@@ -220,6 +255,11 @@ class ProposalController extends Controller
             ];
             
         } catch (\Exception $e) {
+            // Limpiar archivo de sesión en caso de excepción
+            if (isset($sessionFilePath) && file_exists($sessionFilePath)) {
+                unlink($sessionFilePath);
+            }
+            
             // En caso de excepción, usar simulación como fallback
             Log::error('Excepción en envío, usando simulación como fallback', [
                 'error' => $e->getMessage()

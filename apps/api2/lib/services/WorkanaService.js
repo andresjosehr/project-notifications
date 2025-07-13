@@ -964,7 +964,7 @@ class WorkanaService extends BaseScraper {
   // PROPOSAL MANAGEMENT
   // ===========================================
 
-  async sendProposalByUserId(sessionData, proposalText) {
+  async sendProposal(sessionData, proposalText, projectLink) {
     try {
       // Validar que se proporcionen los datos requeridos
       if (!sessionData) {
@@ -973,6 +973,10 @@ class WorkanaService extends BaseScraper {
       
       if (!proposalText || typeof proposalText !== 'string' || proposalText.trim().length === 0) {
         throw new Error('Se requiere texto de propuesta válido');
+      }
+
+      if (!projectLink || typeof projectLink !== 'string') {
+        throw new Error('Se requiere link del proyecto válido');
       }
 
       if (this.debug) {
@@ -985,9 +989,13 @@ class WorkanaService extends BaseScraper {
         throw new Error('Sesión inválida o expirada');
       }
       
-      // Navegar a la página de propuesta
-      await this._navigateToProposalPage();
-      await this._verifyProposalPage();
+      // Navegar al proyecto usando el link proporcionado
+      await this.page.goto(projectLink, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 30000 
+      });
+      
+      await this.page.waitForTimeout(2000);
       
       // Enviar propuesta
       await this._fillAndSubmitProposal(proposalText.trim());
