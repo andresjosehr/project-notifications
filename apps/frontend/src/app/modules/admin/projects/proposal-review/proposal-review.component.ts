@@ -10,7 +10,6 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FuseCardComponent } from '@fuse/components/card';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService, Project } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -75,7 +74,6 @@ export class ProposalReviewComponent implements OnInit {
         private authService: AuthService,
         private route: ActivatedRoute,
         private router: Router,
-        private snackbarService: SnackbarService,
         @Optional() private dialogRef?: MatDialogRef<ProposalReviewComponent>,
         @Optional() @Inject(MAT_DIALOG_DATA) private dialogData?: ProposalReviewData
     ) {
@@ -108,11 +106,11 @@ export class ProposalReviewComponent implements OnInit {
                 if (result?.success) {
                     this.project = result.data;
                 } else {
-                    this.snackbarService.showError('Proyecto no encontrado');
+                    // Error('Proyecto no encontrado');
                     this.router.navigate(['/admin/projects']);
                 }
             } catch (error: any) {
-                this.snackbarService.showError('Error cargando proyecto');
+                // Error('Error cargando proyecto');
                 this.router.navigate(['/admin/projects']);
             }
         }
@@ -164,10 +162,10 @@ export class ProposalReviewComponent implements OnInit {
                 this.proposalForm.patchValue({ content: this.currentProposal });
                 this.updateProposalStats(this.currentProposal);
             } else {
-                this.snackbarService.showError(result?.error || 'Error generando propuesta');
+                // Error(result?.error || 'Error generando propuesta');
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error generando propuesta');
+            // Error(error.message || 'Error generando propuesta');
         } finally {
             this.isLoading = false;
         }
@@ -190,12 +188,12 @@ export class ProposalReviewComponent implements OnInit {
                 this.currentProposal = this.originalProposal;
                 this.proposalForm.patchValue({ content: this.currentProposal });
                 this.updateProposalStats(this.currentProposal);
-                this.snackbarService.showSuccess('Propuesta regenerada exitosamente');
+                // Success('Propuesta regenerada exitosamente');
             } else {
-                this.snackbarService.showError(result?.error || 'Error regenerando propuesta');
+                // Error(result?.error || 'Error regenerando propuesta');
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error regenerando propuesta');
+            // Error(error.message || 'Error regenerando propuesta');
         } finally {
             this.isLoading = false;
         }
@@ -205,7 +203,7 @@ export class ProposalReviewComponent implements OnInit {
         this.currentProposal = this.originalProposal;
         this.proposalForm.patchValue({ content: this.currentProposal });
         this.updateProposalStats(this.currentProposal);
-        this.snackbarService.showInfo('Propuesta restaurada a la versión original');
+        // Info('Propuesta restaurada a la versión original');
     }
 
     async sendProposal(): Promise<void> {
@@ -213,7 +211,7 @@ export class ProposalReviewComponent implements OnInit {
 
         const content = this.proposalForm.get('content')?.value;
         if (!content || content.trim().length === 0) {
-            this.snackbarService.showError('La propuesta no puede estar vacía');
+            // Error('La propuesta no puede estar vacía');
             return;
         }
 
@@ -230,17 +228,17 @@ export class ProposalReviewComponent implements OnInit {
             ).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Propuesta enviada exitosamente');
+                // Success('Propuesta enviada exitosamente');
                 this.proposalSent.emit(result.data);
                 
                 if (this.isModal && this.dialogRef) {
                     this.dialogRef.close(result.data);
                 }
             } else {
-                this.snackbarService.showError(result?.error || 'Error enviando propuesta');
+                // Error(result?.error || 'Error enviando propuesta');
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error enviando propuesta');
+            // Error(error.message || 'Error enviando propuesta');
         } finally {
             this.isSending = false;
         }

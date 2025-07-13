@@ -14,7 +14,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 
@@ -49,8 +48,7 @@ export class AuthRegisterComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router,
-        private _snackbarService: SnackbarService
+        private _router: Router
     ) {}
 
     ngOnInit(): void {
@@ -84,14 +82,11 @@ export class AuthRegisterComponent implements OnInit {
             
             if (result?.success) {
                 this.tokenValid = true;
-                this._snackbarService.showSuccess('Token válido. Completa tu registro.');
             } else {
                 this.tokenValid = false;
-                this._snackbarService.showError(result?.error || 'Token inválido o expirado.');
             }
         } catch (error) {
             this.tokenValid = false;
-            this._snackbarService.showError('Error validando token.');
         } finally {
             this.loading = false;
         }
@@ -108,10 +103,9 @@ export class AuthRegisterComponent implements OnInit {
             } else {
                 // System not initialized, allow admin setup
                 this.isSystemInitialized = false;
-                this._snackbarService.showInfo('Configuración inicial del sistema. Registra el primer administrador.');
             }
         } catch (error) {
-            this._snackbarService.showError('Error verificando estado del sistema.');
+            // Error checking system status
         } finally {
             this.loading = false;
         }
@@ -137,8 +131,6 @@ export class AuthRegisterComponent implements OnInit {
             this._authService.registerWithToken(userData).subscribe({
                 next: (response) => {
                     if (response.success) {
-                        this._snackbarService.showSuccess('Registro completado exitosamente.');
-                        
                         // Auto-redirect to profile after successful registration
                         setTimeout(() => {
                             this._router.navigate(['/profile']);
@@ -156,8 +148,6 @@ export class AuthRegisterComponent implements OnInit {
             this._authService.registerAdmin(formData).subscribe({
                 next: (response) => {
                     if (response.success) {
-                        this._snackbarService.showSuccess('Administrador registrado exitosamente. Redirigiendo al login...');
-                        
                         setTimeout(() => {
                             this._router.navigate(['/sign-in']);
                         }, 2000);
@@ -175,7 +165,6 @@ export class AuthRegisterComponent implements OnInit {
     private handleError(message: string): void {
         this.registerForm.enable();
         this.loading = false;
-        this._snackbarService.showError(message);
         
         // Reset form
         this.registerNgForm.resetForm();

@@ -16,7 +16,6 @@ import { FuseCardComponent } from '@fuse/components/card';
 import { ApiService, User } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 
 interface UserStats {
     total: number;
@@ -98,7 +97,6 @@ export class UsersComponent implements OnInit {
         private authService: AuthService,
         private router: Router,
         private dialog: MatDialog,
-        private snackbarService: SnackbarService,
         private cdr: ChangeDetectorRef
     ) {
         this.currentUser = this.authService.currentUser;
@@ -130,10 +128,10 @@ export class UsersComponent implements OnInit {
             if (result?.success) {
                 this.users = result.data || [];
             } else {
-                this.snackbarService.showError(result?.error || 'Error cargando usuarios');
+                // Error loading users
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error cargando usuarios');
+            // Error loading users
         } finally {
             this.isLoading = false;
         }
@@ -150,11 +148,10 @@ export class UsersComponent implements OnInit {
                 console.log('Component tokens array:', this.tokens);
                 this.cdr.detectChanges(); // Force change detection
             } else {
-                this.snackbarService.showError(result?.error || 'Error cargando tokens');
+                // Error loading tokens
             }
         } catch (error: any) {
             console.error('Error loading tokens:', error);
-            this.snackbarService.showError(error.message || 'Error cargando tokens');
         }
     }
 
@@ -187,17 +184,16 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.generateToken().toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Token generado exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
                 
                 // Show the token details in a dialog
                 this.showTokenDialog(result.data);
             } else {
-                this.snackbarService.showError(result?.error || 'Error generando token');
+                // Error generating token
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error generando token');
+            // Error generating token
         }
     }
 
@@ -206,17 +202,8 @@ export class UsersComponent implements OnInit {
         const registerUrl = `${window.location.origin}/register?token=${tokenData.token}`;
         const message = `Token generado: ${tokenData.token}\n\nURL de registro: ${registerUrl}`;
         
-        this.snackbarService.showInfo(message, {
-            duration: 10000,
-            actionText: 'Copiar URL',
-            actionCallback: () => {
-                navigator.clipboard.writeText(registerUrl).then(() => {
-                    this.snackbarService.showSuccess('URL copiada al portapapeles');
-                }).catch(() => {
-                    this.snackbarService.showError('Error copiando URL');
-                });
-            }
-        });
+        // Could implement a modal dialog here instead
+        console.log('Token generated:', message);
     }
 
     async deleteToken(tokenId: number): Promise<void> {
@@ -227,14 +214,13 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.deleteToken(tokenId).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Token eliminado exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
             } else {
-                this.snackbarService.showError(result?.error || 'Error eliminando token');
+                // Error deleting token
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error eliminando token');
+            // Error deleting token
         }
     }
 
@@ -246,14 +232,13 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.cleanupTokens(30).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess(result.message || 'Tokens limpiados exitosamente');
                 this.loadTokens();
                 this.loadTokenStats();
             } else {
-                this.snackbarService.showError(result?.error || 'Error limpiando tokens');
+                // Error cleaning tokens
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error limpiando tokens');
+            // Error cleaning tokens
         }
     }
 
@@ -278,15 +263,14 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.updateUser(this.editingUser.id, formData).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Usuario actualizado exitosamente');
                 this.editingUser = null;
                 this.editUserForm.reset();
                 this.loadUsers();
             } else {
-                this.snackbarService.showError(result?.error || 'Error actualizando usuario');
+                // Error updating user
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error actualizando usuario');
+            // Error updating user
         }
     }
 
@@ -300,14 +284,13 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.toggleUserStatus(user.id, !user.isActive).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess(result.message || 'Estado del usuario actualizado');
                 this.loadUsers();
                 this.loadUserStats();
             } else {
-                this.snackbarService.showError(result?.error || 'Error actualizando estado');
+                // Error updating user status
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error actualizando estado');
+            // Error updating user status
         }
     }
 
@@ -319,31 +302,30 @@ export class UsersComponent implements OnInit {
             const result = await this.apiService.deleteUser(user.id).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Usuario eliminado exitosamente');
                 this.loadUsers();
                 this.loadUserStats();
             } else {
-                this.snackbarService.showError(result?.error || 'Error eliminando usuario');
+                // Error deleting user
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error eliminando usuario');
+            // Error deleting user
         }
     }
 
     copyToken(token: string): void {
         navigator.clipboard.writeText(token).then(() => {
-            this.snackbarService.showSuccess('Token copiado al portapapeles');
+            // Token copied
         }).catch(() => {
-            this.snackbarService.showError('Error copiando token');
+            // Error copying token
         });
     }
 
     copyRegistrationLink(token: string): void {
         const link = `${window.location.origin}/register?token=${token}`;
         navigator.clipboard.writeText(link).then(() => {
-            this.snackbarService.showSuccess('Link de registro copiado al portapapeles');
+            // Link copied
         }).catch(() => {
-            this.snackbarService.showError('Error copiando link');
+            // Error copying link
         });
     }
 
@@ -363,17 +345,6 @@ export class UsersComponent implements OnInit {
         });
     }
 
-    showSuccess(message: string): void {
-        this.snackbarService.showSuccess(message);
-    }
-
-    showError(message: string): void {
-        this.snackbarService.showError(message);
-    }
-
-    showInfo(message: string): void {
-        this.snackbarService.showInfo(message);
-    }
 
     logout(): void {
         this.authService.signOut().subscribe(() => {

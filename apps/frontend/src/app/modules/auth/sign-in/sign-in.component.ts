@@ -15,7 +15,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 
 @Component({
@@ -48,8 +47,7 @@ export class AuthSignInComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router,
-        private _snackbarService: SnackbarService
+        private _router: Router
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -89,8 +87,7 @@ export class AuthSignInComponent implements OnInit {
                 return;
             }
         } catch (error) {
-            // If there's an error checking initialization, show error but allow login
-            this._snackbarService.showError('Error verificando estado del sistema. Puedes intentar iniciar sesión.');
+            // If there's an error checking initialization, allow login
         } finally {
             this.loading = false;
         }
@@ -134,8 +131,6 @@ export class AuthSignInComponent implements OnInit {
                 // Reset the form
                 this.signInNgForm.resetForm();
 
-                // Show error message
-                this._snackbarService.showError('Correo electrónico o contraseña incorrectos');
             }
         );
     }

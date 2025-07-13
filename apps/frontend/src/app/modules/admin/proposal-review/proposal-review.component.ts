@@ -9,7 +9,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { FuseCardComponent } from '@fuse/components/card';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService, Project, User } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -67,8 +66,7 @@ export class ProposalReviewComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar,
-        private snackbarService: SnackbarService
+        private snackBar: MatSnackBar
     ) {
         this.authUser = this.authService.currentUser;
     }
@@ -81,7 +79,7 @@ export class ProposalReviewComponent implements OnInit {
             this.platform = params['platform'] || 'workana';
 
             if (!this.projectId || !this.userId) {
-                this.snackbarService.showError('❌ Faltan parámetros requeridos (projectId, userId)');
+                // Error('❌ Faltan parámetros requeridos (projectId, userId)');
                 setTimeout(() => {
                     this.router.navigate(['/admin/projects']);
                 }, 3000);
@@ -110,7 +108,7 @@ export class ProposalReviewComponent implements OnInit {
 
         } catch (error: any) {
             console.error('Error initializing proposal review:', error);
-            this.snackbarService.showError(`❌ Error iniciando revisión: ${error.message}`);
+            // Error(`❌ Error iniciando revisión: ${error.message}`);
         }
     }
 
@@ -159,13 +157,13 @@ export class ProposalReviewComponent implements OnInit {
                 this.proposalContent = this.originalProposal;
                 this.updateProposalStats();
                 
-                this.snackbarService.showSuccess('✅ Propuesta generada exitosamente');
+                // Success('✅ Propuesta generada exitosamente');
             } else {
                 throw new Error(result?.error || 'Error generando propuesta');
             }
         } catch (error: any) {
             console.error('Error generating proposal:', error);
-            this.snackbarService.showError(`❌ Error generando propuesta: ${error.message}`);
+            // Error(`❌ Error generando propuesta: ${error.message}`);
             throw error;
         } finally {
             this.isGenerating = false;
@@ -194,7 +192,7 @@ export class ProposalReviewComponent implements OnInit {
         if (this.isGenerating) return;
         
         try {
-            this.snackbarService.showInfo('🔄 Regenerando propuesta...');
+            // Info('🔄 Regenerando propuesta...');
             
             // Clear current content
             this.proposalContent = '';
@@ -204,7 +202,7 @@ export class ProposalReviewComponent implements OnInit {
             
         } catch (error: any) {
             console.error('Error regenerating proposal:', error);
-            this.snackbarService.showError(`❌ Error regenerando propuesta: ${error.message}`);
+            // Error(`❌ Error regenerando propuesta: ${error.message}`);
         }
     }
 
@@ -212,9 +210,9 @@ export class ProposalReviewComponent implements OnInit {
         if (this.originalProposal) {
             this.proposalContent = this.originalProposal;
             this.updateProposalStats();
-            this.snackbarService.showInfo('↩️ Propuesta restaurada al contenido original');
+            // Info('↩️ Propuesta restaurada al contenido original');
         } else {
-            this.snackbarService.showError('❌ No hay propuesta original para restaurar');
+            // Error('❌ No hay propuesta original para restaurar');
         }
     }
 
@@ -224,7 +222,7 @@ export class ProposalReviewComponent implements OnInit {
         const proposalContent = this.proposalContent.trim();
         
         if (!proposalContent) {
-            this.snackbarService.showError('❌ La propuesta no puede estar vacía');
+            // Error('❌ La propuesta no puede estar vacía');
             return;
         }
         
@@ -274,7 +272,7 @@ export class ProposalReviewComponent implements OnInit {
             
             setTimeout(() => {
                 this.showProposalReview();
-                this.snackbarService.showError(`❌ Error enviando propuesta: ${error.message}`);
+                // Error(`❌ Error enviando propuesta: ${error.message}`);
             }, 3000);
             
         } finally {
@@ -298,7 +296,7 @@ export class ProposalReviewComponent implements OnInit {
     }
 
     private showSuccessOptions(): void {
-        this.snackbarService.showSuccess('✅ ¡Propuesta Enviada! La propuesta ha sido enviada exitosamente a Workana.');
+        // Success('✅ ¡Propuesta Enviada! La propuesta ha sido enviada exitosamente a Workana.');
         
         // Show success snackbar with action
         const snackBarRef = this.snackBar.open(

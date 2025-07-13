@@ -12,7 +12,6 @@ import { RouterLink } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
 import { ApiService } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -57,8 +56,7 @@ export class ProfileComponent implements OnInit {
         private apiService: ApiService,
         private authService: AuthService,
         private router: Router,
-        private dialog: MatDialog,
-        private snackbarService: SnackbarService
+        private dialog: MatDialog
     ) {
         this.currentUser = this.authService.currentUser;
         this.createForms();
@@ -112,10 +110,10 @@ export class ProfileComponent implements OnInit {
                 this.userProfile = result.data;
                 this.populateForms();
             } else {
-                this.snackbarService.showError(result?.error || 'Error cargando perfil');
+                // Error loading profile
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error cargando perfil');
+            // Error loading profile
         } finally {
             this.isLoading = false;
         }
@@ -171,12 +169,11 @@ export class ProfileComponent implements OnInit {
                 // Limpiar campo de contraseña por seguridad
                 this.profileForm.get('workanaPassword')?.setValue('');
                 
-                this.snackbarService.showSuccess('Perfil actualizado exitosamente');
             } else {
-                this.snackbarService.showError(result?.error || 'Error actualizando perfil');
+                // Error updating profile
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error actualizando perfil');
+            // Error updating profile
         } finally {
             this.loadingStates.profile = false;
         }
@@ -195,13 +192,12 @@ export class ProfileComponent implements OnInit {
             const result = await this.apiService.updateUser(this.currentUser.id, formData).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Contraseña cambiada exitosamente');
                 this.changePasswordForm.reset();
             } else {
-                this.snackbarService.showError(result?.error || 'Error cambiando contraseña');
+                // Error changing password
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error cambiando contraseña');
+            // Error changing password
         } finally {
             this.loadingStates.changePassword = false;
         }
@@ -212,7 +208,6 @@ export class ProfileComponent implements OnInit {
         const workanaPassword = this.profileForm.get('workanaPassword')?.value;
 
         if (!workanaEmail || !workanaPassword) {
-            this.snackbarService.showError('Completa las credenciales de Workana antes de probar la conexión');
             return;
         }
 
@@ -225,12 +220,12 @@ export class ProfileComponent implements OnInit {
             }).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Conexión a Workana exitosa');
+                // Connection successful
             } else {
-                this.snackbarService.showError(result?.error || 'Error conectando a Workana');
+                // Error connecting to Workana
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error conectando a Workana');
+            // Error connecting to Workana
         } finally {
             this.loadingStates.testConnection = false;
         }

@@ -11,7 +11,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { ApiService } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { Router } from '@angular/router';
@@ -83,8 +82,7 @@ export class DashboardComponent implements OnInit {
         private fb: FormBuilder,
         private apiService: ApiService,
         private authService: AuthService,
-        private router: Router,
-        private snackbarService: SnackbarService
+        private router: Router
     ) {
         this.currentUser = this.authService.currentUser;
         this.createForms();
@@ -116,12 +114,12 @@ export class DashboardComponent implements OnInit {
                     telegram: result.data?.telegram || false,
                     scrapers: result.data?.scrapers || false,
                 };
-                this.snackbarService.showSuccess('Estado del sistema actualizado');
+                // System status updated
             } else {
-                this.snackbarService.showError(result?.error || 'Error verificando salud del sistema');
+                // Error checking system health
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error verificando salud del sistema');
+            // Error checking system health
         } finally {
             this.loadingStates.health = false;
         }
@@ -145,10 +143,10 @@ export class DashboardComponent implements OnInit {
                     this.systemLogs.error = logLines;
                 }
             } else {
-                this.snackbarService.showError(result?.error || 'Error cargando logs');
+                // Error loading logs
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error cargando logs');
+            // Error loading logs
         } finally {
             this.loadingStates.logs = false;
         }
@@ -183,12 +181,12 @@ export class DashboardComponent implements OnInit {
             }
 
             if (result?.success) {
-                this.snackbarService.showSuccess(`Scraping completado: ${result.data?.newProjects || 0} nuevos proyectos encontrados`);
+                // Scraping completed successfully
             } else {
-                this.snackbarService.showError(result?.error || 'Error ejecutando scraping');
+                // Error running scraping
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error ejecutando scraping');
+            // Error running scraping
         } finally {
             this.loadingStates.scraping = false;
         }
@@ -204,12 +202,12 @@ export class DashboardComponent implements OnInit {
             const result = await this.apiService.cleanup().toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess('Base de datos limpiada exitosamente');
+                // Database cleaned successfully
             } else {
-                this.snackbarService.showError(result?.error || 'Error limpiando base de datos');
+                // Error cleaning database
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error limpiando base de datos');
+            // Error cleaning database
         } finally {
             this.loadingStates.cleanup = false;
         }
@@ -225,13 +223,13 @@ export class DashboardComponent implements OnInit {
             const result = await this.apiService.clearLogs(logType).toPromise();
             
             if (result?.success) {
-                this.snackbarService.showSuccess(`Logs de ${logType} limpiados exitosamente`);
+                // Logs cleaned successfully
                 this.loadLogs(logType);
             } else {
-                this.snackbarService.showError(result?.error || 'Error limpiando logs');
+                // Error cleaning logs
             }
         } catch (error: any) {
-            this.snackbarService.showError(error.message || 'Error limpiando logs');
+            // Error cleaning logs
         }
     }
 
@@ -240,7 +238,7 @@ export class DashboardComponent implements OnInit {
         const logs = logType === 'app' ? this.systemLogs.app : this.systemLogs.error;
         
         if (logs.length === 0) {
-            this.snackbarService.showError('No hay logs para descargar');
+            // No logs to download
             return;
         }
 
@@ -249,7 +247,7 @@ export class DashboardComponent implements OnInit {
         const fileName = `${logType}-logs_${timestamp}.txt`;
         
         this.downloadFile(content, fileName, 'text/plain');
-        this.snackbarService.showSuccess(`Logs de ${logType} descargados`);
+        // Logs downloaded successfully
     }
 
     private downloadFile(content: string, fileName: string, contentType: string): void {

@@ -15,7 +15,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 
 @Component({
@@ -46,8 +45,7 @@ export class AuthSignUpComponent implements OnInit {
     constructor(
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router,
-        private _snackbarService: SnackbarService
+        private _router: Router
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -97,9 +95,6 @@ export class AuthSignUpComponent implements OnInit {
 
                 // Reset the form
                 this.signUpNgForm.resetForm();
-
-                // Show error message
-                this._snackbarService.showError('Something went wrong, please try again.');
             }
         );
     }

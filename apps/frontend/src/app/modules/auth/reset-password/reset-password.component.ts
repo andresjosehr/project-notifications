@@ -14,7 +14,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { FuseValidators } from '@fuse/validators';
 import { AuthService } from 'app/core/auth/auth.service';
 import { finalize } from 'rxjs';
@@ -45,8 +44,7 @@ export class AuthResetPasswordComponent implements OnInit {
      */
     constructor(
         private _authService: AuthService,
-        private _formBuilder: UntypedFormBuilder,
-        private _snackbarService: SnackbarService
+        private _formBuilder: UntypedFormBuilder
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -103,12 +101,10 @@ export class AuthResetPasswordComponent implements OnInit {
             )
             .subscribe(
                 (response) => {
-                    // Show success message
-                    this._snackbarService.showSuccess('Your password has been reset.');
+                    // Password reset successful
                 },
                 (response) => {
-                    // Show error message
-                    this._snackbarService.showError('Something went wrong, please try again.');
+                    // Password reset failed
                 }
             );
     }

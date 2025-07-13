@@ -13,7 +13,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
-import { SnackbarService } from 'app/core/services/snackbar.service';
 import { AuthService } from 'app/core/auth/auth.service';
 import { finalize } from 'rxjs';
 
@@ -42,8 +41,7 @@ export class AuthForgotPasswordComponent implements OnInit {
      */
     constructor(
         private _authService: AuthService,
-        private _formBuilder: UntypedFormBuilder,
-        private _snackbarService: SnackbarService
+        private _formBuilder: UntypedFormBuilder
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -90,10 +88,10 @@ export class AuthForgotPasswordComponent implements OnInit {
             )
             .subscribe(
                 (response) => {
-                    this._snackbarService.showSuccess("Password reset sent! You'll receive an email if you are registered on our system.");
+                    // Password reset email sent
                 },
                 (response) => {
-                    this._snackbarService.showError('Email does not found! Are you sure you are already a member?');
+                    // Email not found
                 }
             );
     }
