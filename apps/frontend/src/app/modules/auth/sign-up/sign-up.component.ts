@@ -99,7 +99,7 @@ export class AuthSignUpComponent implements OnInit {
                 this.signUpNgForm.resetForm();
 
                 // Show error message
-                this._snackbarService.error('Something went wrong, please try again.');
+                this._snackbarService.showError('Something went wrong, please try again.');
             }
         );
     }

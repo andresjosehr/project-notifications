@@ -104,11 +104,11 @@ export class AuthResetPasswordComponent implements OnInit {
             .subscribe(
                 (response) => {
                     // Show success message
-                    this._snackbarService.success('Your password has been reset.');
+                    this._snackbarService.showSuccess('Your password has been reset.');
                 },
                 (response) => {
                     // Show error message
-                    this._snackbarService.error('Something went wrong, please try again.');
+                    this._snackbarService.showError('Something went wrong, please try again.');
                 }
             );
     }

@@ -128,7 +128,7 @@ export class AuthUnlockSessionComponent implements OnInit {
                     });
 
                     // Show error message
-                    this._snackbarService.error('Invalid password');
+                    this._snackbarService.showError('Invalid password');
                 }
             );
     }
