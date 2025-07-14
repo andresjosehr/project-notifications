@@ -19,16 +19,27 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql
+        coverage: none
+        
     - name: Install dependencies
       run: |
         npm install
-        npm ci --workspace=apps/api
         npm ci --workspace=apps/frontend
         
-    - name: Install knex in api directory
+    - name: Install Laravel dependencies
       run: |
         cd apps/api
-        npm install knex mysql2
+        composer install --no-dev --optimize-autoloader
+        
+    - name: Install Node.js CLI dependencies (optional)
+      run: |
+        cd apps/api
+        npm install
         
     - name: Build frontend
       run: npm run build:frontend
@@ -40,14 +51,14 @@ jobs:
         echo "PORT is set: ${{ secrets.PORT != '' }}"
         echo "SSH_PRIVATE_KEY is set: ${{ secrets.SSH_PRIVATE_KEY != '' }}"
       
-    - name: Run database migrations
+    - name: Run Laravel migrations
       run: |
         cd apps/api
-        npx knex migrate:latest
+        php artisan migrate --force
       env:
-        NODE_ENV: production
+        APP_ENV: production
         DB_HOST: ${{ secrets.DB_HOST }}
-        DB_USER: ${{ secrets.DB_USER }}
+        DB_USERNAME: ${{ secrets.DB_USER }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         DB_DATABASE: ${{ secrets.DB_DATABASE }}
         
@@ -66,8 +77,14 @@ jobs:
           cd /var/www/projects/jobs
           git pull origin master
           npm install
-          npm ci --workspace=apps/api
           npm ci --workspace=apps/frontend
           npm run build:frontend
-          pm2 restart jobs-api
-          pm2 save
+          cd apps/api
+          composer install --no-dev --optimize-autoloader
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan migrate --force
+          php artisan queue:restart
+          sudo systemctl restart nginx
+          sudo systemctl restart php8.2-fpm
