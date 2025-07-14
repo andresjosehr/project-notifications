@@ -70,73 +70,70 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.PORT || '22' }}
         timeout: 60s
-        command_timeout: 10m
+        command_timeout: 15m
         debug: true
         use_insecure_cipher: false
         script: |
-          # Navegar al directorio del proyecto
-          cd /var/www/projects/jobs
+          echo "=== Starting deployment as github-deploy user ==="
+          whoami
           
-          # Verificar el estado actual del repositorio
-          echo "Estado actual del repositorio:"
+          echo "=== Checking project directory permissions ==="
+          ls -la /var/www/projects/jobs/
+          
+          echo "=== Checking repository status ==="
+          cd /var/www/projects/jobs
           git status
-          echo "Último commit:"
+          echo "Current commit:"
           git log --oneline -1
           
-          # Hacer pull del código más reciente
-          echo "Haciendo pull del código más reciente..."
+          echo "=== Pulling latest code ==="
           git fetch origin
           
-          # Verificar si hay cambios sin confirmar
+          # Check for uncommitted changes
           if [ -n "$(git status --porcelain)" ]; then
-            echo "Hay cambios sin confirmar. Haciendo stash..."
+            echo "Found uncommitted changes. Stashing..."
             git stash
           fi
           
-          # Resetear al estado del master remoto
+          # Reset to remote master state
           git reset --hard origin/master
           
-          # Verificar que el pull fue exitoso
-          echo "Verificando que el pull fue exitoso:"
+          echo "=== Verifying pull was successful ==="
           git log --oneline -1
           
-          # Limpiar e instalar dependencias del proyecto principal
-          echo "Instalando dependencias del proyecto principal..."
+          echo "=== Installing root dependencies ==="
           rm -rf node_modules package-lock.json
-          npm install
+          npm install --no-fund --no-audit
           
-          # Limpiar e instalar dependencias del frontend
-          echo "Instalando dependencias del frontend..."
+          echo "=== Building frontend ==="
           cd /var/www/projects/jobs/apps/frontend
           rm -rf node_modules package-lock.json
-          npm install
-          
-          # Construir el frontend
-          echo "Construyendo el frontend..."
+          npm install --no-fund --no-audit
           ng build --configuration production
           
-          # Limpiar e instalar dependencias del backend
-          echo "Instalando dependencias del backend..."
+          echo "=== Installing Laravel dependencies ==="
           cd /var/www/projects/jobs/apps/api
           rm -rf node_modules package-lock.json
-          composer install --no-dev --optimize-autoloader
+          composer install --no-dev --optimize-autoloader --no-interaction
           
-          # Limpiar cachés de Laravel
-          echo "Limpiando cachés de Laravel..."
+          echo "=== Installing API Node dependencies ==="
+          npm install --no-fund --no-audit
+          
+          echo "=== Clearing Laravel caches ==="
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
+          php artisan cache:clear
+          
+          echo "=== Optimizing Laravel ==="
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
           
-          # Ejecutar migraciones
-          echo "Ejecutando migraciones..."
+          echo "=== Running migrations ==="
           php artisan migrate --force
           
-          # Reiniciar colas
-          echo "Reiniciando colas..."
+          echo "=== Restarting services ==="
           php artisan queue:restart
           
-          # Instalar dependencias de Node.js del backend (si las hay)
-          echo "Instalando dependencias de Node.js del backend..."
-          npm install
-          
-          echo "Deployment completado exitosamente!"
+          echo "=== Deployment completed successfully ==="
