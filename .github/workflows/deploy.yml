@@ -86,4 +86,3 @@ jobs:
           php artisan view:cache
           php artisan migrate --force
           php artisan queue:restart
-          service apache2 restart
