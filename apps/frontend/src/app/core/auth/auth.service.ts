@@ -62,14 +62,14 @@ export class AuthService {
             switchMap((response: any) => {
                 if (response.success) {
                     // Store the access token and user info in local storage
-                    this.accessToken = response.token;
-                    localStorage.setItem('userInfo', JSON.stringify(response.user));
+                    this.accessToken = response.data.token;
+                    localStorage.setItem('userInfo', JSON.stringify(response.data.user));
 
                     // Set the authenticated flag to true
                     this._authenticated = true;
 
                     // Store the user on the user service
-                    this._userService.user = response.user;
+                    this._userService.user = response.data.user;
 
                     // Return a new observable with the response
                     return of(response);
@@ -151,12 +151,12 @@ export class AuthService {
     registerWithToken(userData: any): Observable<any> {
         return this._apiService.registerWithToken(userData).pipe(
             tap((response) => {
-                if (response.success && response.token) {
+                if (response.success && response.data.token) {
                     // Auto-login after successful registration
-                    this.accessToken = response.token;
-                    localStorage.setItem('userInfo', JSON.stringify(response.user));
+                    this.accessToken = response.data.token;
+                    localStorage.setItem('userInfo', JSON.stringify(response.data.user));
                     this._authenticated = true;
-                    this._userService.user = response.user;
+                    this._userService.user = response.data.user;
                 }
             })
         );
@@ -206,12 +206,12 @@ export class AuthService {
     signUp(userData: any): Observable<any> {
         return this._apiService.registerWithToken(userData).pipe(
             tap((response) => {
-                if (response.success && response.token) {
+                if (response.success && response.data.token) {
                     // Auto-login after successful registration
-                    this.accessToken = response.token;
-                    localStorage.setItem('userInfo', JSON.stringify(response.user));
+                    this.accessToken = response.data.token;
+                    localStorage.setItem('userInfo', JSON.stringify(response.data.user));
                     this._authenticated = true;
-                    this._userService.user = response.user;
+                    this._userService.user = response.data.user;
                 }
             })
         );

@@ -6,7 +6,7 @@
     "apps/*"
   ],
   "scripts": {
-    "start:api": "npm start --workspace=apps/api",
+    "start:api": "php artisan serve --workspace=apps/api",
     "start:frontend": "npm start --workspace=apps/frontend",
     "start": "concurrently --kill-others-on-fail \"npm run start:api\" \"npm run start:frontend\"",
     "build:frontend": "npm run build --workspace=apps/frontend",

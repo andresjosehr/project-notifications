@@ -60,9 +60,7 @@ Route::post('/proposal/send', [ProposalController::class, 'send'])->middleware([
 
 // Workana specific routes (communication with Node.js)
 Route::prefix('workana')->group(function () {
-    Route::post('/scrape', function () {
-        return app(ScraperController::class)->scrapeWorkana(request());
-    });
+    Route::post('/scrape', [ScraperController::class, 'scrapeWorkana']);
     Route::post('/login', function () {
         return app(ScraperController::class)->workanaLogin(request());
     });

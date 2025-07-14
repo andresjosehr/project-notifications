@@ -97,7 +97,7 @@ export class AuthRegisterComponent implements OnInit {
         try {
             const result = await this._authService.checkInitialization().toPromise();
             
-            if (result?.isInitialized) {
+            if (result?.data?.isInitialized) {
                 // System is initialized, redirect to login
                 this._router.navigate(['/sign-in']);
             } else {

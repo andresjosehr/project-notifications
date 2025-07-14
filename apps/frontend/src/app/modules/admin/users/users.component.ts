@@ -34,10 +34,13 @@ interface TokenStats {
 interface Token {
     id: number;
     token: string;
-    isUsed: boolean;
-    createdAt: string;
-    usedAt?: string;
-    registeredUserEmail?: string;
+    is_used: boolean;
+    created_at: string;
+    used_at?: string;
+    created_by_admin?: any;
+    registered_user?: any;
+    registered_user_id?: number;
+    updated_at: string;
 }
 
 @Component({
@@ -143,8 +146,7 @@ export class UsersComponent implements OnInit {
             
             if (result?.success) {
                 console.log('Tokens loaded successfully:', result.data);
-                console.log('Tokens array length:', result.data?.length);
-                this.tokens = result.data.data || [];
+                this.tokens = result.data.tokens || [];
                 console.log('Component tokens array:', this.tokens);
                 this.cdr.detectChanges(); // Force change detection
             } else {
