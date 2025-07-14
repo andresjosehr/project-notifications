@@ -76,11 +76,15 @@ jobs:
         script: |
           cd /var/www/projects/jobs
           git pull origin master
+          # Verificar y corregir permisos si es necesario
+          [ -d node_modules ] && find node_modules -type d ! -writable -exec chmod u+w {} \; 2>/dev/null || true
           npm install
           cd /var/www/projects/jobs/apps/frontend
+          [ -d node_modules ] && find node_modules -type d ! -writable -exec chmod u+w {} \; 2>/dev/null || true
           npm install
           ng build --configuration production
           cd /var/www/projects/jobs/apps/api
+          [ -d node_modules ] && find node_modules -type d ! -writable -exec chmod u+w {} \; 2>/dev/null || true
           composer install
           php artisan config:cache
           php artisan route:cache
