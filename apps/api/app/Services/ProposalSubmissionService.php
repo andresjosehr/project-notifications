@@ -102,6 +102,8 @@ class ProposalSubmissionService
             }
             
             $sessionData = $loginResult['sessionData'];
+
+            $sessionData = $this->credentialService->getUserSessionData($userId, $platform);
         }
 
         return $sessionData;

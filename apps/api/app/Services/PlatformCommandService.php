@@ -80,9 +80,8 @@ class PlatformCommandService
             Log::error('Excepción en envío de propuesta', ['error' => $e->getMessage()]);
             
             return [
-                'success' => true,
-                'output' => 'Propuesta enviada exitosamente (simulado tras excepción)',
-                'fallback' => true
+                'success' => false,
+                'error' => 'Excepción durante el envío de propuesta: ' . $e->getMessage()
             ];
         }
     }
@@ -113,26 +112,24 @@ class PlatformCommandService
                     'output' => $jsonResponse['message'] ?? 'Propuesta enviada exitosamente'
                 ];
             } else {
-                Log::warning('Envío real falló, usando simulación como fallback', [
+                Log::error('Error en envío de propuesta', [
                     'error' => $jsonResponse['error'] ?? 'Error desconocido'
                 ]);
                 
                 return [
-                    'success' => true,
-                    'output' => 'Propuesta enviada exitosamente (simulado como fallback)',
-                    'fallback' => true
+                    'success' => false,
+                    'error' => $jsonResponse['error'] ?? 'Error desconocido en el envío de propuesta'
                 ];
             }
         }
         
-        Log::warning('Output no es JSON válido, usando simulación como fallback', [
+        Log::error('Output no es JSON válido', [
             'output' => $output
         ]);
         
         return [
-            'success' => true,
-            'output' => 'Propuesta enviada exitosamente (simulado como fallback)',
-            'fallback' => true
+            'success' => false,
+            'error' => 'Respuesta inválida del comando: ' . $output
         ];
     }
 }

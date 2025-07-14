@@ -67,7 +67,7 @@ class CommandHandlers {
 
       // Create WorkanaService instance
       const workanaService = new WorkanaService({
-        headless: false,
+        headless: true,
         debug: false
       });
 
@@ -122,7 +122,7 @@ class CommandHandlers {
 
       // Create WorkanaService instance
       const workanaService = new WorkanaService({
-        headless: false, // options.headless === 'true' || options.headless === true,
+        headless: true, // options.headless === 'true' || options.headless === true,
         debug: options.debug
       });
 
