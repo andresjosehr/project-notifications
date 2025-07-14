@@ -134,7 +134,12 @@ class CommandHandlers {
       const loginResult = await workanaService.login(username, password);
       
       if (!loginResult.success) {
-        throw new Error(`Error en login: ${loginResult.error}`);
+        // Parse specific error types from the error message
+        const { errorType, errorMessage } = CommandHandlers._parseLoginError(loginResult.error);
+        const enhancedError = new Error(`Error en login: ${errorMessage}`);
+        enhancedError.type = errorType;
+        enhancedError.originalError = loginResult.error;
+        throw enhancedError;
       }
 
       // Get session data
@@ -157,11 +162,8 @@ class CommandHandlers {
     } catch (error) {
       logger.errorWithStack('Error en login de Workana', error);
 
-      const errorResponse = ResponseHandler.error({
-        platform: 'workana',
-        operation: 'login',
-        error
-      });
+      // Create enhanced error response with specific error information
+      const errorResponse = CommandHandlers._createLoginErrorResponse(error);
 
       if (options.debug) {
         console.error(`❌ Error: ${error.message}`);
@@ -194,6 +196,178 @@ class CommandHandlers {
     } catch (parseError) {
       throw new Error(`Error parseando session: ${parseError.message}`);
     }
+  }
+
+  /**
+   * Parse login error to extract specific error type and user-friendly message
+   * @param {string} errorMessage - Raw error message from login
+   * @returns {Object} Object with errorType and errorMessage
+   * @private
+   */
+  static _parseLoginError(errorMessage) {
+    if (!errorMessage || typeof errorMessage !== 'string') {
+      return {
+        errorType: 'UNKNOWN_ERROR',
+        errorMessage: 'Error desconocido durante el inicio de sesión'
+      };
+    }
+
+    // Extract error type and message from format: "ERROR_TYPE|Message"
+    if (errorMessage.includes('|')) {
+      const [errorType, ...messageParts] = errorMessage.split('|');
+      return {
+        errorType: errorType.trim(),
+        errorMessage: messageParts.join('|').trim()
+      };
+    }
+
+    // Legacy error format - try to categorize
+    const lowerMessage = errorMessage.toLowerCase();
+    
+    if (lowerMessage.includes('credenciales') || lowerMessage.includes('contraseña') || lowerMessage.includes('email')) {
+      return {
+        errorType: 'INVALID_CREDENTIALS',
+        errorMessage: 'Correo o contraseña incorrectos'
+      };
+    }
+    
+    if (lowerMessage.includes('captcha')) {
+      return {
+        errorType: 'CAPTCHA_REQUIRED',
+        errorMessage: 'Se requiere completar CAPTCHA. Demasiados intentos fallidos'
+      };
+    }
+    
+    if (lowerMessage.includes('bloqueada') || lowerMessage.includes('suspended')) {
+      return {
+        errorType: 'ACCOUNT_BLOCKED',
+        errorMessage: 'Cuenta bloqueada temporalmente por seguridad'
+      };
+    }
+    
+    if (lowerMessage.includes('verificar') || lowerMessage.includes('verify')) {
+      return {
+        errorType: 'EMAIL_NOT_VERIFIED',
+        errorMessage: 'Cuenta no verificada. Revisa tu correo electrónico'
+      };
+    }
+    
+    return {
+      errorType: 'UNKNOWN_ERROR',
+      errorMessage: 'Error desconocido durante el inicio de sesión'
+    };
+  }
+
+  /**
+   * Create enhanced error response for login failures
+   * @param {Error} error - The login error
+   * @returns {Object} Enhanced error response
+   * @private
+   */
+  static _createLoginErrorResponse(error) {
+    const { errorType, errorMessage } = CommandHandlers._parseLoginError(error.message);
+    
+    // Create error object for ResponseHandler
+    const enhancedError = new Error(`Error en login: ${errorMessage}`);
+    enhancedError.type = errorType;
+    enhancedError.category = CommandHandlers._getErrorCategory(errorType);
+    enhancedError.userMessage = errorMessage;
+    enhancedError.originalError = error.originalError || error.message;
+
+    const baseError = {
+      platform: 'workana',
+      operation: 'login',
+      error: enhancedError,
+      data: {
+        loginAttemptFailed: true,
+        errorType: errorType,
+        category: CommandHandlers._getErrorCategory(errorType),
+        userMessage: errorMessage,
+        canRetry: CommandHandlers._canRetryLogin(errorType),
+        suggestions: CommandHandlers._getLoginSuggestions(errorType)
+      }
+    };
+
+    return ResponseHandler.error(baseError);
+  }
+
+  /**
+   * Get error category for grouping similar errors
+   * @param {string} errorType - The specific error type
+   * @returns {string} Error category
+   * @private
+   */
+  static _getErrorCategory(errorType) {
+    const categories = {
+      'INVALID_CREDENTIALS': 'authentication',
+      'CAPTCHA_REQUIRED': 'security',
+      'ACCOUNT_BLOCKED': 'security',
+      'EMAIL_NOT_VERIFIED': 'verification',
+      'RATE_LIMITED': 'security',
+      'SERVER_ERROR': 'server',
+      'NETWORK_ERROR': 'network',
+      'UNKNOWN_ERROR': 'unknown'
+    };
+    
+    return categories[errorType] || 'unknown';
+  }
+
+  /**
+   * Determine if login can be retried for this error type
+   * @param {string} errorType - The specific error type
+   * @returns {boolean} Whether retry is possible
+   * @private
+   */
+  static _canRetryLogin(errorType) {
+    const retryableErrors = ['SERVER_ERROR', 'NETWORK_ERROR', 'UNKNOWN_ERROR'];
+    return retryableErrors.includes(errorType);
+  }
+
+  /**
+   * Get user-friendly suggestions based on error type
+   * @param {string} errorType - The specific error type
+   * @returns {Array} Array of suggestion strings
+   * @private
+   */
+  static _getLoginSuggestions(errorType) {
+    const suggestions = {
+      'INVALID_CREDENTIALS': [
+        'Verifica que el correo electrónico esté escrito correctamente',
+        'Asegúrate de que la contraseña sea correcta',
+        'Si olvidaste tu contraseña, puedes restablecerla en Workana'
+      ],
+      'CAPTCHA_REQUIRED': [
+        'Espera unos minutos antes de intentar nuevamente',
+        'Inicia sesión manualmente en el navegador para completar el CAPTCHA',
+        'Reduce la frecuencia de intentos de login'
+      ],
+      'ACCOUNT_BLOCKED': [
+        'Contacta al soporte de Workana para desbloquear tu cuenta',
+        'Espera el tiempo indicado antes de intentar nuevamente',
+        'Revisa si hay notificaciones de seguridad en tu correo'
+      ],
+      'EMAIL_NOT_VERIFIED': [
+        'Revisa tu bandeja de entrada y carpeta de spam',
+        'Solicita un nuevo email de verificación en Workana',
+        'Contacta al soporte si no recibes el email de verificación'
+      ],
+      'RATE_LIMITED': [
+        'Espera al menos 5-10 minutos antes de intentar nuevamente',
+        'Reduce la frecuencia de intentos de login',
+        'Considera usar un proxy o VPN diferente si el problema persiste'
+      ],
+      'SERVER_ERROR': [
+        'Intenta nuevamente en unos minutos',
+        'Verifica tu conexión a internet',
+        'Contacta al soporte si el problema persiste'
+      ]
+    };
+    
+    return suggestions[errorType] || [
+      'Intenta nuevamente en unos minutos',
+      'Verifica tu conexión a internet',
+      'Si el problema persiste, contacta al soporte'
+    ];
   }
 }
 

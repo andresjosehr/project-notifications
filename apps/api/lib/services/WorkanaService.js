@@ -401,17 +401,13 @@ class WorkanaService extends BaseScraper {
       // Wait for page to settle after navigation
       await this.page.waitForTimeout(WorkanaService.TIMEOUTS.SHORT_WAIT);
       
-      // Check for login errors first
-      for (const selector of WorkanaService.SELECTORS.LOGIN_ERRORS) {
-        const errorElement = this.page.locator(selector).first();
-        if (await errorElement.count() > 0) {
-          const errorText = await errorElement.textContent();
-          throw new Error(`Error de login detectado: ${errorText}`);
-        }
+      // Check for specific login error scenarios
+      const loginError = await this._detectSpecificLoginError();
+      if (loginError) {
+        throw loginError;
       }
       
       const currentUrl = this.page.url();
-      // URL after login
       
       // Check if still on login page - indicates failure
       if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
@@ -419,7 +415,12 @@ class WorkanaService extends BaseScraper {
         await this.page.waitForTimeout(3000);
         const urlAfterWait = this.page.url();
         if (urlAfterWait.includes('/login') || urlAfterWait.includes('/signin')) {
-          throw new Error('Login falló - permanecemos en la página de login');
+          // If still on login page, check for specific errors again
+          const retryError = await this._detectSpecificLoginError();
+          if (retryError) {
+            throw retryError;
+          }
+          throw new Error('UNKNOWN_LOGIN_ERROR|Login falló - permanecemos en la página de login');
         }
       }
       
@@ -434,18 +435,124 @@ class WorkanaService extends BaseScraper {
           if (this.debug) {
             try {
               await this.page.screenshot({ path: 'login-verification-failed.png' });
-              // Screenshot saved for debugging
             } catch (screenshotError) {
               // Ignore screenshot errors
             }
           }
-          throw new Error('Login falló - no se detectó sesión activa después de múltiples intentos');
+          throw new Error('UNKNOWN_LOGIN_ERROR|Login falló - no se detectó sesión activa después de múltiples intentos');
         }
       }
       
-      // Login verified successfully
     } catch (error) {
-      throw new Error(`Error verificando login: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async _detectSpecificLoginError() {
+    try {
+      // Wait a moment for any error messages to appear
+      await this.page.waitForTimeout(1000);
+      
+      // Get page content to analyze
+      const pageContent = await this.page.content();
+      
+      // Check for invalid credentials error (multiple variations)
+      const invalidCredentialsPatterns = [
+        'Combinación de email y contraseña inválidos',
+        'Usuario o contraseña incorrectos',
+        'Invalid credentials',
+        'Credenciales inválidas',
+        'contraseña inválidos'
+      ];
+      
+      for (const pattern of invalidCredentialsPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error('INVALID_CREDENTIALS|Correo o contraseña incorrectos');
+        }
+      }
+      
+      // Check for CAPTCHA required error
+      const captchaPatterns = [
+        'Completa el CAPTCHA e intenta nuevamente',
+        'Complete the CAPTCHA',
+        'CAPTCHA requerido',
+        'reCAPTCHA'
+      ];
+      
+      for (const pattern of captchaPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error('CAPTCHA_REQUIRED|Se requiere completar CAPTCHA. Demasiados intentos fallidos');
+        }
+      }
+      
+      // Check for account blocked/temporarily locked
+      const blockedPatterns = [
+        'Tu cuenta ha sido bloqueada temporalmente',
+        'Account temporarily blocked',
+        'Cuenta bloqueada',
+        'Account suspended'
+      ];
+      
+      for (const pattern of blockedPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error('ACCOUNT_BLOCKED|Cuenta bloqueada temporalmente por seguridad');
+        }
+      }
+      
+      // Check for email not verified
+      const verificationPatterns = [
+        'Por favor verifica tu correo electrónico',
+        'Please verify your email',
+        'Email no verificado',
+        'Account not verified'
+      ];
+      
+      for (const pattern of verificationPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error('EMAIL_NOT_VERIFIED|Cuenta no verificada. Revisa tu correo electrónico');
+        }
+      }
+      
+      // Check for rate limiting/too many attempts
+      const rateLimitPatterns = [
+        'Demasiados intentos',
+        'Too many attempts',
+        'Rate limit exceeded',
+        'Espera antes de intentar'
+      ];
+      
+      for (const pattern of rateLimitPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error('RATE_LIMITED|Demasiados intentos de login. Espera unos minutos');
+        }
+      }
+      
+      // Check for generic server errors
+      const serverErrorPatterns = [
+        'Ha ocurrido un error',
+        'Error del servidor',
+        'Servicio no disponible',
+        'Internal server error',
+        'Service unavailable'
+      ];
+      
+      for (const pattern of serverErrorPatterns) {
+        if (pageContent.includes(pattern)) {
+          return new Error(`SERVER_ERROR|Error del servidor - ${pattern}`);
+        }
+      }
+      
+      // Check for CAPTCHA iframe presence (visual CAPTCHA)
+      for (const selector of WorkanaService.SELECTORS.CAPTCHA_SELECTORS) {
+        const captcha = this.page.locator(selector).first();
+        if (await captcha.count() > 0) {
+          return new Error('CAPTCHA_REQUIRED|CAPTCHA detectado en la página');
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
     }
   }
 
@@ -453,31 +560,26 @@ class WorkanaService extends BaseScraper {
     try {
       // Check current URL first - most reliable indicator
       const currentUrl = this.page.url();
-      // Current URL
       
       // If we're on dashboard or not on login page, we're likely logged in
       if (currentUrl.includes('/dashboard') || currentUrl.includes('/messages') || currentUrl.includes('/projects')) {
-        // User logged in - detected by URL
         return true;
       }
       
       // If still on login page, we failed
       if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
-        // Still on login page
         return false;
       }
       
       // Look for user avatar/profile button in navigation
       const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user|perfil|profile/i }).first();
       if (await userButton.count() > 0) {
-        // User button found in navigation
         return true;
       }
       
       // Look for user avatar image
       const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
       if (await userAvatar.count() > 0) {
-        // User avatar found
         return true;
       }
       
@@ -485,12 +587,10 @@ class WorkanaService extends BaseScraper {
       for (const selector of WorkanaService.SELECTORS.LOGGED_IN_NAV) {
         const element = this.page.locator(selector).first();
         if (await element.count() > 0) {
-          // Logged in navigation element found
           return true;
         }
       }
       
-      // No active session detected
       return false;
     } catch (error) {
       logger.errorWithStack('Error verificando elementos de login', error);
