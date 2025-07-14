@@ -23,7 +23,7 @@ class ScraperService
     public function scrapeWorkana($options = [])
     {
         try {
-            Log::info('Solicitando scraping de Workana desde Node.js', $options);
+            // Log removido - información innecesaria en producción
 
             $quietFlag = isset($options['silent']) && $options['silent'] ? '--quiet' : '';
             $command = "cd " . base_path() . " && {$this->nodePath} {$this->scriptPath} scrape-workana {$quietFlag} 2>&1";
@@ -31,34 +31,72 @@ class ScraperService
             $output = shell_exec($command);
             $returnCode = $this->getLastReturnCode();
 
-            Log::info('Output del comando: ' . $output);
+            // Log removido - información innecesaria en producción
             
             if ($returnCode !== 0) {
-                throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}, Output: {$output}");
+                $context = [
+                    'return_code' => $returnCode,
+                    'output' => $output,
+                    'command' => $command,
+                    'options' => $options,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}", 0, null, $context);
             }
             
             // Extraer JSON válido del output
             $jsonOutput = $this->extractJsonFromOutput($output);
             
             if ($jsonOutput === null) {
-                throw new \Exception("No se encontró JSON válido en el output: {$output}");
+                $context = [
+                    'output' => $output,
+                    'command' => $command,
+                    'return_code' => $returnCode,
+                    'options' => $options,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("No se encontró JSON válido en el output: {$output}", 0, null, $context);
             }
             
             $result = json_decode($jsonOutput, true);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg() . "\nOutput: {$output}");
+                $context = [
+                    'json_error' => json_last_error_msg(),
+                    'output' => $output,
+                    'command' => $command,
+                    'return_code' => $returnCode,
+                    'options' => $options,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg(), 0, null, $context);
             }
             
             // Verificar el nuevo formato de respuesta estandarizado
             if (!isset($result['success'])) {
-                throw new \Exception("Formato de respuesta inválido: falta campo 'success'");
+                $context = [
+                    'result' => $result,
+                    'command' => $command,
+                    'return_code' => $returnCode,
+                    'options' => $options,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("Formato de respuesta inválido: falta campo 'success'", 0, null, $context);
             }
             
             if (!$result['success']) {
                 $errorMessage = $result['error']['message'] ?? 'Error desconocido';
                 $errorType = $result['error']['type'] ?? 'UnknownError';
-                throw new \Exception("Error en scraping ({$errorType}): {$errorMessage}");
+                $context = [
+                    'error_type' => $errorType,
+                    'error_message' => $errorMessage,
+                    'command' => $command,
+                    'return_code' => $returnCode,
+                    'options' => $options,
+                    'result' => $result,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("Error en scraping ({$errorType}): {$errorMessage}", 0, null, $context);
             }
             
             // Extraer datos del nuevo formato
@@ -66,13 +104,7 @@ class ScraperService
             $stats = $result['data']['stats'] ?? [];
             $duration = $result['duration'] ?? 0;
             
-            Log::info('Scraping de Workana completado', [
-                'projects_count' => count($projects),
-                'duration' => $duration,
-                'stats' => $stats,
-                'platform' => $result['platform'] ?? 'unknown',
-                'operation' => $result['operation'] ?? 'unknown'
-            ]);
+            // Log removido - información innecesaria en producción
             
             // Mantener compatibilidad con el formato anterior
             return [
@@ -98,7 +130,7 @@ class ScraperService
     public function executeScrapingCommand($platform = 'workana', $options = [])
     {
         try {
-            Log::info("Ejecutando comando de scraping para {$platform}", $options);
+            // Log removido - información innecesaria en producción
             
             $command = "scrape:{$platform}";
             $artisanOptions = [];
@@ -110,15 +142,20 @@ class ScraperService
             $exitCode = Artisan::call($command, $artisanOptions);
             
             if ($exitCode !== 0) {
-                throw new \Exception("Error ejecutando comando de scraping. Código: {$exitCode}");
+                $context = [
+                    'exit_code' => $exitCode,
+                    'platform' => $platform,
+                    'command' => $command,
+                    'options' => $options,
+                    'output' => $output,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception("Error ejecutando comando de scraping. Código: {$exitCode}", 0, null, $context);
             }
             
             $output = Artisan::output();
             
-            Log::info("Comando de scraping para {$platform} completado", [
-                'exit_code' => $exitCode,
-                'output' => $output
-            ]);
+            // Log removido - información innecesaria en producción
             
             return [
                 'success' => true,
@@ -167,7 +204,7 @@ class ScraperService
      */
     private function extractJsonFromOutput(string $output): ?string
     {
-        Log::info('Output del comando: ' . $output);
+        // Log removido - información innecesaria en producción
         // Patrones para encontrar el inicio del JSON
         $patterns = [
             '/\{\s*"success"/',           // {"success" con espacios opcionales

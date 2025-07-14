@@ -31,7 +31,7 @@ class TelegramService
     {
         try {
             if (!$this->enabled) {
-                Log::info('Telegram está deshabilitado, no se enviará notificación', ['user' => $user]);
+                // Log removido - información innecesaria en producción
                 return ['success' => false, 'error' => 'Telegram está deshabilitado'];
             }
 
@@ -47,17 +47,13 @@ class TelegramService
             // Construir la URL de CallMeBot
             $url = "{$this->apiUrl}?user={$encodedUser}&text={$encodedMessage}";
 
-            Log::info('Enviando notificación de Telegram', [
-                'user' => $user,
-                'messageLength' => strlen($message),
-                'url' => substr($url, 0, 100) . '...'
-            ]);
+            // Log removido - información innecesaria en producción
 
             $response = Http::timeout($options['timeout'] ?? $this->defaultTimeout)
                 ->get($url);
 
             if ($response->successful()) {
-                Log::info('Notificación enviada exitosamente', ['user' => $user]);
+                // Log removido - información innecesaria en producción
                 return ['success' => true, 'response' => $response->body()];
             } else {
                 Log::error('Error enviando notificación de Telegram', [
@@ -122,7 +118,7 @@ class TelegramService
         try {
             // Si no hay usuario, no enviar notificación
             if (!$user) {
-                Log::info('No se enviará notificación de error: usuario no proporcionado');
+                // Log removido - información innecesaria en producción
                 return ['success' => false, 'error' => 'Usuario no proporcionado'];
             }
 
@@ -165,7 +161,7 @@ class TelegramService
         try {
             // Si no hay usuario, no enviar notificación
             if (!$user) {
-                Log::info('No se enviará notificación de estado: usuario no proporcionado');
+                // Log removido - información innecesaria en producción
                 return ['success' => false, 'error' => 'Usuario no proporcionado'];
             }
 

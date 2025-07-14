@@ -20,12 +20,18 @@ class ProposalService
 
     public function buildProposal(string $projectId, int $userId, ?string $platform = null, array $options = []): array
     {
-        Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId}");
+        // Log removido - información innecesaria en producción
 
         $project = $this->projectService->getProjectById($projectId, $platform);
         
         if (!$project) {
-            throw new \Exception("Proyecto {$projectId} no encontrado");
+            $context = [
+                'project_id' => $projectId,
+                'user_id' => $userId,
+                'platform' => $platform ?? 'null',
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception("Proyecto {$projectId} no encontrado", 0, null, $context);
         }
 
         // Si no se proporciona platform, obtenerlo del proyecto
@@ -33,17 +39,23 @@ class ProposalService
             $platform = $project->platform;
         }
 
-        Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId} de {$platform}");
+        // Log removido - información innecesaria en producción
 
         $user = User::find($userId);
         
         if (!$user) {
-            throw new \Exception("Usuario {$userId} no encontrado");
+            $context = [
+                'user_id' => $userId,
+                'project_id' => $projectId,
+                'platform' => $platform ?? 'null',
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception("Usuario {$userId} no encontrado", 0, null, $context);
         }
 
         $proposal = $this->generateProposal($project, $user, $options);
         
-        Log::info("Propuesta generada exitosamente para proyecto {$projectId}");
+        // Log removido - información innecesaria en producción
 
         return [
             'projectId' => $projectId,

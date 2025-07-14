@@ -24,7 +24,12 @@ class AuthenticationService
     {
         $userCount = User::count();
         if ($userCount > 0) {
-            throw new \Exception('El sistema ya está inicializado. No se puede registrar un administrador adicional.');
+            $context = [
+                'user_count' => $userCount,
+                'email' => $email,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('El sistema ya está inicializado. No se puede registrar un administrador adicional.', 0, null, $context);
         }
 
         $professionalProfile = $this->readContentFile('profesional-profile.txt');
@@ -37,7 +42,7 @@ class AuthenticationService
             'role' => 'ADMIN',
         ]);
 
-        Log::info('Administrador registrado exitosamente', ['user_id' => $user->id, 'email' => $email]);
+        // Log removido - información innecesaria en producción
 
         return [
             'id' => $user->id,
@@ -53,20 +58,38 @@ class AuthenticationService
                    ->first();
 
         if (!$user) {
-            throw new \Exception('Credenciales inválidas');
+            $context = [
+                'email' => $email,
+                'user_found' => false,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Credenciales inválidas', 0, null, $context);
         }
 
         if (!in_array($user->role, ['ADMIN', 'USER'])) {
-            throw new \Exception('Acceso denegado. Rol de usuario inválido.');
+            $context = [
+                'user_id' => $user->id,
+                'email' => $email,
+                'role' => $user->role,
+                'valid_roles' => ['ADMIN', 'USER'],
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Acceso denegado. Rol de usuario inválido.', 0, null, $context);
         }
 
         if (!Hash::check($password, $user->password)) {
-            throw new \Exception('Credenciales inválidas');
+            $context = [
+                'email' => $email,
+                'user_id' => $user->id,
+                'password_check' => false,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Credenciales inválidas', 0, null, $context);
         }
 
         $token = JWTAuth::fromUser($user);
 
-        Log::info('Login exitoso', ['user_id' => $user->id, 'email' => $email]);
+        // Log removido - información innecesaria en producción
 
         return [
             'token' => $token,
@@ -83,11 +106,24 @@ class AuthenticationService
         $registrationToken = RegistrationToken::where('token', $token)->first();
         
         if (!$registrationToken) {
-            throw new \Exception('Token de registro inválido');
+            $context = [
+                'token' => $token,
+                'token_found' => false,
+                'email' => $email,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Token de registro inválido', 0, null, $context);
         }
 
         if (!$registrationToken->isValid()) {
-            throw new \Exception('Token de registro ya utilizado');
+            $context = [
+                'token_id' => $registrationToken->id,
+                'token' => $token,
+                'is_valid' => false,
+                'email' => $email,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Token de registro ya utilizado', 0, null, $context);
         }
 
         $user = User::create([
@@ -102,11 +138,7 @@ class AuthenticationService
 
         $jwtToken = JWTAuth::fromUser($user);
 
-        Log::info('Usuario registrado con token exitosamente', [
-            'userId' => $user->id,
-            'email' => $email,
-            'registrationToken' => $token
-        ]);
+        // Log removido - información innecesaria en producción
 
         return [
             'token' => $jwtToken,

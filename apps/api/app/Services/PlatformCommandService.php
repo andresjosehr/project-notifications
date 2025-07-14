@@ -14,9 +14,9 @@ class PlatformCommandService
                 escapeshellarg($email) . " " .
                 escapeshellarg($password) . " 2>&1";
             
-            Log::info('Ejecutando comando de login', ['userId' => $userId]);
+            // Log removido - información innecesaria en producción
             $output = shell_exec($command);
-            Log::info('Output del comando de login', ['output' => $output]);
+            // Log removido - información innecesaria en producción
             
             $response = json_decode($output, true);
             
@@ -64,9 +64,9 @@ class PlatformCommandService
                 escapeshellarg($proposalContent) . " " .
                 escapeshellarg($projectLink);
             
-            Log::info('Ejecutando comando de envío de propuesta');
+            // Log removido - información innecesaria en producción
             $output = shell_exec($command . " 2>&1");
-            Log::info('Output del comando de envío', ['output' => $output]);
+            // Log removido - información innecesaria en producción
             
             $this->cleanupSessionFile($sessionFilePath);
             

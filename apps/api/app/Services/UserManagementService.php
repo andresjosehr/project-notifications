@@ -29,7 +29,11 @@ class UserManagementService
         $user = User::with(['externalCredentials'])->find($userId);
         
         if (!$user) {
-            throw new \Exception('Usuario no encontrado');
+            $context = [
+                'user_id' => $userId,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Usuario no encontrado', 0, null, $context);
         }
 
         return $user;
@@ -45,11 +49,7 @@ class UserManagementService
             'is_active' => true
         ]);
 
-        Log::info('Usuario creado exitosamente', [
-            'userId' => $user->id,
-            'email' => $email,
-            'role' => $role
-        ]);
+        // Log removido - información innecesaria en producción
 
         return $user;
     }
@@ -70,10 +70,7 @@ class UserManagementService
 
         $user->load(['externalCredentials']);
 
-        Log::info('Usuario actualizado exitosamente', [
-            'userId' => $user->id,
-            'email' => $user->email
-        ]);
+        // Log removido - información innecesaria en producción
 
         return $user;
     }
@@ -86,10 +83,7 @@ class UserManagementService
         $deleted = $user->delete();
 
         if ($deleted) {
-            Log::info('Usuario eliminado exitosamente', [
-                'userId' => $userId,
-                'email' => $email
-            ]);
+            // Log removido - información innecesaria en producción
         }
 
         return $deleted;

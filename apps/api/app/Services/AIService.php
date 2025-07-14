@@ -26,7 +26,7 @@ class AIService
 
             $prompt = $this->buildPrompt($projectDescription, $professionalProfile, $proposalDirectives);
 
-            Log::info('Prompt generado', ['prompt' => $prompt]);
+            // Log removido - información innecesaria en producción
             
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
@@ -55,7 +55,17 @@ class AIService
                     'status' => $response->status(),
                     'body' => $response->body()
                 ]);
-                throw new \Exception('Error comunicándose con el servicio de IA');
+                $context = [
+                    'status' => $response->status(),
+                    'response_body' => $response->body(),
+                    'api_url' => $this->apiUrl,
+                    'model' => $this->model,
+                    'project_description_length' => strlen($projectDescription),
+                    'professional_profile_length' => strlen($professionalProfile),
+                    'proposal_directives_length' => strlen($proposalDirectives),
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception('Error comunicándose con el servicio de IA', 0, null, $context);
             }
         } catch (\Exception $e) {
             Log::error('Error generando propuesta con IA', ['error' => $e->getMessage()]);
@@ -122,7 +132,7 @@ DIRECTRICES DE LA PROPUESTA:
 IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}.";
 
 
-            Log::info('Prompt generado', ['prompt' => $userPrompt]);
+            // Log removido - información innecesaria en producción
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -146,13 +156,7 @@ IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}."
                 $data = $response->json();
                 $proposal = $data['choices'][0]['message']['content'] ?? 'Error generando propuesta';
                 
-                Log::info('Propuesta con perfil de usuario generada exitosamente', [
-                    'projectTitleLength' => strlen($projectTitle),
-                    'projectDescriptionLength' => strlen($projectDescription),
-                    'proposalLength' => strlen($proposal),
-                    'language' => $language,
-                    'targetLanguage' => $targetLanguage
-                ]);
+                // Log removido - información innecesaria en producción
 
                 return $proposal;
             } else {
@@ -160,7 +164,20 @@ IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}."
                     'status' => $response->status(),
                     'body' => $response->body()
                 ]);
-                throw new \Exception('Error comunicándose con el servicio de IA');
+                $context = [
+                    'status' => $response->status(),
+                    'response_body' => $response->body(),
+                    'api_url' => $this->apiUrl,
+                    'model' => $this->model,
+                    'project_title' => $projectTitle,
+                    'project_description_length' => strlen($projectDescription),
+                    'user_profile_length' => strlen($userProfile),
+                    'user_directives_length' => strlen($userDirectives),
+                    'language' => $language,
+                    'target_language' => $targetLanguage,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new \Exception('Error comunicándose con el servicio de IA', 0, null, $context);
             }
         } catch (\Exception $e) {
             Log::error('Error generando propuesta con perfil de usuario', ['error' => $e->getMessage()]);

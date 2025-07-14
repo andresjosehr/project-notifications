@@ -39,17 +39,23 @@ class ProjectController extends Controller
             $options = $request->validated();
             $iteration = $options['iteration'] ?? 0;
             
-            Log::info("Iniciando ciclo de scraping #{$iteration}");
+            // Log removido - información innecesaria en producción
 
             $results = $this->scraperService->requestScrapingFromNode(null, $options);
 
-            Log::info("Ciclo de scraping #{$iteration} completado", ['results' => $results]);
+            // Log removido - información innecesaria en producción
             
             return ApiResponse::success($results);
         } catch (\Exception $error) {
             Log::error("Error en ciclo de scraping #{$iteration}", ['error' => $error->getMessage()]);
             
-            return ApiResponse::error($error->getMessage());
+            $context = [
+                'original_error' => $error->getMessage(),
+                'options' => $options,
+                'iteration' => $iteration,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception("Error en ciclo de scraping #{$iteration}", 0, null, $context);
         }
     }
 
@@ -58,17 +64,23 @@ class ProjectController extends Controller
         try {
             $options = $request->validated();
             
-            Log::info("Ejecutando scraping para {$platform}");
+            // Log removido - información innecesaria en producción
 
             $results = $this->scraperService->requestScrapingFromNode($platform, $options);
 
-            Log::info("Scraping de {$platform} completado", ['results' => $results]);
+            // Log removido - información innecesaria en producción
             
             return ApiResponse::success($results);
         } catch (\Exception $error) {
             Log::error("Error en scraping de {$platform}", ['error' => $error->getMessage()]);
             
-            return ApiResponse::error($error->getMessage());
+            $context = [
+                'original_error' => $error->getMessage(),
+                'platform' => $platform,
+                'options' => $options,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception("Error en scraping de {$platform}", 0, null, $context);
         }
     }
 
@@ -84,7 +96,14 @@ class ProjectController extends Controller
         } catch (\Exception $error) {
             Log::error("Error generando propuesta", ['error' => $error->getMessage(), 'projectId' => $projectId]);
             
-            return ApiResponse::error($error->getMessage());
+            $context = [
+                'original_error' => $error->getMessage(),
+                'project_id' => $projectId,
+                'user_id' => auth()->id(),
+                'options' => $options,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception("Error generando propuesta", 0, null, $context);
         }
     }
 

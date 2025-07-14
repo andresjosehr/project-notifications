@@ -80,18 +80,36 @@ abstract class BaseCommand extends Command
         $output = shell_exec($command);
         
         if (empty($output)) {
-            throw new Exception("No se recibió output del comando: {$command}");
+            $exceptionContext = [
+                'context' => $context,
+                'command' => $command,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new Exception("No se recibió output del comando: {$command}", 0, null, $exceptionContext);
         }
 
         $result = json_decode($output, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception("Error parseando JSON: " . json_last_error_msg() . "\nOutput: {$output}");
+            $exceptionContext = [
+                'json_error' => json_last_error_msg(),
+                'output' => $output,
+                'command' => $command,
+                'context' => $context,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new Exception("Error parseando JSON: " . json_last_error_msg(), 0, null, $exceptionContext);
         }
 
         // Validar formato estándar de respuesta
         if (!isset($result['success'])) {
-            throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success'");
+            $exceptionContext = [
+                'result' => $result,
+                'command' => $command,
+                'context' => $context,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success'", 0, null, $exceptionContext);
         }
 
         return $result;
@@ -112,14 +130,12 @@ abstract class BaseCommand extends Command
     }
 
     /**
-     * Log de información estructurada
+     * Log de información estructurada - DESHABILITADO EN PRODUCCIÓN
      */
     protected function logInfo(string $message, array $context = []): void
     {
-        Log::info($message, array_merge([
-            'command' => $this->getName(),
-            'platform' => 'workana'
-        ], $context));
+        // Log removido - información innecesaria en producción
+        // Solo se mantiene para compatibilidad
     }
 
     /**

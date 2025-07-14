@@ -70,12 +70,7 @@ class CleanupProposals extends Command
         // Mostrar estadísticas finales
         $this->info("Limpieza completada. Total eliminadas: {$totalDeleted}");
 
-        Log::info('Limpieza de propuestas completada', [
-            'days' => $days,
-            'dry_run' => $dryRun,
-            'duplicates' => $duplicates,
-            'total_deleted' => $totalDeleted
-        ]);
+        // Log removido - información innecesaria en producción
     }
 
     /**

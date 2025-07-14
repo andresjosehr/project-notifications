@@ -22,7 +22,7 @@ class ScraperController extends Controller
         try {
             $options = $request->getOptions();
 
-            Log::info('Solicitud de scraping de Workana recibida', $options);
+            // Log removido - información innecesaria en producción
 
             $result = $this->scraperService->scrapeWorkana($options);
 

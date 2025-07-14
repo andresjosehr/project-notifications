@@ -37,12 +37,7 @@ class NotificationService
             $successCount = count(array_filter($results, fn($r) => $r['success']));
             $totalServices = count($results);
             
-            Log::info('Notificación de proyecto distribuida', [
-                'project_id' => $project->id ?? null,
-                'user_id' => $user->id ?? null,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ]);
+            // Log removido - información innecesaria en producción
 
             return [
                 'success' => $successCount > 0,
@@ -80,12 +75,7 @@ class NotificationService
             $successCount = count(array_filter($results, fn($r) => $r['success']));
             $totalServices = count($results);
 
-            Log::info('Notificación de error distribuida', [
-                'context' => $context,
-                'user_id' => $user->id ?? null,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ]);
+            // Log removido - información innecesaria en producción
 
             return [
                 'success' => $successCount > 0,
@@ -122,11 +112,7 @@ class NotificationService
             $successCount = count(array_filter($results, fn($r) => $r['success']));
             $totalServices = count($results);
 
-            Log::info('Notificación de estado distribuida', [
-                'user_id' => $user->id ?? null,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ]);
+            // Log removido - información innecesaria en producción
 
             return [
                 'success' => $successCount > 0,

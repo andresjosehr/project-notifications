@@ -9,11 +9,11 @@ class RegistrationTokenService
 {
     public function generateToken(int $adminUserId): array
     {
-        Log::info('Generando nuevo token de registro', ['admin_id' => $adminUserId]);
+        // Log removido - información innecesaria en producción
         
         $token = RegistrationToken::generateToken($adminUserId);
         
-        Log::info('Token generado exitosamente', ['token_id' => $token->id]);
+        // Log removido - información innecesaria en producción
         
         return [
             'token' => $token->token,
@@ -51,21 +51,26 @@ class RegistrationTokenService
         $token = RegistrationToken::find($tokenId);
         
         if (!$token) {
-            throw new \Exception('Token no encontrado');
+            $context = [
+                'token_id' => $tokenId,
+                'token_found' => false,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new \Exception('Token no encontrado', 0, null, $context);
         }
 
-        Log::info('Eliminando token', ['token_id' => $tokenId]);
+        // Log removido - información innecesaria en producción
         
         return $token->delete();
     }
 
     public function cleanupOldTokens(int $days = 30): array
     {
-        Log::info('Iniciando limpieza de tokens antiguos', ['days' => $days]);
+        // Log removido - información innecesaria en producción
         
         $deleted = RegistrationToken::cleanupOldTokens($days);
         
-        Log::info('Limpieza completada', ['deleted_count' => $deleted, 'days' => $days]);
+        // Log removido - información innecesaria en producción
         
         return [
             'deleted_count' => $deleted,
@@ -77,7 +82,7 @@ class RegistrationTokenService
     {
         $isValid = RegistrationToken::isValidToken($token);
         
-        Log::info('Validación de token', ['token' => $token, 'valid' => $isValid]);
+        // Log removido - información innecesaria en producción
         
         return [
             'valid' => $isValid,
