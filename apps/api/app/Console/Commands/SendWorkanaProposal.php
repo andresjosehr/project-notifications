@@ -38,7 +38,7 @@ class SendWorkanaProposal extends BaseCommand
             $sessionData = $this->prepareSessionData($session);
             $result = $this->executeProposalCommand($sessionData, $proposalText, $projectLink);
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             if (!$result['success']) {
                 $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
                 

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\UserProposal;
-use Illuminate\Support\Facades\Log;
 
 class ProposalSubmissionService
 {
@@ -37,14 +36,7 @@ class ProposalSubmissionService
 
         // Validar si ya existe una propuesta para este usuario y proyecto
         if ($this->proposalAlreadyExists($userId, $projectId, $platform)) {
-            $context = [
-                'user_id' => $userId,
-                'project_id' => $projectId,
-                'platform' => $platform,
-                'proposal_content_length' => strlen($proposalContent),
-                'timestamp' => now()->toISOString()
-            ];
-            throw new \Exception('Ya se ha enviado una propuesta para este proyecto - Context: ' . json_encode($context));
+            throw new \Exception('Ya se ha enviado una propuesta para este proyecto');
         }
 
         $user = $this->validateUser($userId);
@@ -76,15 +68,8 @@ class ProposalSubmissionService
             ];
         }
 
-        $context = [
-            'user_id' => $userId,
-            'project_id' => $projectId,
-            'platform' => $platform,
-            'proposal_content_length' => strlen($proposalContent),
-            'result' => $result,
-            'timestamp' => now()->toISOString()
-        ];
-        throw new \Exception('Error enviando propuesta: ' . $result['error'] . ' - Context: ' . json_encode($context));
+        $errorMessage = is_array($result['error']) ? $result['error']['message'] : $result['error'];
+        throw new \Exception('Error enviando propuesta: ' . $errorMessage);
     }
 
     private function validateProject(string $projectId): Project
@@ -92,11 +77,7 @@ class ProposalSubmissionService
         $project = Project::find($projectId);
         
         if (!$project) {
-            $context = [
-                'project_id' => $projectId,
-                'timestamp' => now()->toISOString()
-            ];
-            throw new \Exception('Proyecto no encontrado - Context: ' . json_encode($context));
+            throw new \Exception('Proyecto no encontrado');
         }
 
         return $project;
@@ -107,11 +88,7 @@ class ProposalSubmissionService
         $user = User::find($userId);
         
         if (!$user) {
-            $context = [
-                'user_id' => $userId,
-                'timestamp' => now()->toISOString()
-            ];
-            throw new \Exception('Usuario no encontrado - Context: ' . json_encode($context));
+            throw new \Exception('Usuario no encontrado');
         }
 
         return $user;
@@ -126,14 +103,8 @@ class ProposalSubmissionService
             $loginResult = $this->attemptLogin($userId, $platform);
             
             if (!$loginResult['success']) {
-                $context = [
-                    'user_id' => $userId,
-                    'platform' => $platform,
-                    'login_result' => $loginResult,
-                    'timestamp' => now()->toISOString()
-                ];
                 throw new \Exception(
-                    'No se encontraron datos de sesión y falló el login: ' . $loginResult['error'] . ' - Context: ' . json_encode($context)
+                    'No se encontraron datos de sesión y falló el login: ' . $loginResult['error']
                 );
             }
             
@@ -209,15 +180,8 @@ class ProposalSubmissionService
 
             // Log removido - información innecesaria en producción
         } catch (\Exception $e) {
-            Log::error('Error guardando registro de propuesta', [
-                'error' => $e->getMessage(),
-                'userId' => $userId,
-                'projectId' => $projectId,
-                'platform' => $platform
-            ]);
-            
             // No lanzar excepción aquí para no afectar el flujo principal
-            // Solo loggear el error
+            // Solo manejar el error silenciosamente
         }
     }
 

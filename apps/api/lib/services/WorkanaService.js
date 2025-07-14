@@ -971,7 +971,7 @@ class WorkanaService extends BaseScraper {
     
     const sendButton = this._getSubmitProposalButtonLocator();
 
-    if(!sendButton) {
+    if(await sendButton.count() === 0) {
       throw new Error('No se encontró el botón de envío de propuesta');
     }
 
@@ -982,7 +982,8 @@ class WorkanaService extends BaseScraper {
   }
 
   _getSubmitProposalButtonLocator() {
-    return this.page.locator(WorkanaService.SELECTORS.PROPOSAL_SUBMIT_BUTTON).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
+    const button = this.page.locator(WorkanaService.SELECTORS.PROPOSAL_SUBMIT_BUTTON).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
+    return button;
   }
 
   async _verifySubmissionSuccess() {
