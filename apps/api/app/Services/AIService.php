@@ -13,7 +13,7 @@ class AIService
 
     public function __construct()
     {
-        $this->apiKey = env('GROP_API_KEY');
+        $this->apiKey = env('GROQ_API_KEY');
         $this->apiUrl = env('AI_API_URL', 'https://api.groq.com/openai/v1/chat/completions');
         $this->model = env('AI_MODEL', 'llama3-8b-8192');
     }
