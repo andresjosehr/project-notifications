@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const BaseScraper = require('../scrapers/BaseScraper');
 const Project = require('../models/Project');
 const logger = require('../utils/logger');
-const { franc } = require('franc');
+// const { franc } = require('franc'); // Temporarily disabled due to ESM issue
 
 class WorkanaService extends BaseScraper {
   // ===========================================
@@ -643,7 +643,12 @@ class WorkanaService extends BaseScraper {
       }
 
       const cleanText = text.trim();
-      const langCode = franc(cleanText);
+      
+      // Temporary fallback while franc is disabled
+      let langCode = 'spa'; // Default to Spanish for Workana
+      if (cleanText.match(/\b(the|and|or|with|for|to|of|in|on|at|by|from)\b/gi)) {
+        langCode = 'eng';
+      }
       
       logger.debug('Language detection result', { 
         textSample: cleanText.substring(0, 50),
