@@ -74,21 +74,69 @@ jobs:
         debug: true
         use_insecure_cipher: false
         script: |
+          # Navegar al directorio del proyecto
           cd /var/www/projects/jobs
-          git pull origin master
-          # Eliminar node_modules para evitar problemas de permisos
+          
+          # Verificar el estado actual del repositorio
+          echo "Estado actual del repositorio:"
+          git status
+          echo "Último commit:"
+          git log --oneline -1
+          
+          # Hacer pull del código más reciente
+          echo "Haciendo pull del código más reciente..."
+          git fetch origin
+          
+          # Verificar si hay cambios sin confirmar
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Hay cambios sin confirmar. Haciendo stash..."
+            git stash
+          fi
+          
+          # Resetear al estado del master remoto
+          git reset --hard origin/master
+          
+          # Verificar que el pull fue exitoso
+          echo "Verificando que el pull fue exitoso:"
+          git log --oneline -1
+          
+          # Limpiar e instalar dependencias del proyecto principal
+          echo "Instalando dependencias del proyecto principal..."
           rm -rf node_modules package-lock.json
           npm install
+          
+          # Limpiar e instalar dependencias del frontend
+          echo "Instalando dependencias del frontend..."
           cd /var/www/projects/jobs/apps/frontend
           rm -rf node_modules package-lock.json
           npm install
+          
+          # Construir el frontend
+          echo "Construyendo el frontend..."
           ng build --configuration production
+          
+          # Limpiar e instalar dependencias del backend
+          echo "Instalando dependencias del backend..."
           cd /var/www/projects/jobs/apps/api
           rm -rf node_modules package-lock.json
-          composer install
+          composer install --no-dev --optimize-autoloader
+          
+          # Limpiar cachés de Laravel
+          echo "Limpiando cachés de Laravel..."
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+          
+          # Ejecutar migraciones
+          echo "Ejecutando migraciones..."
           php artisan migrate --force
+          
+          # Reiniciar colas
+          echo "Reiniciando colas..."
           php artisan queue:restart
+          
+          # Instalar dependencias de Node.js del backend (si las hay)
+          echo "Instalando dependencias de Node.js del backend..."
           npm install
+          
+          echo "Deployment completado exitosamente!"
