@@ -6,6 +6,7 @@ use App\Http\Requests\SendProposalRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\ProposalSubmissionService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class ProposalController extends Controller
 {
@@ -16,19 +17,21 @@ class ProposalController extends Controller
         $this->proposalSubmissionService = $proposalSubmissionService;
     }
 
-    public function send(SendProposalRequest $request)
+    public function sendByProjectId(Request $request, $projectId)
     {
         try {
-            $projectId = $request->getProjectId();
-            $userId = $request->getUserId();
-            $proposalContent = $request->getProposalContent();
-            $platform = $request->getPlatform();
+            $userId = auth()->id();
+            $proposalContent = $request->input('proposalContent');
+
+            if (!$proposalContent) {
+                return ApiResponse::error('El contenido de la propuesta es obligatorio');
+            }
 
             $result = $this->proposalSubmissionService->sendProposal(
                 $projectId,
                 $userId,
                 $proposalContent,
-                $platform
+                null // platform se obtendrá del proyecto
             );
             
             return ApiResponse::success($result['data'], $result['message']);
@@ -36,8 +39,8 @@ class ProposalController extends Controller
         } catch (\Exception $e) {
             Log::error('Error enviando propuesta', [
                 'error' => $e->getMessage(),
-                'projectId' => $request->getProjectId() ?? null,
-                'userId' => $request->getUserId() ?? null
+                'projectId' => $projectId,
+                'userId' => auth()->id()
             ]);
             
             return ApiResponse::error($e->getMessage());

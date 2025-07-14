@@ -23,15 +23,21 @@ class ProposalSubmissionService
         string $projectId,
         int $userId,
         string $proposalContent,
-        string $platform
+        ?string $platform = null
     ): array {
+        $project = $this->validateProject($projectId);
+        
+        // Si no se proporciona platform, obtenerlo del proyecto
+        if (!$platform) {
+            $platform = $project->platform;
+        }
+
         Log::info('Iniciando envío de propuesta', [
             'projectId' => $projectId,
             'userId' => $userId,
             'platform' => $platform
         ]);
 
-        $project = $this->validateProject($projectId);
         $user = $this->validateUser($userId);
         $sessionData = $this->getOrCreateSessionData($userId, $platform);
         $projectLink = $this->formatProjectLink($project->link, $platform);

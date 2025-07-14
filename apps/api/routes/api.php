@@ -53,10 +53,10 @@ Route::prefix('scrape')->group(function () {
 });
 
 // AI and proposal routes
-Route::post('/proposal/generate', [ProjectController::class, 'buildProposal'])->middleware(['auth.api']);
-
-// Send proposal endpoint
-Route::post('/proposal/send', [ProposalController::class, 'send'])->middleware(['auth.api']);
+Route::prefix('proposal')->middleware(['auth.api'])->group(function () {
+    Route::post('/generate/{projectId}', [ProjectController::class, 'buildProposalByProjectId']);
+    Route::post('/send/{projectId}', [ProposalController::class, 'sendByProjectId']);
+});
 
 // Workana specific routes (communication with Node.js)
 Route::prefix('workana')->group(function () {

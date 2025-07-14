@@ -72,19 +72,17 @@ class ProjectController extends Controller
         }
     }
 
-    public function buildProposal(BuildProposalRequest $request)
+    public function buildProposalByProjectId(Request $request, $projectId)
     {
         try {
-            $projectId = $request->getProjectId();
-            $userId = $request->getUserId();
-            $platform = $request->getPlatform();
-            $options = $request->getOptions();
+            $userId = auth()->id();
+            $options = $request->all();
 
-            $result = $this->proposalService->buildProposal($projectId, $userId, $platform, $options);
+            $result = $this->proposalService->buildProposal($projectId, $userId, null, $options);
             
             return ApiResponse::success($result, 'Propuesta generada exitosamente');
         } catch (\Exception $error) {
-            Log::error("Error generando propuesta", ['error' => $error->getMessage()]);
+            Log::error("Error generando propuesta", ['error' => $error->getMessage(), 'projectId' => $projectId]);
             
             return ApiResponse::error($error->getMessage());
         }

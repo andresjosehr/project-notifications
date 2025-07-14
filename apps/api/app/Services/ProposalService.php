@@ -18,15 +18,22 @@ class ProposalService
         $this->projectService = $projectService;
     }
 
-    public function buildProposal(string $projectId, int $userId, string $platform = 'workana', array $options = []): array
+    public function buildProposal(string $projectId, int $userId, ?string $platform = null, array $options = []): array
     {
-        Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId} de {$platform}");
+        Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId}");
 
         $project = $this->projectService->getProjectById($projectId, $platform);
         
         if (!$project) {
-            throw new \Exception("Proyecto {$projectId} no encontrado en {$platform}");
+            throw new \Exception("Proyecto {$projectId} no encontrado");
         }
+
+        // Si no se proporciona platform, obtenerlo del proyecto
+        if (!$platform) {
+            $platform = $project->platform;
+        }
+
+        Log::info("Generando propuesta para proyecto {$projectId} con usuario {$userId} de {$platform}");
 
         $user = User::find($userId);
         
