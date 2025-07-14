@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Exceptions\GenericException;
 
 abstract class BaseCommand extends Command
 {
@@ -85,7 +86,7 @@ abstract class BaseCommand extends Command
                 'command' => $command,
                 'timestamp' => now()->toISOString()
             ];
-            throw new Exception("No se recibió output del comando: {$command} - Context: " . json_encode($exceptionContext));
+            throw new GenericException("No se recibió output del comando: {$command} - Context: " . json_encode($exceptionContext));
         }
 
         // Extraer JSON del output - el CLI puede tener mensajes de error antes del JSON
@@ -106,7 +107,7 @@ abstract class BaseCommand extends Command
                     'context' => $context,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new Exception("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
+                throw new GenericException("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
             }
         }
 
@@ -118,13 +119,13 @@ abstract class BaseCommand extends Command
                 'context' => $context,
                 'timestamp' => now()->toISOString()
             ];
-            throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success' - Context: " . json_encode($exceptionContext));
+            throw new GenericException("Respuesta inválida del comando Node.js - falta campo 'success' - Context: " . json_encode($exceptionContext));
         }
 
         // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
         if (!$result['success']) {
             $errorMessage = $this->extractErrorMessage($result);
-            throw new Exception($errorMessage);
+            throw new GenericException($errorMessage);
         }
 
         return $result;

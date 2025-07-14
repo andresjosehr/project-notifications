@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -20,56 +21,51 @@ class AIService
 
     public function buildProposal($projectDescription, $options = [])
     {
-        try {
-            $professionalProfile = $options['professional_profile'] ?? $this->getDefaultProfessionalProfile();
-            $proposalDirectives = $options['proposal_directives'] ?? $this->getDefaultProposalDirectives();
+        $professionalProfile = $options['professional_profile'] ?? $this->getDefaultProfessionalProfile();
+        $proposalDirectives = $options['proposal_directives'] ?? $this->getDefaultProposalDirectives();
 
-            $prompt = $this->buildPrompt($projectDescription, $professionalProfile, $proposalDirectives);
+        $prompt = $this->buildPrompt($projectDescription, $professionalProfile, $proposalDirectives);
 
-            // Log removido - información innecesaria en producción
-            
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->apiUrl, [
-                'model' => $this->model,
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'Eres un asistente especializado en crear propuestas profesionales para proyectos de freelance.'
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $prompt
-                    ]
+        // Log removido - información innecesaria en producción
+        
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->post($this->apiUrl, [
+            'model' => $this->model,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'Eres un asistente especializado en crear propuestas profesionales para proyectos de freelance.'
                 ],
-                'max_tokens' => 1500,
-                'temperature' => 0.7,
-            ]);
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ],
+            'max_tokens' => 1500,
+            'temperature' => 0.7,
+        ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data['choices'][0]['message']['content'] ?? 'Error generando propuesta';
-            } else {
-                Log::error('Error en API de IA', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                $context = [
-                    'status' => $response->status(),
-                    'response_body' => $response->body(),
-                    'api_url' => $this->apiUrl,
-                    'model' => $this->model,
-                    'project_description_length' => strlen($projectDescription),
-                    'professional_profile_length' => strlen($professionalProfile),
-                    'proposal_directives_length' => strlen($proposalDirectives),
-                    'timestamp' => now()->toISOString()
-                ];
-                throw new \Exception('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
-            }
-        } catch (\Exception $e) {
-            Log::error('Error generando propuesta con IA', ['error' => $e->getMessage()]);
-            throw $e;
+        if ($response->successful()) {
+            $data = $response->json();
+            return $data['choices'][0]['message']['content'] ?? 'Error generando propuesta';
+        } else {
+            Log::error('Error en API de IA', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            $context = [
+                'status' => $response->status(),
+                'response_body' => $response->body(),
+                'api_url' => $this->apiUrl,
+                'model' => $this->model,
+                'project_description_length' => strlen($projectDescription),
+                'professional_profile_length' => strlen($professionalProfile),
+                'proposal_directives_length' => strlen($proposalDirectives),
+                'timestamp' => now()->toISOString()
+            ];
+            throw new GenericException('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
         }
     }
 
@@ -101,23 +97,22 @@ Por favor, genera una propuesta profesional y personalizada para este proyecto b
 
     public function generateProposalWithUserProfile($projectTitle, $projectDescription, $userProfile, $userDirectives, $options = [])
     {
-        try {
-            if (!$userProfile) {
-                throw new \Exception('Perfil profesional del usuario no proporcionado');
-            }
-            
-            if (!$userDirectives) {
-                throw new \Exception('Directrices de propuesta del usuario no proporcionadas');
-            }
+        if (!$userProfile) {
+            throw new GenericException('Perfil profesional del usuario no proporcionado');
+        }
+        
+        if (!$userDirectives) {
+            throw new GenericException('Directrices de propuesta del usuario no proporcionadas');
+        }
 
-            $language = $options['language'] ?? 'es';
-            $targetLanguage = $this->getTargetLanguage($language);
+        $language = $options['language'] ?? 'es';
+        $targetLanguage = $this->getTargetLanguage($language);
 
-            $systemPrompt = "Eres un asistente especializado en redactar propuestas profesionales para proyectos freelance. 
+        $systemPrompt = "Eres un asistente especializado en redactar propuestas profesionales para proyectos freelance. 
 Tu tarea es generar una propuesta personalizada basada en el perfil profesional y las directrices proporcionadas.
 IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}.";
 
-            $userPrompt = "Basándote en el siguiente perfil profesional y las directrices de propuesta, redacta una propuesta personalizada para el proyecto en {$targetLanguage}.
+        $userPrompt = "Basándote en el siguiente perfil profesional y las directrices de propuesta, redacta una propuesta personalizada para el proyecto en {$targetLanguage}.
 
 PERFIL PROFESIONAL:
 {$userProfile}
@@ -132,56 +127,52 @@ DIRECTRICES DE LA PROPUESTA:
 IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}.";
 
 
-            // Log removido - información innecesaria en producción
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->apiUrl, [
-                'model' => $this->model,
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => $systemPrompt
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $userPrompt
-                    ]
+        // Log removido - información innecesaria en producción
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->post($this->apiUrl, [
+            'model' => $this->model,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => $systemPrompt
                 ],
-                'max_tokens' => 1500,
-                'temperature' => 0.7,
+                [
+                    'role' => 'user',
+                    'content' => $userPrompt
+                ]
+            ],
+            'max_tokens' => 1500,
+            'temperature' => 0.7,
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $proposal = $data['choices'][0]['message']['content'] ?? 'Error generando propuesta';
+            
+            // Log removido - información innecesaria en producción
+
+            return $proposal;
+        } else {
+            Log::error('Error en API de IA', [
+                'status' => $response->status(),
+                'body' => $response->body()
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $proposal = $data['choices'][0]['message']['content'] ?? 'Error generando propuesta';
-                
-                // Log removido - información innecesaria en producción
-
-                return $proposal;
-            } else {
-                Log::error('Error en API de IA', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                $context = [
-                    'status' => $response->status(),
-                    'response_body' => $response->body(),
-                    'api_url' => $this->apiUrl,
-                    'model' => $this->model,
-                    'project_title' => $projectTitle,
-                    'project_description_length' => strlen($projectDescription),
-                    'user_profile_length' => strlen($userProfile),
-                    'user_directives_length' => strlen($userDirectives),
-                    'language' => $language,
-                    'target_language' => $targetLanguage,
-                    'timestamp' => now()->toISOString()
-                ];
-                throw new \Exception('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
-            }
-        } catch (\Exception $e) {
-            Log::error('Error generando propuesta con perfil de usuario', ['error' => $e->getMessage()]);
-            throw $e;
+            $context = [
+                'status' => $response->status(),
+                'response_body' => $response->body(),
+                'api_url' => $this->apiUrl,
+                'model' => $this->model,
+                'project_title' => $projectTitle,
+                'project_description_length' => strlen($projectDescription),
+                'user_profile_length' => strlen($userProfile),
+                'user_directives_length' => strlen($userDirectives),
+                'language' => $language,
+                'target_language' => $targetLanguage,
+                'timestamp' => now()->toISOString()
+            ];
+            throw new GenericException('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
         }
     }
 

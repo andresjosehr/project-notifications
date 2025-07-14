@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\GenericException;
 use App\Services\ScraperService;
 use App\Services\ProjectService;
 use App\Services\NotificationService;
@@ -29,44 +30,39 @@ class ScrapeWorkanaCommand extends BaseCommand
      */
     public function handle()
     {
-        try {
-            $this->info('🚀 Iniciando scraping de Workana...');
+        $this->info('🚀 Iniciando scraping de Workana...');
+        
+        $startTime = microtime(true);
+        $result = $this->executeNodeScraper();
+        
+        if (!$result['success']) {
+            $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido';
             
-            $startTime = microtime(true);
-            $result = $this->executeNodeScraper();
+            $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'scrape_failed', ['operation' => 'scrape']);
             
-            if (!$result['success']) {
-                $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido';
-                
-                $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'scrape_failed', ['operation' => 'scrape']);
-                
-                $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
-                return 1;
-            }
-
-            
-            $projects = $result['data']['projects'] ?? $result['projects'] ?? [];
-            $stats = $result['data']['stats'] ?? null;
-
-            
-            $insertedCount = $this->processProjects($projects);
-            
-            $duration = microtime(true) - $startTime;
-            
-            return $this->handleSuccess([
-                'operation' => 'scrape',
-                'message' => 'Scraping y procesamiento completado',
-                'data' => [
-                    'projects_found' => count($projects),
-                    'projects_inserted' => $insertedCount,
-                    'stats' => $stats
-                ],
-                'duration' => round($duration, 2)
-            ]);
-            
-        } catch (\Exception $e) {
-            return $this->handleError($e, ['operation' => 'scrape']);
+            $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
+            return 1;
         }
+
+        
+        $projects = $result['data']['projects'] ?? $result['projects'] ?? [];
+        $stats = $result['data']['stats'] ?? null;
+
+        
+        $insertedCount = $this->processProjects($projects);
+        
+        $duration = microtime(true) - $startTime;
+        
+        return $this->handleSuccess([
+            'operation' => 'scrape',
+            'message' => 'Scraping y procesamiento completado',
+            'data' => [
+                'projects_found' => count($projects),
+                'projects_inserted' => $insertedCount,
+                'stats' => $stats
+            ],
+            'duration' => round($duration, 2)
+        ]);
     }
     
     /**
@@ -176,21 +172,12 @@ class ScrapeWorkanaCommand extends BaseCommand
     private function sendProjectNotifications(Project $project, $users, NotificationService $notificationService): void
     {
         foreach ($users as $user) {
-            try {
-                $result = $notificationService->sendProjectNotification($project, $user);
-                
-                if ($result['success']) {
-                    $this->info("✅ Notificación enviada a {$user->telegram_user}");
-                } else {
-                    $this->warn("⚠️ Error enviando notificación a {$user->telegram_user}: " . ($result['error'] ?? 'Error desconocido'));
-                }
-            } catch (\Exception $e) {
-                $this->error("❌ Error enviando notificación a {$user->telegram_user}: " . $e->getMessage());
-                $this->logWarning('Error enviando notificación', [
-                    'user_id' => $user->id,
-                    'project_id' => $project->id,
-                    'error' => $e->getMessage()
-                ]);
+            $result = $notificationService->sendProjectNotification($project, $user);
+            
+            if ($result['success']) {
+                $this->info("✅ Notificación enviada a {$user->telegram_user}");
+            } else {
+                $this->warn("⚠️ Error enviando notificación a {$user->telegram_user}: " . ($result['error'] ?? 'Error desconocido'));
             }
         }
     }

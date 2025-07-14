@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use App\Models\User;
 use App\Models\ExternalCredential;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +34,7 @@ class UserManagementService
                 'user_id' => $userId,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Usuario no encontrado - Context: ' . json_encode($context));
+            throw new GenericException('Usuario no encontrado - Context: ' . json_encode($context));
         }
 
         return $user;

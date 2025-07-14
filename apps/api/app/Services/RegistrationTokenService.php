@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use App\Models\RegistrationToken;
 use Illuminate\Support\Facades\Log;
 
@@ -56,7 +57,7 @@ class RegistrationTokenService
                 'token_found' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token no encontrado - Context: ' . json_encode($context));
+            throw new GenericException('Token no encontrado - Context: ' . json_encode($context));
         }
 
         // Log removido - información innecesaria en producción

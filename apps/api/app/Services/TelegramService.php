@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
@@ -29,49 +30,41 @@ class TelegramService
      */
     public function sendMessage($message, $user, $options = [])
     {
-        try {
-            if (!$this->enabled) {
-                // Log removido - información innecesaria en producción
-                return ['success' => false, 'error' => 'Telegram está deshabilitado'];
-            }
-
-            if (!$user) {
-                Log::warning('No se proporcionó un usuario para enviar notificación', ['user' => $user]);
-                return ['success' => false, 'error' => 'No se proporcionó un usuario para enviar notificación'];
-            }
-
-            // Codificar el mensaje y usuario para la URL
-            $encodedMessage = urlencode($message);
-            $encodedUser = urlencode($user);
-            
-            // Construir la URL de CallMeBot
-            $url = "{$this->apiUrl}?user={$encodedUser}&text={$encodedMessage}";
-
+        if (!$this->enabled) {
             // Log removido - información innecesaria en producción
+            return ['success' => false, 'error' => 'Telegram está deshabilitado'];
+        }
 
-            $response = Http::timeout($options['timeout'] ?? $this->defaultTimeout)
-                ->get($url);
+        if (!$user) {
+            Log::warning('No se proporcionó un usuario para enviar notificación', ['user' => $user]);
+            return ['success' => false, 'error' => 'No se proporcionó un usuario para enviar notificación'];
+        }
 
-            if ($response->successful()) {
-                // Log removido - información innecesaria en producción
-                return ['success' => true, 'response' => $response->body()];
-            } else {
-                Log::error('Error enviando notificación de Telegram', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'user' => $user
-                ]);
-                return [
-                    'success' => false, 
-                    'error' => "Telegram API respondió con status {$response->status()}: {$response->body()}"
-                ];
-            }
-        } catch (\Exception $e) {
+        // Codificar el mensaje y usuario para la URL
+        $encodedMessage = urlencode($message);
+        $encodedUser = urlencode($user);
+        
+        // Construir la URL de CallMeBot
+        $url = "{$this->apiUrl}?user={$encodedUser}&text={$encodedMessage}";
+
+        // Log removido - información innecesaria en producción
+
+        $response = Http::timeout($options['timeout'] ?? $this->defaultTimeout)
+            ->get($url);
+
+        if ($response->successful()) {
+            // Log removido - información innecesaria en producción
+            return ['success' => true, 'response' => $response->body()];
+        } else {
             Log::error('Error enviando notificación de Telegram', [
-                'error' => $e->getMessage(),
-                'user' => $user ?? 'unknown'
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'user' => $user
             ]);
-            return ['success' => false, 'error' => $e->getMessage()];
+            return [
+                'success' => false, 
+                'error' => "Telegram API respondió con status {$response->status()}: {$response->body()}"
+            ];
         }
     }
 
@@ -85,24 +78,19 @@ class TelegramService
      */
     public function sendProjectNotification($project, $user, $options = [])
     {
-        try {
-            // Validar que el usuario tenga telegram_user configurado
-            $telegramUser = $user->telegram_user ?? null;
-            
-            if (!$telegramUser) {
-                Log::warning('Usuario sin telegram_user configurado', [
-                    'user_id' => $user->id ?? null,
-                    'project_id' => $project->id ?? null
-                ]);
-                return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
-            }
-
-            $message = $this->formatProjectMessage($project, $user);
-            return $this->sendMessage($message, $telegramUser, $options);
-        } catch (\Exception $e) {
-            Log::error('Error enviando notificación de proyecto', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
+        // Validar que el usuario tenga telegram_user configurado
+        $telegramUser = $user->telegram_user ?? null;
+        
+        if (!$telegramUser) {
+            Log::warning('Usuario sin telegram_user configurado', [
+                'user_id' => $user->id ?? null,
+                'project_id' => $project->id ?? null
+            ]);
+            return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
         }
+
+        $message = $this->formatProjectMessage($project, $user);
+        return $this->sendMessage($message, $telegramUser, $options);
     }
 
     /**
@@ -115,38 +103,33 @@ class TelegramService
      */
     public function sendErrorNotification($error, $context = '', $user = null)
     {
-        try {
-            // Si no hay usuario, no enviar notificación
-            if (!$user) {
-                // Log removido - información innecesaria en producción
-                return ['success' => false, 'error' => 'Usuario no proporcionado'];
-            }
-
-            // Validar que el usuario tenga telegram_user configurado
-            $telegramUser = $user->telegram_user ?? null;
-            
-            if (!$telegramUser) {
-                Log::warning('Usuario sin telegram_user configurado para notificación de error', [
-                    'user_id' => $user->id ?? null,
-                    'context' => $context
-                ]);
-                return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
-            }
-
-            $message = "🚨 ERROR EN SISTEMA DE NOTIFICACIONES 🚨\n\n";
-            
-            if ($context) {
-                $message .= "Contexto: {$context}\n\n";
-            }
-            
-            $message .= "Error: " . $error->getMessage() . "\n\n";
-            $message .= "Timestamp: " . now()->format('Y-m-d H:i:s');
-
-            return $this->sendMessage($message, $telegramUser);
-        } catch (\Exception $e) {
-            Log::error('Error enviando notificación de error', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
+        // Si no hay usuario, no enviar notificación
+        if (!$user) {
+            // Log removido - información innecesaria en producción
+            return ['success' => false, 'error' => 'Usuario no proporcionado'];
         }
+
+        // Validar que el usuario tenga telegram_user configurado
+        $telegramUser = $user->telegram_user ?? null;
+        
+        if (!$telegramUser) {
+            Log::warning('Usuario sin telegram_user configurado para notificación de error', [
+                'user_id' => $user->id ?? null,
+                'context' => $context
+            ]);
+            return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
+        }
+
+        $message = "🚨 ERROR EN SISTEMA DE NOTIFICACIONES 🚨\n\n";
+        
+        if ($context) {
+            $message .= "Contexto: {$context}\n\n";
+        }
+        
+        $message .= "Error: " . $error->getMessage() . "\n\n";
+        $message .= "Timestamp: " . now()->format('Y-m-d H:i:s');
+
+        return $this->sendMessage($message, $telegramUser);
     }
 
     /**
@@ -158,28 +141,23 @@ class TelegramService
      */
     public function sendStatusNotification($message, $user = null)
     {
-        try {
-            // Si no hay usuario, no enviar notificación
-            if (!$user) {
-                // Log removido - información innecesaria en producción
-                return ['success' => false, 'error' => 'Usuario no proporcionado'];
-            }
-
-            // Validar que el usuario tenga telegram_user configurado
-            $telegramUser = $user->telegram_user ?? null;
-            
-            if (!$telegramUser) {
-                Log::warning('Usuario sin telegram_user configurado para notificación de estado', [
-                    'user_id' => $user->id ?? null
-                ]);
-                return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
-            }
-
-            return $this->sendMessage($message, $telegramUser);
-        } catch (\Exception $e) {
-            Log::error('Error enviando notificación de estado', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
+        // Si no hay usuario, no enviar notificación
+        if (!$user) {
+            // Log removido - información innecesaria en producción
+            return ['success' => false, 'error' => 'Usuario no proporcionado'];
         }
+
+        // Validar que el usuario tenga telegram_user configurado
+        $telegramUser = $user->telegram_user ?? null;
+        
+        if (!$telegramUser) {
+            Log::warning('Usuario sin telegram_user configurado para notificación de estado', [
+                'user_id' => $user->id ?? null
+            ]);
+            return ['success' => false, 'error' => 'Usuario sin telegram_user configurado'];
+        }
+
+        return $this->sendMessage($message, $telegramUser);
     }
 
     /**

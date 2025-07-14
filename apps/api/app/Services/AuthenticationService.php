@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\RegistrationToken;
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -29,7 +30,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('El sistema ya está inicializado. No se puede registrar un administrador adicional. - Context: ' . json_encode($context));
+            throw new GenericException('El sistema ya está inicializado. No se puede registrar un administrador adicional. - Context: ' . json_encode($context));
         }
 
         $professionalProfile = $this->readContentFile('profesional-profile.txt');
@@ -63,7 +64,7 @@ class AuthenticationService
                 'user_found' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Credenciales inválidas - Context: ' . json_encode($context));
+            throw new GenericException('Credenciales inválidas - Context: ' . json_encode($context));
         }
 
         if (!in_array($user->role, ['ADMIN', 'USER'])) {
@@ -74,7 +75,7 @@ class AuthenticationService
                 'valid_roles' => ['ADMIN', 'USER'],
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Acceso denegado. Rol de usuario inválido. - Context: ' . json_encode($context));
+            throw new GenericException('Acceso denegado. Rol de usuario inválido. - Context: ' . json_encode($context));
         }
 
         if (!Hash::check($password, $user->password)) {
@@ -84,7 +85,7 @@ class AuthenticationService
                 'password_check' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Credenciales inválidas - Context: ' . json_encode($context));
+            throw new GenericException('Credenciales inválidas - Context: ' . json_encode($context));
         }
 
         $token = JWTAuth::fromUser($user);
@@ -112,7 +113,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token de registro inválido - Context: ' . json_encode($context));
+            throw new GenericException('Token de registro inválido - Context: ' . json_encode($context));
         }
 
         if (!$registrationToken->isValid()) {
@@ -123,7 +124,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token de registro ya utilizado - Context: ' . json_encode($context));
+            throw new GenericException('Token de registro ya utilizado - Context: ' . json_encode($context));
         }
 
         $user = User::create([
@@ -159,19 +160,15 @@ class AuthenticationService
             'timestamp' => now()->toISOString()
         ];
 
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if ($user) {
-                $data['user'] = [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'isAuthenticated' => true
-                ];
-            } else {
-                $data['user'] = ['isAuthenticated' => false];
-            }
-        } catch (\Exception $e) {
+        $user = JWTAuth::parseToken()->authenticate();
+        if ($user) {
+            $data['user'] = [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'isAuthenticated' => true
+            ];
+        } else {
             $data['user'] = ['isAuthenticated' => false];
         }
 
@@ -180,14 +177,10 @@ class AuthenticationService
 
     private function readContentFile(string $filename): ?string
     {
-        try {
-            $filePath = base_path('../api/' . $filename);
-            if (file_exists($filePath)) {
-                return trim(file_get_contents($filePath));
-            }
-            return null;
-        } catch (\Exception $e) {
-            return null;
+        $filePath = base_path('../api/' . $filename);
+        if (file_exists($filePath)) {
+            return trim(file_get_contents($filePath));
         }
+        return null;
     }
 }

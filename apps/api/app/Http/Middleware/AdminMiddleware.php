@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\GenericException;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,22 +16,15 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
 
-            if (!$user || $user->role !== 'ADMIN') {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Acceso denegado. Requiere permisos de administrador.'
-                ], 403);
-            }
-
-            return $next($request);
-        } catch (\Exception $e) {
+        if (!$user || $user->role !== 'ADMIN') {
             return response()->json([
                 'success' => false,
-                'error' => 'Token de autenticación inválido'
-            ], 401);
+                'error' => 'Acceso denegado. Requiere permisos de administrador.'
+            ], 403);
         }
+
+        return $next($request);
     }
 }

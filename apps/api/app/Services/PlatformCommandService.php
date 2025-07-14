@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Log;
 
 class PlatformCommandService
@@ -23,7 +24,7 @@ class PlatformCommandService
             Log::error('Error parseando respuesta de comando de login', [
                 'output' => $output
             ]);
-            throw new \Exception('Error parseando respuesta del comando de login: ' . $output);
+            throw new GenericException('Error parseando respuesta del comando de login: ' . $output);
         }
 
         // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
@@ -36,7 +37,7 @@ class PlatformCommandService
             if (is_array($errorMessage)) {
                 $errorMessage = json_encode($errorMessage);
             }
-            throw new \Exception($errorMessage);
+            throw new GenericException($errorMessage);
         }
         
         return [
@@ -50,34 +51,20 @@ class PlatformCommandService
         $sessionFileName = 'session_' . uniqid() . '.json';
         $sessionFilePath = storage_path('app/sessions/' . $sessionFileName);
         
-        try {
-            $this->ensureSessionDirectoryExists();
-            
-            file_put_contents($sessionFilePath, $sessionData);
-            
-            $command = "cd " . base_path() . " && php artisan workana:send-proposal " .
-                escapeshellarg($sessionFilePath) . " " .
-                escapeshellarg($proposalContent) . " " .
-                escapeshellarg($projectLink);
-            
-            // Log removido - información innecesaria en producción
-            $output = shell_exec($command . " 2>&1");
-            // Log removido - información innecesaria en producción
-            
-            $this->cleanupSessionFile($sessionFilePath);
-            
-            return $this->parseCommandOutput($output);
-            
-        } catch (\Exception $e) {
-            if (isset($sessionFilePath)) {
-                $this->cleanupSessionFile($sessionFilePath);
-            }
-            
-            Log::error('Excepción en envío de propuesta', ['error' => $e->getMessage()]);
-            
-            // CAMBIO CRÍTICO: Re-lanzar la excepción en lugar de devolver array de error
-            throw $e;
-        }
+        $this->ensureSessionDirectoryExists();
+        
+        file_put_contents($sessionFilePath, $sessionData);
+        
+        $command = "cd " . base_path() . " && php artisan workana:send-proposal " .
+            escapeshellarg($sessionFilePath) . " " .
+            escapeshellarg($proposalContent) . " " .
+            escapeshellarg($projectLink);
+        
+        $output = shell_exec($command . " 2>&1");
+        
+        $this->cleanupSessionFile($sessionFilePath);
+        
+        return $this->parseCommandOutput($output);
     }
 
     private function ensureSessionDirectoryExists(): void
@@ -108,7 +95,7 @@ class PlatformCommandService
                 'output' => $output,
                 'lastLine' => $lastLine
             ]);
-            throw new \Exception('Respuesta inválida del comando: ' . $output);
+            throw new GenericException('Respuesta inválida del comando: ' . $output);
         }
 
         // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
@@ -118,7 +105,13 @@ class PlatformCommandService
             ]);
             
             $errorMessage = $jsonResponse['error'] ?? 'Error desconocido en el envío de propuesta';
-            throw new \Exception($errorMessage);
+            if (is_array($errorMessage)) {
+                $errorMessage = json_encode($errorMessage);
+            }
+
+            Log::info('Respuesta de jsonResponse:');
+            Log::info($errorMessage);
+            throw new GenericException($errorMessage);
         }
         
         return [

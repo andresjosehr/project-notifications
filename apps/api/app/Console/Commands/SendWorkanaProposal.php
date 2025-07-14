@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\GenericException;
+
 class SendWorkanaProposal extends BaseCommand
 {
     /**
@@ -23,55 +25,46 @@ class SendWorkanaProposal extends BaseCommand
      */
     public function handle()
     {
-        try {
-            if (!$this->validateRequiredArguments(['session', 'proposalText', 'projectLink'])) {
-                return 1;
-            }
-
-            $session = $this->argument('session');
-            $proposalText = $this->argument('proposalText');
-            $projectLink = $this->argument('projectLink');
-            
-            $this->info('Enviando propuesta a Workana...');
-            
-            $startTime = microtime(true);
-            $sessionData = $this->prepareSessionData($session);
-            $result = $this->executeProposalCommand($sessionData, $proposalText, $projectLink);
-            $duration = (microtime(true) - $startTime) * 1000;
-
-            if (!$result['success']) {
-                $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
-                
-                $this->logWarning('Error enviando propuesta a Workana', [
-                    'error' => $errorMessage,
-                    'error_type' => $result['error']['type'] ?? 'unknown',
-                    'operation' => 'send_proposal'
-                ]);
-                
-                $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'send_proposal_failed', [
-                    'operation' => 'send_proposal'
-                ]);
-                
-                $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
-                return 1;
-            }
-            
-            return $this->handleSuccess([
-                'operation' => 'send_proposal',
-                'message' => 'Propuesta enviada exitosamente',
-                'data' => [
-                    'projectLink' => $result['data']['projectLink'] ?? $result['projectLink'] ?? $projectLink
-                ],
-                'duration' => round($duration, 2)
-            ]);
-            
-        } catch (\Exception $e) {
-            return $this->handleError($e, [
-                'operation' => 'send_proposal',
-                'session' => $this->argument('session'),
-                'proposalText' => substr($this->argument('proposalText'), 0, 100) . '...'
-            ]);
+        if (!$this->validateRequiredArguments(['session', 'proposalText', 'projectLink'])) {
+            return 1;
         }
+
+        $session = $this->argument('session');
+        $proposalText = $this->argument('proposalText');
+        $projectLink = $this->argument('projectLink');
+        
+        $this->info('Enviando propuesta a Workana...');
+        
+        $startTime = microtime(true);
+        $sessionData = $this->prepareSessionData($session);
+        $result = $this->executeProposalCommand($sessionData, $proposalText, $projectLink);
+        $duration = (microtime(true) - $startTime) * 1000;
+
+        if (!$result['success']) {
+            $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
+            
+            $this->logWarning('Error enviando propuesta a Workana', [
+                'error' => $errorMessage,
+                'error_type' => $result['error']['type'] ?? 'unknown',
+                'operation' => 'send_proposal'
+            ]);
+            
+            $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'send_proposal_failed', [
+                'operation' => 'send_proposal'
+            ]);
+            
+            $this->error(json_encode($error, JSON_UNESCAPED_UNICODE));
+            return 1;
+        }
+        
+        return $this->handleSuccess([
+            'operation' => 'send_proposal',
+            'message' => 'Propuesta enviada exitosamente',
+            'data' => [
+                'projectLink' => $result['data']['projectLink'] ?? $result['projectLink'] ?? $projectLink
+            ],
+            'duration' => round($duration, 2)
+        ]);
     }
 
     private function prepareSessionData(string $session): string

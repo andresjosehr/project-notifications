@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Log;
 
 class NotificationService
@@ -23,32 +24,27 @@ class NotificationService
      */
     public function sendProjectNotification($project, $user, $options = [])
     {
-        try {
-            $results = [];
-            
-            // Distribuir notificación a Telegram
-            $telegramResult = $this->telegramService->sendProjectNotification($project, $user, $options);
-            $results['telegram'] = $telegramResult;
+        $results = [];
+        
+        // Distribuir notificación a Telegram
+        $telegramResult = $this->telegramService->sendProjectNotification($project, $user, $options);
+        $results['telegram'] = $telegramResult;
 
-            // Aquí se pueden agregar más servicios (email, SMS, etc.)
-            // $emailResult = $this->emailService->sendProjectNotification($project, $user, $options);
-            // $results['email'] = $emailResult;
+        // Aquí se pueden agregar más servicios (email, SMS, etc.)
+        // $emailResult = $this->emailService->sendProjectNotification($project, $user, $options);
+        // $results['email'] = $emailResult;
 
-            $successCount = count(array_filter($results, fn($r) => $r['success']));
-            $totalServices = count($results);
-            
-            // Log removido - información innecesaria en producción
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $totalServices = count($results);
+        
+        // Log removido - información innecesaria en producción
 
-            return [
-                'success' => $successCount > 0,
-                'results' => $results,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error en servicio de notificación de proyecto', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return [
+            'success' => $successCount > 0,
+            'results' => $results,
+            'services_attempted' => $totalServices,
+            'services_successful' => $successCount
+        ];
     }
 
     /**
@@ -61,32 +57,27 @@ class NotificationService
      */
     public function sendErrorNotification($error, $context = '', $user = null)
     {
-        try {
-            $results = [];
-            
-            // Distribuir notificación de error a Telegram
-            $telegramResult = $this->telegramService->sendErrorNotification($error, $context, $user);
-            $results['telegram'] = $telegramResult;
+        $results = [];
+        
+        // Distribuir notificación de error a Telegram
+        $telegramResult = $this->telegramService->sendErrorNotification($error, $context, $user);
+        $results['telegram'] = $telegramResult;
 
-            // Aquí se pueden agregar más servicios
-            // $emailResult = $this->emailService->sendErrorNotification($error, $context, $user);
-            // $results['email'] = $emailResult;
+        // Aquí se pueden agregar más servicios
+        // $emailResult = $this->emailService->sendErrorNotification($error, $context, $user);
+        // $results['email'] = $emailResult;
 
-            $successCount = count(array_filter($results, fn($r) => $r['success']));
-            $totalServices = count($results);
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $totalServices = count($results);
 
-            // Log removido - información innecesaria en producción
+        // Log removido - información innecesaria en producción
 
-            return [
-                'success' => $successCount > 0,
-                'results' => $results,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error en servicio de notificación de error', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return [
+            'success' => $successCount > 0,
+            'results' => $results,
+            'services_attempted' => $totalServices,
+            'services_successful' => $successCount
+        ];
     }
 
     /**
@@ -98,31 +89,26 @@ class NotificationService
      */
     public function sendStatusNotification($message, $user = null)
     {
-        try {
-            $results = [];
-            
-            // Distribuir notificación de estado a Telegram
-            $telegramResult = $this->telegramService->sendStatusNotification($message, $user);
-            $results['telegram'] = $telegramResult;
+        $results = [];
+        
+        // Distribuir notificación de estado a Telegram
+        $telegramResult = $this->telegramService->sendStatusNotification($message, $user);
+        $results['telegram'] = $telegramResult;
 
-            // Aquí se pueden agregar más servicios
-            // $emailResult = $this->emailService->sendStatusNotification($message, $user);
-            // $results['email'] = $emailResult;
+        // Aquí se pueden agregar más servicios
+        // $emailResult = $this->emailService->sendStatusNotification($message, $user);
+        // $results['email'] = $emailResult;
 
-            $successCount = count(array_filter($results, fn($r) => $r['success']));
-            $totalServices = count($results);
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $totalServices = count($results);
 
-            // Log removido - información innecesaria en producción
+        // Log removido - información innecesaria en producción
 
-            return [
-                'success' => $successCount > 0,
-                'results' => $results,
-                'services_attempted' => $totalServices,
-                'services_successful' => $successCount
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error en servicio de notificación de estado', ['error' => $e->getMessage()]);
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return [
+            'success' => $successCount > 0,
+            'results' => $results,
+            'services_attempted' => $totalServices,
+            'services_successful' => $successCount
+        ];
     }
 }

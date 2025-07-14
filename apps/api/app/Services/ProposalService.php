@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Services\AIService;
 use App\Services\ProjectService;
+use App\Exceptions\GenericException;
 use Illuminate\Support\Facades\Log;
 
 class ProposalService
@@ -31,7 +32,7 @@ class ProposalService
                 'platform' => $platform ?? 'null',
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Proyecto {$projectId} no encontrado - Context: " . json_encode($context));
+            throw new GenericException("Proyecto {$projectId} no encontrado - Context: " . json_encode($context));
         }
 
         // Si no se proporciona platform, obtenerlo del proyecto
@@ -50,7 +51,7 @@ class ProposalService
                 'platform' => $platform ?? 'null',
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Usuario {$userId} no encontrado - Context: " . json_encode($context));
+            throw new GenericException("Usuario {$userId} no encontrado - Context: " . json_encode($context));
         }
 
         $proposal = $this->generateProposal($project, $user, $options);

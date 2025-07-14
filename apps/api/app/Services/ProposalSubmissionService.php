@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\UserProposal;
+use App\Exceptions\GenericException;
 
 class ProposalSubmissionService
 {
@@ -36,7 +37,7 @@ class ProposalSubmissionService
 
         // Validar si ya existe una propuesta para este usuario y proyecto
         if ($this->proposalAlreadyExists($userId, $projectId, $platform)) {
-            throw new \Exception('Ya se ha enviado una propuesta para este proyecto');
+            throw new GenericException('Ya se ha enviado una propuesta para este proyecto');
         }
 
         $user = $this->validateUser($userId);
@@ -77,7 +78,7 @@ class ProposalSubmissionService
         $project = Project::find($projectId);
         
         if (!$project) {
-            throw new \Exception('Proyecto no encontrado');
+            throw new GenericException('Proyecto no encontrado');
         }
 
         return $project;
@@ -88,7 +89,7 @@ class ProposalSubmissionService
         $user = User::find($userId);
         
         if (!$user) {
-            throw new \Exception('Usuario no encontrado');
+            throw new GenericException('Usuario no encontrado');
         }
 
         return $user;
@@ -114,7 +115,7 @@ class ProposalSubmissionService
     private function attemptLogin(int $userId, string $platform): array
     {
         if (!$this->credentialService->hasValidCredentials($userId, $platform)) {
-            throw new \Exception('No se encontraron credenciales de ' . $platform . ' para el usuario');
+            throw new GenericException('No se encontraron credenciales de ' . $platform . ' para el usuario');
         }
 
         $credentials = $this->credentialService->getUserCredentials($userId, $platform);
@@ -128,7 +129,7 @@ class ProposalSubmissionService
         // CAMBIO CRÍTICO: Si login falla, lanzar excepción inmediatamente
         if (!$result['success']) {
             $errorMessage = $this->extractSpecificErrorMessage($result['error']) ?: $result['error'];
-            throw new \Exception('Error en login: ' . $errorMessage);
+            throw new GenericException('Error en login: ' . $errorMessage);
         }
 
         return $result;
@@ -168,21 +169,16 @@ class ProposalSubmissionService
      */
     private function saveProposalRecord(int $userId, string $projectId, string $platform, string $proposalContent): void
     {
-        try {
-            UserProposal::create([
-                'user_id' => $userId,
-                'project_id' => $projectId,
-                'project_platform' => $platform,
-                'proposal_sent_at' => now(),
-                'proposal_content' => $proposalContent,
-                'status' => 'sent'
-            ]);
+        UserProposal::create([
+            'user_id' => $userId,
+            'project_id' => $projectId,
+            'project_platform' => $platform,
+            'proposal_sent_at' => now(),
+            'proposal_content' => $proposalContent,
+            'status' => 'sent'
+        ]);
 
-            // Log removido - información innecesaria en producción
-        } catch (\Exception $e) {
-            // No lanzar excepción aquí para no afectar el flujo principal
-            // Solo manejar el error silenciosamente
-        }
+        // Log removido - información innecesaria en producción
     }
 
     /**
@@ -317,7 +313,7 @@ class ProposalSubmissionService
                 $message .= " Sugerencia: " . $suggestions[0];
             }
 
-            throw new \Exception($message);
+            throw new GenericException($message);
         }
 
         // Intentar extraer mensaje específico de error JSON escapado
@@ -331,7 +327,7 @@ class ProposalSubmissionService
             }
         }
 
-        throw new \Exception($errorMessage);
+        throw new GenericException($errorMessage);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\GenericException;
 use App\Models\Project;
 use App\Models\UserProposal;
 use Illuminate\Support\Facades\DB;
@@ -161,35 +162,20 @@ class ProjectService
 
     public function healthCheck()
     {
-        try {
-            $totalProjects = Project::count();
-            $recentProjects = Project::where('created_at', '>=', now()->subHour())->count();
-            
-            return [
-                'database' => [
-                    'status' => 'healthy',
-                    'total_projects' => $totalProjects,
-                    'recent_projects' => $recentProjects,
-                ],
-                'overall' => [
-                    'status' => 'healthy',
-                    'healthy' => true,
-                ]
-            ];
-        } catch (\Exception $e) {
-            Log::error('Health check failed', ['error' => $e->getMessage()]);
-            
-            return [
-                'database' => [
-                    'status' => 'unhealthy',
-                    'error' => $e->getMessage(),
-                ],
-                'overall' => [
-                    'status' => 'unhealthy',
-                    'healthy' => false,
-                ]
-            ];
-        }
+        $totalProjects = Project::count();
+        $recentProjects = Project::where('created_at', '>=', now()->subHour())->count();
+        
+        return [
+            'database' => [
+                'status' => 'healthy',
+                'total_projects' => $totalProjects,
+                'recent_projects' => $recentProjects,
+            ],
+            'overall' => [
+                'status' => 'healthy',
+                'healthy' => true,
+            ]
+        ];
     }
 
     public function cleanup($options = [])
