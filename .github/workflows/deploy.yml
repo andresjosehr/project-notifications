@@ -77,8 +77,9 @@ jobs:
           cd /var/www/projects/jobs
           git pull origin master
           npm install
-          npm ci --workspace=apps/frontend
-          npm run build:frontend
+          cd apps/frontend
+          npm install
+          ng build --configuration production
           cd apps/api
           composer install --no-dev --optimize-autoloader
           php artisan config:cache
@@ -86,3 +87,4 @@ jobs:
           php artisan view:cache
           php artisan migrate --force
           php artisan queue:restart
+          npm install
