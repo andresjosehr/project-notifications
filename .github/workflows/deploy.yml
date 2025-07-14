@@ -77,10 +77,10 @@ jobs:
           cd /var/www/projects/jobs
           git pull origin master
           npm install
-          cd apps/frontend
+          cd /var/www/projects/jobs/apps/frontend
           npm install
           ng build --configuration production
-          cd apps/api
+          cd /var/www/projects/jobs/apps/api
           composer install --no-dev --optimize-autoloader
           php artisan config:cache
           php artisan route:cache
