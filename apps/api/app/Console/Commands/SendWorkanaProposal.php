@@ -33,21 +33,13 @@ class SendWorkanaProposal extends BaseCommand
         $proposalText = $this->argument('proposalText');
         $projectLink = $this->argument('projectLink');
         
-        $this->info('Enviando propuesta a Workana...');
-        
         $startTime = microtime(true);
-        $sessionData = $this->prepareSessionData($session);
+        $sessionData = $session;
         $result = $this->executeProposalCommand($sessionData, $proposalText, $projectLink);
         $duration = (microtime(true) - $startTime) * 1000;
 
         if (!$result['success']) {
             $errorMessage = $result['error']['message'] ?? $result['error'] ?? 'Error desconocido enviando propuesta';
-            
-            $this->logWarning('Error enviando propuesta a Workana', [
-                'error' => $errorMessage,
-                'error_type' => $result['error']['type'] ?? 'unknown',
-                'operation' => 'send_proposal'
-            ]);
             
             $error = $this->standardError($errorMessage, $result['error']['type'] ?? 'send_proposal_failed', [
                 'operation' => 'send_proposal'
@@ -69,11 +61,7 @@ class SendWorkanaProposal extends BaseCommand
 
     private function prepareSessionData(string $session): string
     {
-        if (file_exists($session) && is_readable($session)) {
-            $this->line("Usando archivo de sesión en storage: {$session}");
-            return $session;
-        }
-        
+        $this->line("Usando contenido directo de sesión");
         return $session;
     }
 
@@ -85,8 +73,6 @@ class SendWorkanaProposal extends BaseCommand
             escapeshellarg($sessionData) . " " .
             escapeshellarg($proposalText) . " " .
             escapeshellarg($projectLink);
-        
-        $this->line("Ejecutando: {$command}");
         
         return $this->executeNodeCommand($command, ['operation' => 'send_proposal']);
     }

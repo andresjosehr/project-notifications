@@ -51,7 +51,7 @@ class CommandHandlers {
 
   /**
    * Handle sendProposal command
-   * @param {string} session - Session data (JSON string or file path)
+   * @param {string} session - Session data as JSON string
    * @param {string} proposalText - Proposal text
    * @param {string} projectLink - Project link
    * @returns {Promise<void>}
@@ -171,25 +171,15 @@ class CommandHandlers {
   }
 
   /**
-   * Parse session data from JSON string or file path
-   * @param {string} session - Session data
+   * Parse session data from JSON string
+   * @param {string} session - Session data as JSON string
    * @returns {Object} Parsed session data
    * @private
    */
   static _parseSessionData(session) {
     try {
-      // Check if it's a session file in storage
-      if (session.includes('storage/app/sessions/') || session.includes('session_')) {
-        if (fs.existsSync(session)) {
-          const fileContent = fs.readFileSync(session, 'utf8');
-          return JSON.parse(fileContent);
-        } else {
-          throw new Error(`Archivo de sesión no encontrado: ${session}`);
-        }
-      } else {
-        // Try to parse as direct JSON
-        return JSON.parse(session);
-      }
+      // Parse session data directly as JSON string
+      return JSON.parse(session);
     } catch (parseError) {
       throw new Error(`Error parseando session: ${parseError.message}`);
     }

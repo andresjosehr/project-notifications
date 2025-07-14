@@ -21,7 +21,7 @@ program
 program
   .command('sendProposal')
   .description('Enviar propuesta simple con sesión y texto')
-  .argument('<session>', 'Datos de sesión en formato JSON o ruta a archivo temporal')
+  .argument('<session>', 'Datos de sesión en formato JSON')
   .argument('<proposalText>', 'Texto de la propuesta')
   .argument('<projectLink>', 'Link del proyecto en Workana')
   .action(CommandHandlers.handleSendProposal);

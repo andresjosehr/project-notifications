@@ -48,21 +48,13 @@ class PlatformCommandService
 
     public function executeSendProposal(string $sessionData, string $proposalContent, string $projectLink): array
     {
-        $sessionFileName = 'session_' . uniqid() . '.json';
-        $sessionFilePath = storage_path('app/sessions/' . $sessionFileName);
-        
-        $this->ensureSessionDirectoryExists();
-        
-        file_put_contents($sessionFilePath, $sessionData);
-        
+
         $command = "cd " . base_path() . " && php artisan workana:send-proposal " .
-            escapeshellarg($sessionFilePath) . " " .
+            escapeshellarg($sessionData) . " " .
             escapeshellarg($proposalContent) . " " .
             escapeshellarg($projectLink);
         
         $output = shell_exec($command . " 2>&1");
-        
-        $this->cleanupSessionFile($sessionFilePath);
         
         return $this->parseCommandOutput($output);
     }
@@ -72,13 +64,6 @@ class PlatformCommandService
         $sessionDir = storage_path('app/sessions');
         if (!file_exists($sessionDir)) {
             mkdir($sessionDir, 0755, true);
-        }
-    }
-
-    private function cleanupSessionFile(string $sessionFilePath): void
-    {
-        if (file_exists($sessionFilePath)) {
-            unlink($sessionFilePath);
         }
     }
 
