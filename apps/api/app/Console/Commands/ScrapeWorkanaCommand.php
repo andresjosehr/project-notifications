@@ -127,7 +127,7 @@ class ScrapeWorkanaCommand extends BaseCommand
                 'title' => $project['title'] ?? null,
                 'description' => $project['description'] ?? null,
                 'price' => $project['price'] ?? null,
-                'skills' => $project['skills'] ?? null,
+                'skills' => is_array($project['skills']) ? implode(', ', $project['skills']) : ($project['skills'] ?? null),
                 'link' => $project['link'] ?? null,
                 'platform' => $project['platform'] ?? 'workana',
                 'language' => $project['language'] ?? 'unknown',

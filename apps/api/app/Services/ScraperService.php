@@ -37,12 +37,14 @@ class ScraperService
                 throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}, Output: {$output}");
             }
             
-            // Convertir output a array
-            $result = json_decode($output, true);
+            // Extraer JSON válido del output
+            $jsonOutput = $this->extractJsonFromOutput($output);
             
-            if ($result === null) {
+            if ($jsonOutput === null) {
                 throw new \Exception("No se encontró JSON válido en el output: {$output}");
             }
+            
+            $result = json_decode($jsonOutput, true);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg() . "\nOutput: {$output}");

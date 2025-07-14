@@ -24,7 +24,7 @@ class ScraperController extends Controller
 
             Log::info('Solicitud de scraping de Workana recibida', $options);
 
-            $result = $this->scraperService->executeScrapingCommand('workana', $options);
+            $result = $this->scraperService->scrapeWorkana($options);
 
             return ApiResponse::success($result, 'Scraping de Workana completado exitosamente');
 
