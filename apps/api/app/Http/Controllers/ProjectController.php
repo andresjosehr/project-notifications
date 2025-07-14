@@ -55,7 +55,7 @@ class ProjectController extends Controller
                 'iteration' => $iteration,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Error en ciclo de scraping #{$iteration}", 0, null, $context);
+            throw new \Exception("Error en ciclo de scraping #{$iteration} - Context: " . json_encode($context));
         }
     }
 
@@ -80,7 +80,7 @@ class ProjectController extends Controller
                 'options' => $options,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Error en scraping de {$platform}", 0, null, $context);
+            throw new \Exception("Error en scraping de {$platform} - Context: " . json_encode($context));
         }
     }
 
@@ -103,7 +103,7 @@ class ProjectController extends Controller
                 'options' => $options,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Error generando propuesta", 0, null, $context);
+            throw new \Exception("Error generando propuesta - Context: " . json_encode($context));
         }
     }
 

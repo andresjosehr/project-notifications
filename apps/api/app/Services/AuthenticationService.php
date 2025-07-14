@@ -29,7 +29,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('El sistema ya está inicializado. No se puede registrar un administrador adicional.', 0, null, $context);
+            throw new \Exception('El sistema ya está inicializado. No se puede registrar un administrador adicional. - Context: ' . json_encode($context));
         }
 
         $professionalProfile = $this->readContentFile('profesional-profile.txt');
@@ -63,7 +63,7 @@ class AuthenticationService
                 'user_found' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Credenciales inválidas', 0, null, $context);
+            throw new \Exception('Credenciales inválidas - Context: ' . json_encode($context));
         }
 
         if (!in_array($user->role, ['ADMIN', 'USER'])) {
@@ -74,7 +74,7 @@ class AuthenticationService
                 'valid_roles' => ['ADMIN', 'USER'],
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Acceso denegado. Rol de usuario inválido.', 0, null, $context);
+            throw new \Exception('Acceso denegado. Rol de usuario inválido. - Context: ' . json_encode($context));
         }
 
         if (!Hash::check($password, $user->password)) {
@@ -84,7 +84,7 @@ class AuthenticationService
                 'password_check' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Credenciales inválidas', 0, null, $context);
+            throw new \Exception('Credenciales inválidas - Context: ' . json_encode($context));
         }
 
         $token = JWTAuth::fromUser($user);
@@ -112,7 +112,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token de registro inválido', 0, null, $context);
+            throw new \Exception('Token de registro inválido - Context: ' . json_encode($context));
         }
 
         if (!$registrationToken->isValid()) {
@@ -123,7 +123,7 @@ class AuthenticationService
                 'email' => $email,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token de registro ya utilizado', 0, null, $context);
+            throw new \Exception('Token de registro ya utilizado - Context: ' . json_encode($context));
         }
 
         $user = User::create([

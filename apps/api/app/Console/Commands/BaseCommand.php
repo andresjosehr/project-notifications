@@ -85,7 +85,7 @@ abstract class BaseCommand extends Command
                 'command' => $command,
                 'timestamp' => now()->toISOString()
             ];
-            throw new Exception("No se recibió output del comando: {$command}", 0, null, $exceptionContext);
+            throw new Exception("No se recibió output del comando: {$command} - Context: " . json_encode($exceptionContext));
         }
 
         $result = json_decode($output, true);
@@ -98,7 +98,7 @@ abstract class BaseCommand extends Command
                 'context' => $context,
                 'timestamp' => now()->toISOString()
             ];
-            throw new Exception("Error parseando JSON: " . json_last_error_msg(), 0, null, $exceptionContext);
+            throw new Exception("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
         }
 
         // Validar formato estándar de respuesta
@@ -109,7 +109,7 @@ abstract class BaseCommand extends Command
                 'context' => $context,
                 'timestamp' => now()->toISOString()
             ];
-            throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success'", 0, null, $exceptionContext);
+            throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success' - Context: " . json_encode($exceptionContext));
         }
 
         return $result;

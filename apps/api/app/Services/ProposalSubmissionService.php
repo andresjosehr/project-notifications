@@ -44,7 +44,7 @@ class ProposalSubmissionService
                 'proposal_content_length' => strlen($proposalContent),
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Ya se ha enviado una propuesta para este proyecto', 0, null, $context);
+            throw new \Exception('Ya se ha enviado una propuesta para este proyecto - Context: ' . json_encode($context));
         }
 
         $user = $this->validateUser($userId);
@@ -84,7 +84,7 @@ class ProposalSubmissionService
             'result' => $result,
             'timestamp' => now()->toISOString()
         ];
-        throw new \Exception('Error enviando propuesta: ' . $result['error'], 0, null, $context);
+        throw new \Exception('Error enviando propuesta: ' . $result['error'] . ' - Context: ' . json_encode($context));
     }
 
     private function validateProject(string $projectId): Project
@@ -96,7 +96,7 @@ class ProposalSubmissionService
                 'project_id' => $projectId,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Proyecto no encontrado', 0, null, $context);
+            throw new \Exception('Proyecto no encontrado - Context: ' . json_encode($context));
         }
 
         return $project;
@@ -111,7 +111,7 @@ class ProposalSubmissionService
                 'user_id' => $userId,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Usuario no encontrado', 0, null, $context);
+            throw new \Exception('Usuario no encontrado - Context: ' . json_encode($context));
         }
 
         return $user;
@@ -133,7 +133,7 @@ class ProposalSubmissionService
                     'timestamp' => now()->toISOString()
                 ];
                 throw new \Exception(
-                    'No se encontraron datos de sesión y falló el login: ' . $loginResult['error'], 0, null, $context
+                    'No se encontraron datos de sesión y falló el login: ' . $loginResult['error'] . ' - Context: ' . json_encode($context)
                 );
             }
             

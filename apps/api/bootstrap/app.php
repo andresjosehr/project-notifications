@@ -20,17 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.api' => \App\Http\Middleware\AuthMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'check.proposal.duplicate' => \App\Http\Middleware\CheckProposalDuplicate::class,
-            'logging' => \App\Http\Middleware\LoggingMiddleware::class,
         ]);
         
         // Exclude telescope from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'telescope/*',
         ]);
-        
-        // Apply logging middleware to all routes
-        $middleware->append(\App\Http\Middleware\LoggingMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->handler(\App\Exceptions\Handler::class);
+        //
     })->create();

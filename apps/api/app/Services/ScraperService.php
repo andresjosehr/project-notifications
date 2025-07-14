@@ -41,7 +41,7 @@ class ScraperService
                     'options' => $options,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode}", 0, null, $context);
+                throw new \Exception("Error ejecutando Node.js scraper. Código: {$returnCode} - Context: " . json_encode($context));
             }
             
             // Extraer JSON válido del output
@@ -55,7 +55,7 @@ class ScraperService
                     'options' => $options,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("No se encontró JSON válido en el output: {$output}", 0, null, $context);
+                throw new \Exception("No se encontró JSON válido en el output: {$output} - Context: " . json_encode($context));
             }
             
             $result = json_decode($jsonOutput, true);
@@ -69,7 +69,7 @@ class ScraperService
                     'options' => $options,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg(), 0, null, $context);
+                throw new \Exception("Error parseando JSON de Node.js: " . json_last_error_msg() . " - Context: " . json_encode($context));
             }
             
             // Verificar el nuevo formato de respuesta estandarizado
@@ -81,7 +81,7 @@ class ScraperService
                     'options' => $options,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("Formato de respuesta inválido: falta campo 'success'", 0, null, $context);
+                throw new \Exception("Formato de respuesta inválido: falta campo 'success' - Context: " . json_encode($context));
             }
             
             if (!$result['success']) {
@@ -96,7 +96,7 @@ class ScraperService
                     'result' => $result,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("Error en scraping ({$errorType}): {$errorMessage}", 0, null, $context);
+                throw new \Exception("Error en scraping ({$errorType}): {$errorMessage} - Context: " . json_encode($context));
             }
             
             // Extraer datos del nuevo formato
@@ -145,12 +145,12 @@ class ScraperService
                 $context = [
                     'exit_code' => $exitCode,
                     'platform' => $platform,
-                    'command' => $command,
+                    'command' => $exitCode,
                     'options' => $options,
                     'output' => $output,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception("Error ejecutando comando de scraping. Código: {$exitCode}", 0, null, $context);
+                throw new \Exception("Error ejecutando comando de scraping. Código: {$exitCode} - Context: " . json_encode($context));
             }
             
             $output = Artisan::output();

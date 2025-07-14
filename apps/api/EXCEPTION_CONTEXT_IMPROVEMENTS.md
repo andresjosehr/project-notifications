@@ -5,6 +5,13 @@
 ### 🎯 **Objetivo**
 Enriquecer el contexto de todas las excepciones para que Telescope pueda capturar información completa del estado de la aplicación cuando ocurre un error.
 
+### 🔧 **Mejoras Implementadas**
+
+#### **Enriquecimiento de Contexto en Excepciones**
+- Todas las excepciones ahora incluyen arrays estructurados con contexto completo
+- Información organizada para debugging efectivo en Telescope
+- Datos sanitizados sin información sensible
+
 ### 🔧 **Excepciones Enriquecidas**
 
 #### **AIService.php**

@@ -33,7 +33,7 @@ class UserManagementService
                 'user_id' => $userId,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Usuario no encontrado', 0, null, $context);
+            throw new \Exception('Usuario no encontrado - Context: ' . json_encode($context));
         }
 
         return $user;

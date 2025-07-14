@@ -31,7 +31,7 @@ class ProposalService
                 'platform' => $platform ?? 'null',
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Proyecto {$projectId} no encontrado", 0, null, $context);
+            throw new \Exception("Proyecto {$projectId} no encontrado - Context: " . json_encode($context));
         }
 
         // Si no se proporciona platform, obtenerlo del proyecto
@@ -50,7 +50,7 @@ class ProposalService
                 'platform' => $platform ?? 'null',
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception("Usuario {$userId} no encontrado", 0, null, $context);
+            throw new \Exception("Usuario {$userId} no encontrado - Context: " . json_encode($context));
         }
 
         $proposal = $this->generateProposal($project, $user, $options);

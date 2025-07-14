@@ -56,7 +56,7 @@ class RegistrationTokenService
                 'token_found' => false,
                 'timestamp' => now()->toISOString()
             ];
-            throw new \Exception('Token no encontrado', 0, null, $context);
+            throw new \Exception('Token no encontrado - Context: ' . json_encode($context));
         }
 
         // Log removido - información innecesaria en producción

@@ -65,7 +65,7 @@ class AIService
                     'proposal_directives_length' => strlen($proposalDirectives),
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception('Error comunicándose con el servicio de IA', 0, null, $context);
+                throw new \Exception('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
             }
         } catch (\Exception $e) {
             Log::error('Error generando propuesta con IA', ['error' => $e->getMessage()]);
@@ -177,7 +177,7 @@ IMPORTANTE: La propuesta debe estar escrita completamente en {$targetLanguage}."
                     'target_language' => $targetLanguage,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new \Exception('Error comunicándose con el servicio de IA', 0, null, $context);
+                throw new \Exception('Error comunicándose con el servicio de IA - Context: ' . json_encode($context));
             }
         } catch (\Exception $e) {
             Log::error('Error generando propuesta con perfil de usuario', ['error' => $e->getMessage()]);
