@@ -81,7 +81,7 @@ jobs:
           npm install
           ng build --configuration production
           cd /var/www/projects/jobs/apps/api
-          composer install --no-dev --optimize-autoloader
+          composer install
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
