@@ -37,7 +37,7 @@ class BaseScraper {
       
       this.page = await this.context.newPage();
       
-      logger.scraperLog(this.platform, 'Navegador inicializado');
+      // Browser initialized
     } catch (error) {
       logger.errorWithStack(`Error inicializando navegador para ${this.platform}`, error);
       throw error;
@@ -54,7 +54,7 @@ class BaseScraper {
       
       await this.page.goto(url);
       await this.page.waitForLoadState('networkidle');
-      logger.scraperLog(this.platform, `Navegado a ${url}`);
+      // Navigated to URL
     } catch (error) {
       logger.errorWithStack(`Error navegando a ${url}`, error);
       throw error;
@@ -65,7 +65,7 @@ class BaseScraper {
     try {
       const path = `${filename}-${Date.now()}.png`;
       await this.page.screenshot({ path });
-      logger.scraperLog(this.platform, `Screenshot tomado: ${path}`);
+      // Screenshot taken
       return path;
     } catch (error) {
       logger.errorWithStack(`Error tomando screenshot`, error);
@@ -88,7 +88,7 @@ class BaseScraper {
         await this.page.mouse.wheel(0, -scrollUp);
       }
       
-      logger.scraperLog(this.platform, 'Comportamiento humano simulado');
+      // Human behavior simulated
     } catch (error) {
       logger.errorWithStack(`Error simulando comportamiento humano`, error);
       throw error;
@@ -109,7 +109,7 @@ class BaseScraper {
       
       if (this.browser) {
         await this.browser.close();
-        logger.scraperLog(this.platform, 'Navegador cerrado');
+        // Browser closed
       }
     } catch (error) {
       logger.errorWithStack(`Error cerrando navegador`, error);

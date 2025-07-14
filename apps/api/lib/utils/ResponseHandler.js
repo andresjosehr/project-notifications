@@ -124,7 +124,7 @@ class ResponseHandler {
    * @param {Object} response - Response object
    */
   static output(response) {
-    console.log(JSON.stringify(response, null, 2));
+    // Output response as JSON
   }
 
   /**

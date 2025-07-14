@@ -165,9 +165,7 @@ class WorkanaService extends BaseScraper {
       
       await this._configurePage();
       
-      if (this.debug) {
-        logger.info('Browser de Workana inicializado');
-      }
+      // Browser initialized
     } catch (error) {
       logger.errorWithStack('Error inicializando browser', error);
       throw error;
@@ -216,9 +214,7 @@ class WorkanaService extends BaseScraper {
         this.browser = null;
       }
       
-      if (this.debug) {
-        logger.info('Browser de Workana cerrado');
-      }
+      // Browser closed
     } catch (error) {
       logger.errorWithStack('Error cerrando browser', error);
     }
@@ -233,9 +229,7 @@ class WorkanaService extends BaseScraper {
   async initialize() {
     try {
       await this.initBrowser();
-      if (this.debug) {
-        logger.info('WorkanaService inicializado');
-      }
+      // WorkanaService initialized
     } catch (error) {
       logger.errorWithStack('Error inicializando WorkanaService', error);
       throw error;
@@ -266,9 +260,7 @@ class WorkanaService extends BaseScraper {
         throw new Error('Se requieren username y password para login');
       }
 
-      if (this.debug) {
-        logger.info(`Iniciando proceso de login para: ${username}`);
-      }
+      // Starting login process
 
       await this._ensureBrowserReady();
       
@@ -281,9 +273,7 @@ class WorkanaService extends BaseScraper {
       
       this.isLoggedIn = true;
       
-      if (this.debug) {
-        logger.info('Login exitoso en Workana');
-      }
+      // Login successful
       
       return {
         success: true,
@@ -300,9 +290,7 @@ class WorkanaService extends BaseScraper {
   }
 
   async _navigateToLogin() {
-    if (this.debug) {
-      logger.debug(`Navegando a página de login: ${this.loginUrl}`);
-    }
+    // Navigating to login page
     
     try {
       // First try with networkidle
@@ -311,9 +299,7 @@ class WorkanaService extends BaseScraper {
         timeout: WorkanaService.TIMEOUTS.LOGIN_NAVIGATION
       });
     } catch (error) {
-      if (this.debug) {
-        logger.debug('Fallback: intentando con domcontentloaded');
-      }
+      // Fallback: trying with domcontentloaded
       // Fallback to domcontentloaded if networkidle fails
       await this.page.goto(this.loginUrl, { 
         waitUntil: 'domcontentloaded',
@@ -325,9 +311,7 @@ class WorkanaService extends BaseScraper {
     await this.page.waitForSelector(WorkanaService.SELECTORS.EMAIL_INPUT, { timeout: WorkanaService.TIMEOUTS.ELEMENT_WAIT });
     await this.page.waitForTimeout(WorkanaService.TIMEOUTS.SHORT_WAIT);
     
-    if (this.debug) {
-      logger.debug('Página de login cargada correctamente');
-    }
+    // Login page loaded successfully
   }
 
   async _handleCookieConsent() {
@@ -339,18 +323,14 @@ class WorkanaService extends BaseScraper {
       for (const selector of WorkanaService.SELECTORS.COOKIE_BUTTONS) {
         const cookieButton = this.page.locator(selector).first();
         if (await cookieButton.count() > 0 && await cookieButton.isVisible()) {
-          if (this.debug) {
-            logger.debug(`Aceptando cookies con selector: ${selector}`);
-          }
+          // Accepting cookies
           await cookieButton.click();
           await this.page.waitForTimeout(1000);
           break;
         }
       }
     } catch (error) {
-      if (this.debug) {
-        logger.debug('No se encontró banner de cookies o error al manejarlo');
-      }
+      // No cookie banner found or error handling it
     }
   }
 
@@ -394,9 +374,7 @@ class WorkanaService extends BaseScraper {
     await passwordInput.fill(password);
     await this.page.waitForTimeout(WorkanaService.TIMEOUTS.FORM_WAIT);
     
-    if (this.debug) {
-      logger.debug('Campos de login completados');
-    }
+    // Login fields completed
   }
 
   async _submitLogin() {
@@ -407,9 +385,7 @@ class WorkanaService extends BaseScraper {
       throw new Error('No se encontró el botón de login');
     }
     
-    if (this.debug) {
-      logger.debug('Haciendo clic en el botón de login');
-    }
+    // Clicking login button
     
     // Click and wait for navigation
     await Promise.all([
@@ -435,7 +411,7 @@ class WorkanaService extends BaseScraper {
       }
       
       const currentUrl = this.page.url();
-      logger.debug(`URL actual después del login: ${currentUrl}`);
+      // URL after login
       
       // Check if still on login page - indicates failure
       if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
@@ -458,7 +434,7 @@ class WorkanaService extends BaseScraper {
           if (this.debug) {
             try {
               await this.page.screenshot({ path: 'login-verification-failed.png' });
-              logger.debug('Screenshot guardado: login-verification-failed.png');
+              // Screenshot saved for debugging
             } catch (screenshotError) {
               // Ignore screenshot errors
             }
@@ -467,9 +443,7 @@ class WorkanaService extends BaseScraper {
         }
       }
       
-      if (this.debug) {
-        logger.info(`Login verificado exitosamente. URL final: ${this.page.url()}`);
-      }
+      // Login verified successfully
     } catch (error) {
       throw new Error(`Error verificando login: ${error.message}`);
     }
@@ -479,33 +453,31 @@ class WorkanaService extends BaseScraper {
     try {
       // Check current URL first - most reliable indicator
       const currentUrl = this.page.url();
-      if (this.debug) {
-        logger.debug(`URL actual: ${currentUrl}`);
-      }
+      // Current URL
       
       // If we're on dashboard or not on login page, we're likely logged in
       if (currentUrl.includes('/dashboard') || currentUrl.includes('/messages') || currentUrl.includes('/projects')) {
-        logger.debug('Usuario logueado - detectado por URL');
+        // User logged in - detected by URL
         return true;
       }
       
       // If still on login page, we failed
       if (currentUrl.includes('/login') || currentUrl.includes('/signin')) {
-        logger.debug('Aún en página de login');
+        // Still on login page
         return false;
       }
       
       // Look for user avatar/profile button in navigation
       const userButton = this.page.getByRole('button').filter({ hasText: /josé|usuario|user|perfil|profile/i }).first();
       if (await userButton.count() > 0) {
-        logger.debug('Botón de usuario encontrado en navegación');
+        // User button found in navigation
         return true;
       }
       
       // Look for user avatar image
       const userAvatar = this.page.locator('img[alt*="José"], img[alt*="usuario"], img[alt*="user"]').first();
       if (await userAvatar.count() > 0) {
-        logger.debug('Avatar de usuario encontrado');
+        // User avatar found
         return true;
       }
       
@@ -513,12 +485,12 @@ class WorkanaService extends BaseScraper {
       for (const selector of WorkanaService.SELECTORS.LOGGED_IN_NAV) {
         const element = this.page.locator(selector).first();
         if (await element.count() > 0) {
-          logger.debug(`Elemento de navegación logueado encontrado: ${selector}`);
+          // Logged in navigation element found
           return true;
         }
       }
       
-      logger.debug('No se detectó sesión activa');
+      // No active session detected
       return false;
     } catch (error) {
       logger.errorWithStack('Error verificando elementos de login', error);
@@ -542,14 +514,10 @@ class WorkanaService extends BaseScraper {
       const isValid = await this.validateSession();
       if (isValid) {
         this.isLoggedIn = true;
-        if (this.debug) {
-          logger.info('Sesión de Workana cargada exitosamente');
-        }
+        // Workana session loaded successfully
         return true;
       } else {
-        if (this.debug) {
-          logger.info('Sesión de Workana inválida');
-        }
+        // Workana session invalid
         return false;
       }
     } catch (error) {
@@ -584,7 +552,7 @@ class WorkanaService extends BaseScraper {
       
       // En el CLI, simplemente retornamos los datos de sesión
       // En una implementación real, esto se guardaría en la base de datos
-      logger.info(`Sesión guardada para usuario ${userId}`);
+      // Session saved for user
       
       return {
         success: true,
@@ -638,7 +606,7 @@ class WorkanaService extends BaseScraper {
   detectLanguage(text) {
     try {
       if (!text || typeof text !== 'string' || text.trim().length < 10) {
-        logger.debug('Text too short or invalid for language detection', { textLength: text ? text.length : 0 });
+        // Text too short or invalid for language detection
         return 'unknown';
       }
 
@@ -650,10 +618,7 @@ class WorkanaService extends BaseScraper {
         langCode = 'eng';
       }
       
-      logger.debug('Language detection result', { 
-        textSample: cleanText.substring(0, 50),
-        detectedCode: langCode 
-      });
+            // Language detection result
       
       // Map franc language codes to our desired format
       const languageMap = {
@@ -663,7 +628,7 @@ class WorkanaService extends BaseScraper {
       };
 
       const result = languageMap[langCode] || 'unknown';
-      logger.debug('Final language mapping', { langCode, result });
+      // Final language mapping
       
       return result;
     } catch (error) {
@@ -677,7 +642,7 @@ class WorkanaService extends BaseScraper {
   }
 
   async scrapeProjects() {
-    logger.info('Scraping projects is starting');
+    // Scraping projects starting
     try {
       await this.page.waitForSelector(this.getProjectSelector());
       
@@ -801,7 +766,7 @@ class WorkanaService extends BaseScraper {
         }).filter(Boolean);
       }, WorkanaService.SELECTORS);
 
-      logger.info('Projects scraped, now we are going to detect the language');
+      // Projects scraped, detecting language
       
       const projectInstances = projects.map(projectData => {
         // Detect language from title and description
@@ -846,7 +811,7 @@ class WorkanaService extends BaseScraper {
       // Esperar un poco para que se expandan los detalles
       await this.page.waitForTimeout(2000);
       
-      logger.scraperLog(this.platform, 'Detalles de proyectos expandidos');
+      // Project details expanded
     } catch (error) {
       logger.warn(`Error expandiendo detalles de proyectos en ${this.platform}`, error);
     }
@@ -884,7 +849,7 @@ class WorkanaService extends BaseScraper {
           await this.page.mouse.wheel(0, -scrollUpAmount);
         }
         
-        logger.scraperLog(this.platform, 'Comportamiento humano específico de Workana completado');
+        // Workana-specific human behavior completed
       }
       
     } catch (error) {
@@ -915,7 +880,7 @@ class WorkanaService extends BaseScraper {
 
   async scrapeProjectsList() {
     try {
-      logger.scraperLog(this.platform, 'Iniciando proceso de scraping');
+      // Starting scraping process
       
       await this.initialize();
       await this.navigateTo(this.getUrl());
@@ -931,7 +896,7 @@ class WorkanaService extends BaseScraper {
       
       await this.close();
       
-      logger.scraperLog(this.platform, `Proceso completado: ${cleanedProjects.length} proyectos`);
+      // Process completed
       
       return cleanedProjects;
     } catch (error) {
@@ -960,9 +925,7 @@ class WorkanaService extends BaseScraper {
         throw new Error('Se requiere link del proyecto válido');
       }
 
-      if (this.debug) {
-        logger.info('Enviando propuesta con sesión y texto personalizado...');
-      }
+      // Sending proposal with session and custom text
       
       // Cargar y validar sesión
       const sessionLoaded = await this.loadSessionData(sessionData);
@@ -981,9 +944,7 @@ class WorkanaService extends BaseScraper {
       // Enviar propuesta
       await this._fillAndSubmitProposal(proposalText.trim());
       
-      if (this.debug) {
-        logger.info('Propuesta enviada exitosamente');
-      }
+      // Proposal sent successfully
       
       return {
         success: true,
