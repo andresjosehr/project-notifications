@@ -1,0 +1,246 @@
+36s
+Run appleboy/ssh-action@v1.0.3
+/usr/bin/docker run --name bb0cd37b272d27c34c28810a9ae4fd2c63e0_83a079 --label 01bb0c --workdir /github/workspace --rm -e "COMPOSER_PROCESS_TIMEOUT" -e "COMPOSER_NO_INTERACTION" -e "COMPOSER_NO_AUDIT" -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_KEY" -e "INPUT_PORT" -e "INPUT_TIMEOUT" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_DEBUG" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT" -e "INPUT_PASSPHRASE" -e "INPUT_PASSWORD" -e "INPUT_SYNC" -e "INPUT_CIPHER" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/project-notifications/project-notifications":"/github/workspace" 01bb0c:d37b272d27c34c28810a9ae4fd2c63e0
+======CMD======
+cd /var/www/projects/***
+git pull origin master
+npm install
+npm ci --workspace=apps/frontend
+npm run build:frontend
+cd apps/api
+composer install --no-dev --optimize-autoloader
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan migrate --force
+php artisan queue:restart
+======END======
+======ENV======
+
+======END======
+err: From https://github.com/***/project-notifications
+err:  * branch            master     -> FETCH_HEAD
+out: Already up to date.
+err: npm error code EACCES
+err: npm error syscall rename
+err: npm error path /var/www/projects/***/node_modules/@mixmark-io/domino
+err: npm error dest /var/www/projects/***/node_modules/@mixmark-io/.domino-X1B5VhuY
+err: npm error errno -13
+err: npm error Error: EACCES: permission denied, rename '/var/www/projects/***/node_modules/@mixmark-io/domino' -> '/var/www/projects/***/node_modules/@mixmark-io/.domino-X1B5VhuY'
+err: npm error     at async Object.rename (node:internal/fs/promises:782:10)
+err: npm error     at async moveFile (/usr/local/lib/node_modules/npm/node_modules/@npmcli/fs/lib/move-file.js:30:5)
+err: npm error     at async Promise.allSettled (index 146)
+err: npm error     at async [reifyPackages] (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:325:11)
+err: npm error     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:142:5)
+err: npm error     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:150:5)
+err: npm error     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:207:9)
+err: npm error     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:74:5) {
+err: npm error   errno: -13,
+err: npm error   code: 'EACCES',
+err: npm error   syscall: 'rename',
+err: npm error   path: '/var/www/projects/***/node_modules/@mixmark-io/domino',
+err: npm error   dest: '/var/www/projects/***/node_modules/@mixmark-io/.domino-X1B5VhuY'
+err: npm error }
+err: npm error
+err: npm error The operation was rejected by your operating system.
+err: npm error It is likely you do not have the permissions to access this file as the current user
+err: npm error
+err: npm error If you believe this might be a permissions issue, please double-check the
+err: npm error permissions of the file and its containing directories, or try running
+err: npm error the command again as root/Administrator.
+err: npm error A complete log of this run can be found in: /home/***/.npm/_logs/2025-07-14T04_44_13_***5Z-debug-0.log
+err: npm error code EACCES
+err: npm error syscall unlink
+err: npm error path /var/www/projects/***/apps/api/node_modules/commander/LICENSE
+err: npm error errno -13
+err: npm error [Error: EACCES: permission denied, unlink '/var/www/projects/***/apps/api/node_modules/commander/LICENSE'] {
+err: npm error   errno: -13,
+err: npm error   code: 'EACCES',
+err: npm error   syscall: 'unlink',
+err: npm error   path: '/var/www/projects/***/apps/api/node_modules/commander/LICENSE'
+err: npm error }
+err: npm error
+err: npm error The operation was rejected by your operating system.
+err: npm error It is likely you do not have the permissions to access this file as the current user
+err: npm error
+err: npm error If you believe this might be a permissions issue, please double-check the
+err: npm error permissions of the file and its containing directories, or try running
+err: npm error the command again as root/Administrator.
+err: npm error A complete log of this run can be found in: /home/***/.npm/_logs/2025-07-14T04_44_15_577Z-debug-0.log
+out: > freelance-notifications-monorepo@1.0.0 build:frontend
+out: > npm run build --workspace=apps/frontend
+out: > fuse-angular@21.0.0 build
+out: > ng build
+out: ❯ Building...
+out: ✔ Building...
+out: Initial chunk files   | Names                  |  Raw size | Estimated transfer size
+out: styles-RVDW26IX.css   | styles                 |   1.15 MB |                37.67 kB
+out: main-G3SKLPQX.js      | main                   | 905.45 kB |               176.46 kB
+out: chunk-EHBQKSMV.js     | -                      | 301.08 kB |                81.77 kB
+out: chunk-LTMMS2AW.js     | -                      | 175.04 kB |                31.88 kB
+out: chunk-TYTGE2LD.js     | -                      |  83.70 kB |                18.18 kB
+out: polyfills-OEPZ4W45.js | polyfills              |  34.52 kB |                11.28 kB
+out: chunk-R2GKYFST.js     | -                      |  23.68 kB |                 6.51 kB
+out: chunk-MIO2PQVO.js     | -                      |  17.52 kB |                 4.73 kB
+out: chunk-7GZ63AML.js     | -                      |  13.62 kB |                 3.96 kB
+out:                       | Initial total          |   2.70 MB |               372.44 kB
+out: Lazy chunk files      | Names                  |  Raw size | Estimated transfer size
+out: chunk-3KMEEOO4.js     | -                      |  57.96 kB |                12.56 kB
+out: chunk-FULYU7OV.js     | -                      |  41.53 kB |                 9.03 kB
+out: chunk-ZMS4SMQZ.js     | projects-routes        |  37.67 kB |                 9.48 kB
+out: chunk-A5TXPXH6.js     | -                      |  37.55 kB |                 7.98 kB
+out: chunk-RPPHWQYD.js     | -                      |  25.28 kB |                 4.63 kB
+out: chunk-JWMXURHL.js     | -                      |  24.88 kB |                 6.73 kB
+out: chunk-D5YJR6LW.js     | users-routes           |  21.06 kB |                 5.00 kB
+out: chunk-2WIYP3RX.js     | proposal-review-routes |  19.04 kB |                 4.86 kB
+out: chunk-YOTSG2O4.js     | dashboard-routes       |  14.85 kB |                 4.10 kB
+out: chunk-EOFCFSAZ.js     | profile-routes         |  14.64 kB |                 3.92 kB
+out: chunk-ILBD43FV.js     | register-routes        |  10.04 kB |                 3.33 kB
+out: chunk-AUZ4NM2K.js     | sign-in-routes         |   7.70 kB |                 2.75 kB
+out: chunk-TUNJEGL2.js     | -                      |   3.48 kB |                 1.07 kB
+out: chunk-AF6NJCD6.js     | sign-out-routes        |   2.02 kB |               964 bytes
+out: chunk-W46WZMUM.js     | -                      | 166 bytes |               166 bytes
+out: Application bundle generation complete. [26.046 seconds]
+Warning: ARNING] TS-998113: ProposalReviewComponent is not used within the template of ProjectsComponent [plugin angular-compiler]
+err:     src/app/modules/admin/projects/projects.component.ts:51:8:
+err:       51 │         ProposalReviewComponent,
+err:          ╵         ~~~~~~~~~~~~~~~~~~~~~~~
+err: An unhandled exception occurred: EACCES: permission denied, rmdir '/var/www/projects/***/apps/frontend/dist/fuse/browser/fonts/inter'
+err: See "/tmp/ng-YZwMd3/angular-errors.log" for further details.
+err: /var/www/projects/***/node_modules/@angular-devkit/architect/node_modules/rxjs/dist/cjs/internal/util/reportUnhandledError.js:13
+err:             throw err;
+err:             ^
+err: [Error: EACCES: permission denied, rmdir '/var/www/projects/***/apps/frontend/dist/fuse/browser/fonts/inter'] {
+err:   errno: -13,
+err:   code: 'EACCES',
+err:   syscall: 'rmdir',
+err:   path: '/var/www/projects/***/apps/frontend/dist/fuse/browser/fonts/inter'
+err: }
+err: Node.js v20.19.2
+err: npm error Lifecycle script `build` failed with error:
+err: npm error code 1
+err: npm error path /var/www/projects/***/apps/frontend
+err: npm error workspace fuse-angular@21.0.0
+err: npm error location /var/www/projects/***/apps/frontend
+err: npm error command failed
+err: npm error command sh -c ng build
+err: Installing dependencies from lock file
+err: Verifying lock file contents can be installed on current platform.
+err: Package operations: 0 installs, 0 updates, 35 removals
+err:   - Removing theseer/tokenizer (1.2.3)
+err:   - Removing symfony/yaml (v7.3.1)
+err:   - Removing staabm/side-effects-detector (1.0.5)
+err:   - Removing sebastian/version (5.0.2)
+err:   - Removing sebastian/type (5.1.2)
+err:   - Removing sebastian/recursion-context (6.0.2)
+err:   - Removing sebastian/object-reflector (4.0.1)
+err:   - Removing sebastian/object-enumerator (6.0.1)
+err:   - Removing sebastian/lines-of-code (3.0.1)
+err:   - Removing sebastian/global-state (7.0.2)
+err:   - Removing sebastian/exporter (6.3.0)
+err:   - Removing sebastian/environment (7.2.1)
+err:   - Removing sebastian/diff (6.0.2)
+err:   - Removing sebastian/complexity (4.0.1)
+err:   - Removing sebastian/comparator (6.3.1)
+err:   - Removing sebastian/code-unit-reverse-lookup (4.0.1)
+err:   - Removing sebastian/code-unit (3.0.3)
+err:   - Removing sebastian/cli-parser (3.0.2)
+err:   - Removing phpunit/phpunit (11.5.27)
+err:   - Removing phpunit/php-timer (7.0.1)
+err:   - Removing phpunit/php-text-template (4.0.1)
+err:   - Removing phpunit/php-invoker (5.0.1)
+err:   - Removing phpunit/php-file-iterator (5.1.0)
+err:   - Removing phpunit/php-code-coverage (11.0.10)
+err:   - Removing phar-io/version (3.2.1)
+err:   - Removing phar-io/manifest (2.0.4)
+err:   - Removing nunomaduro/collision (v8.8.2)
+err:   - Removing myclabs/deep-copy (1.13.3)
+err:   - Removing mockery/mockery (1.6.12)
+err:   - Removing laravel/sail (v1.43.1)
+err:   - Removing laravel/pint (v1.24.0)
+err:   - Removing laravel/pail (v1.2.3)
+err:   - Removing hamcrest/hamcrest-php (v2.1.1)
+err:   - Removing filp/whoops (2.18.3)
+err:   - Removing fakerphp/faker (v1.24.1)
+err:     Uninstall of theseer/tokenizer failed
+err:     Uninstall of symfony/yaml failed
+err:     Uninstall of staabm/side-effects-detector failed
+err:     Uninstall of sebastian/version failed
+err:     Uninstall of sebastian/type failed
+err:     Uninstall of sebastian/recursion-context failed
+err:     Uninstall of sebastian/object-reflector failed
+err:     Uninstall of sebastian/object-enumerator failed
+err:     Uninstall of sebastian/lines-of-code failed
+err:     Uninstall of sebastian/global-state failed
+err:   0/25 [>---------------------------]   0%    Uninstall of sebastian/exporter failed
+err:     Uninstall of sebastian/environment failed
+err:     Uninstall of sebastian/diff failed
+err:     Uninstall of sebastian/complexity failed
+err:     Uninstall of sebastian/comparator failed
+err:     Uninstall of sebastian/code-unit-reverse-lookup failed
+err:     Uninstall of sebastian/code-unit failed
+err:     Uninstall of sebastian/cli-parser failed
+err:     Uninstall of phpunit/php-timer failed
+err:     Uninstall of phpunit/php-text-template failed
+err:     Uninstall of phpunit/php-invoker failed
+err:     Uninstall of phpunit/php-file-iterator failed
+err:     Uninstall of phpunit/php-code-coverage failed
+err:     Uninstall of phar-io/version failed
+err:     Uninstall of phar-io/manifest failed
+err:     Uninstall of nunomaduro/collision failed
+err:     Uninstall of myclabs/deep-copy failed
+err:     Uninstall of phpunit/phpunit failed
+err:     Uninstall of mockery/mockery failed
+err:     Uninstall of laravel/sail failed
+err:     Uninstall of laravel/pint failed
+err:     Uninstall of laravel/pail failed
+err:     Uninstall of hamcrest/hamcrest-php failed
+err:     Uninstall of filp/whoops failed
+err:     Uninstall of fakerphp/faker failed
+err:  25/25 [============================] 100%
+err: In Filesystem.php line 303:
+err:                                                                                
+err:   Could not delete /var/www/projects/***/apps/api/vendor/theseer/tokenizer/C  
+err:   HANGELOG.md:                                                                 
+err:                                                                                
+err: install [--prefer-source] [--prefer-dist] [--prefer-install PREFER-INSTALL] [--dry-run] [--download-only] [--dev] [--no-suggest] [--no-dev] [--no-autoloader] [--no-progress] [--no-install] [--audit] [--audit-format AUDIT-FORMAT] [-v|vv|vvv|--verbose] [-o|--optimize-autoloader] [-a|--classmap-authoritative] [--apcu-autoloader] [--apcu-autoloader-prefix APCU-AUTOLOADER-PREFIX] [--ignore-platform-req IGNORE-PLATFORM-REQ] [--ignore-platform-reqs] [--] [<packages>...]
+out:    UnexpectedValueException 
+out:   The stream or file "/var/www/projects/***/apps/api/storage/logs/laravel.log" could not be opened in append mode: Failed to open stream: Permission denied
+out: The exception occurred while attempting to log: file_put_contents(/var/www/projects/***/apps/api/bootstrap/cache/config.php): Failed to open stream: Permission denied
+out: Context: {"exception":{}}
+out:   at vendor/monolog/monolog/src/Monolog/Handler/StreamHandler.php:156
+out:     152▕             }
+out:     153▕             if (!\is_resource($stream)) {
+out:     154▕                 $this->stream = null;
+out:     155▕ 
+out:   ➜ 156▕                 throw new \UnexpectedValueException(sprintf('The stream or file "%s" could not be opened in append mode: '.$this->errorMessage, $url) . Utils::getRecordMessageForException($record));
+out:     157▕             }
+out:     158▕             stream_set_chunk_size($stream, $this->streamChunkSize);
+out:     159▕             $this->stream = $stream;
+out:     160▕         }
+out:       +12 vendor frames **m
+out:   13  artisan:16
+out:       Illuminate\Foundation\Application::handleCommand()
+out:    UnexpectedValueException 
+out:   The stream or file "/var/www/projects/***/apps/api/storage/logs/laravel.log" could not be opened in append mode: Failed to open stream: Permission denied
+out: The exception occurred while attempting to log: Illuminate\Foundation\Console\RouteCacheCommand::buildRouteCacheFile(): Argument #1 ($routes) must be of type Illuminate\Routing\RouteCollection, Illuminate\Routing\CompiledRouteCollection given, called in /var/www/projects/***/apps/api/vendor/laravel/framework/src/Illuminate/Foundation/Console/RouteCacheCommand.php on line 67
+out: Context: {"exception":{}}
+out:   at vendor/monolog/monolog/src/Monolog/Handler/StreamHandler.php:156
+out:     152▕             }
+out:     153▕             if (!\is_resource($stream)) {
+out:     154▕                 $this->stream = null;
+out:     155▕ 
+out:   ➜ 156▕                 throw new \UnexpectedValueException(sprintf('The stream or file "%s" could not be opened in append mode: '.$this->errorMessage, $url) . Utils::getRecordMessageForException($record));
+out:     157▕             }
+out:     158▕             stream_set_chunk_size($stream, $this->streamChunkSize);
+out:     159▕             $this->stream = $stream;
+out:     160▕         }
+out:       +12 vendor frames **m
+out:   13  artisan:16
+out:       Illuminate\Foundation\Application::handleCommand()
+out:    INFO  Blade templates cached successfully.  
+out:    INFO  Nothing to migrate.  
+out:    INFO  Broadcasting queue restart signal.  
+==============================================
+✅ Successfully executed commands to all host.
+==============================================

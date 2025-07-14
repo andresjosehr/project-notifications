@@ -51,6 +51,65 @@ jobs:
         echo "PORT is set: ${{ secrets.PORT != '' }}"
         echo "SSH_PRIVATE_KEY is set: ${{ secrets.SSH_PRIVATE_KEY != '' }}"
       
+    - name: Setup server permissions
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.PORT || '22' }}
+        timeout: 60s
+        command_timeout: 5m
+        debug: true
+        script: |
+          # Verificar que el usuario tiene permisos de sudo
+          if ! sudo -n true 2>/dev/null; then
+            echo "El usuario no tiene permisos de sudo configurados"
+            exit 1
+          fi
+          
+          # Verificar que el directorio del proyecto existe
+          if [ ! -d "/var/www/projects/jobs" ]; then
+            echo "El directorio del proyecto no existe"
+            exit 1
+          fi
+          
+          # Verificar que Node.js está instalado
+          if ! command -v node &> /dev/null; then
+            echo "Node.js no está instalado"
+            exit 1
+          fi
+          
+          # Verificar que npm está instalado
+          if ! command -v npm &> /dev/null; then
+            echo "npm no está instalado"
+            exit 1
+          fi
+          
+          # Verificar que PHP está instalado
+          if ! command -v php &> /dev/null; then
+            echo "PHP no está instalado"
+            exit 1
+          fi
+          
+          # Verificar que Composer está instalado
+          if ! command -v composer &> /dev/null; then
+            echo "Composer no está instalado"
+            exit 1
+          fi
+          
+          # Verificar que Git está instalado
+          if ! command -v git &> /dev/null; then
+            echo "Git no está instalado"
+            exit 1
+          fi
+          
+          # Configurar permisos iniciales
+          sudo chown -R $USER:$USER /var/www/projects/jobs
+          sudo chmod -R 755 /var/www/projects/jobs
+          
+          echo "Configuración del servidor verificada correctamente"
+      
     - name: Run Laravel migrations
       run: |
         cd apps/api
@@ -62,6 +121,36 @@ jobs:
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         DB_DATABASE: ${{ secrets.DB_DATABASE }}
         
+    - name: Configure server environment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.PORT || '22' }}
+        timeout: 60s
+        command_timeout: 5m
+        debug: true
+        script: |
+          cd /var/www/projects/jobs/apps/api
+          
+          # Configurar variables de entorno para Laravel
+          export APP_ENV=production
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_USERNAME=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_DATABASE=${{ secrets.DB_DATABASE }}
+          
+          # Verificar que las variables están configuradas
+          echo "Variables de entorno configuradas:"
+          echo "APP_ENV: $APP_ENV"
+          echo "DB_HOST: $DB_HOST"
+          echo "DB_USERNAME: $DB_USERNAME"
+          echo "DB_DATABASE: $DB_DATABASE"
+          
+          # Probar conexión a la base de datos
+          php artisan tinker --execute="echo 'Conexión a BD exitosa';"
+      
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -74,15 +163,97 @@ jobs:
         debug: true
         use_insecure_cipher: false
         script: |
+          set -e  # Salir en caso de error
+          
           cd /var/www/projects/jobs
+          
+          echo "=== Iniciando despliegue ==="
+          
+          # Asegurar permisos correctos
+          echo "Configurando permisos..."
+          sudo chown -R $USER:$USER /var/www/projects/jobs
+          sudo chmod -R 755 /var/www/projects/jobs
+          
+          # Limpiar directorios problemáticos de forma segura
+          echo "Limpiando directorios..."
+          if [ -d "node_modules" ]; then
+            rm -rf node_modules
+          fi
+          if [ -d "apps/frontend/dist" ]; then
+            rm -rf apps/frontend/dist
+          fi
+          if [ -d "apps/api/vendor" ]; then
+            rm -rf apps/api/vendor
+          fi
+          
+          # Limpiar logs y cache de Laravel
+          sudo rm -rf apps/api/storage/logs/*
+          sudo rm -rf apps/api/bootstrap/cache/*
+          
+          # Crear directorios necesarios
+          echo "Creando directorios necesarios..."
+          mkdir -p apps/api/storage/logs
+          mkdir -p apps/api/bootstrap/cache
+          mkdir -p apps/frontend/dist
+          
+          # Configurar permisos específicos para Laravel
+          sudo chmod -R 775 apps/api/storage
+          sudo chmod -R 775 apps/api/bootstrap/cache
+          sudo chown -R $USER:www-data apps/api/storage
+          sudo chown -R $USER:www-data apps/api/bootstrap/cache
+          
+          # Actualizar código
+          echo "Actualizando código desde Git..."
           git pull origin master
-          npm install
-          npm ci --workspace=apps/frontend
+          
+          # Instalar dependencias de Node.js
+          echo "Instalando dependencias de Node.js..."
+          npm install --no-optional --no-audit
+          npm ci --workspace=apps/frontend --no-optional --no-audit
+          
+          # Build del frontend
+          echo "Construyendo frontend..."
           npm run build:frontend
+          
+          # Instalar dependencias de Laravel
+          echo "Instalando dependencias de Laravel..."
           cd apps/api
-          composer install --no-dev --optimize-autoloader
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+          
+          # Limpiar cache de Laravel
+          echo "Limpiando cache de Laravel..."
+          php artisan config:clear || true
+          php artisan route:clear || true
+          php artisan view:clear || true
+          php artisan cache:clear || true
+          
+          # Regenerar cache
+          echo "Regenerando cache..."
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+          
+          # Configurar variables de entorno
+          export APP_ENV=production
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_USERNAME=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_DATABASE=${{ secrets.DB_DATABASE }}
+          
+          # Ejecutar migraciones
+          echo "Ejecutando migraciones..."
           php artisan migrate --force
+          
+          # Reiniciar colas
+          echo "Reiniciando colas..."
           php artisan queue:restart
+          
+          # Configurar permisos finales
+          echo "Configurando permisos finales..."
+          cd /var/www/projects/jobs
+          sudo chown -R www-data:www-data /var/www/projects/jobs
+          sudo chmod -R 755 /var/www/projects/jobs
+          sudo chmod -R 775 apps/api/storage
+          sudo chmod -R 775 apps/api/bootstrap/cache
+          
+          echo "=== Despliegue completado exitosamente ==="

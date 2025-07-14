@@ -1,21 +1,30 @@
 # Sistema de Notificaciones Freelance - Monorepo
 
-Este proyecto es un **monorepo** que contiene tanto el backend (API Express) como el frontend (Angular) del Sistema de Notificaciones Freelance. La estructura está organizada siguiendo las mejores prácticas para facilitar el desarrollo, mantenimiento y escalabilidad.
+Este proyecto es un **monorepo** que contiene el backend (Laravel + Node.js CLI) y el frontend (Angular) del Sistema de Notificaciones Freelance. La estructura está organizada siguiendo las mejores prácticas para facilitar el desarrollo, mantenimiento y escalabilidad.
 
 ## 🏗️ Estructura del Monorepo
 
 ```
 freelance-notifications-monorepo/
 ├── apps/
-│   ├── api/                 # Backend Express.js
-│   │   ├── index.js         # Punto de entrada principal
-│   │   ├── start-server.js  # Script de inicio
-│   │   ├── knexfile.js      # Configuración de base de datos
-│   │   ├── lib/             # Librerías y utilidades
-│   │   ├── database/        # Migraciones y seeds
-│   │   ├── scripts/         # Scripts de utilidad
-│   │   ├── public/          # Archivos estáticos
-│   │   └── package.json     # Dependencias del backend
+│   ├── api/                 # Backend Laravel + Node.js CLI
+│   │   ├── app/             # Código principal de Laravel
+│   │   │   ├── Http/        # Controladores y middleware
+│   │   │   ├── Models/      # Modelos Eloquent
+│   │   │   ├── Services/    # Servicios de negocio
+│   │   │   └── Console/     # Comandos Artisan
+│   │   ├── routes/          # Definición de rutas
+│   │   │   ├── api.php      # Rutas de API
+│   │   │   └── web.php      # Rutas web
+│   │   ├── database/        # Migraciones y seeders
+│   │   ├── config/          # Configuración de Laravel
+│   │   ├── resources/       # Vistas y assets
+│   │   ├── storage/         # Logs y archivos
+│   │   ├── tests/           # Tests de Laravel
+│   │   ├── cli.js           # CLI Node.js para scraping
+│   │   ├── artisan          # Comando Artisan
+│   │   ├── composer.json    # Dependencias PHP
+│   │   └── package.json     # Dependencias Node.js CLI
 │   │
 │   └── frontend/            # Frontend Angular
 │       ├── src/             # Código fuente de Angular
@@ -39,7 +48,7 @@ npm install
 # Iniciar API y Frontend simultáneamente
 npm start
 
-# Iniciar solo la API
+# Iniciar solo la API (Laravel)
 npm run start:api
 
 # Iniciar solo el Frontend
@@ -54,24 +63,56 @@ npm run migrate
 
 ### Comandos de la API (`apps/api/`)
 
+#### Laravel
 ```bash
 # Navegar al directorio de la API
 cd apps/api
 
-# Iniciar en modo desarrollo
-npm start
-npm run start:dev
+# Instalar dependencias PHP
+composer install
+
+# Configurar entorno
+cp .env.example .env
+php artisan key:generate
+
+# Desarrollo con queue, logs y vite
+composer run dev
+
+# Solo el servidor Laravel
+php artisan serve
 
 # Gestión de migraciones
-npm run migrate              # Ejecutar migraciones pendientes
-npm run migrate:rollback     # Revertir última migración
-npm run migrate:make         # Crear nueva migración
-npm run migrate:status       # Ver estado de migraciones
-npm run migrate:decouple     # Ejecutar migraciones específicas
+php artisan migrate              # Ejecutar migraciones pendientes
+php artisan migrate:rollback    # Revertir última migración
+php artisan migrate:make        # Crear nueva migración
+php artisan migrate:status      # Ver estado de migraciones
 
-# Scripts de utilidad
-npm run migrate:language     # Migración de idiomas
-npm run credentials:create   # Crear credenciales externas
+# Tests
+composer run test
+php artisan test
+
+# Optimización para producción
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+#### Node.js CLI (Scraping)
+```bash
+# Instalar dependencias Node.js
+npm install
+
+# Scraping de proyectos Workana
+npm run scrape
+npm run scrape:quiet
+
+# Envío de propuestas
+npm run send-proposal
+npm run sendProposal
+
+# Comandos directos
+node cli.js scrape-workana --quiet
+node cli.js send-proposal --project-id "12345" --user-id 1
 ```
 
 ### Comandos del Frontend (`apps/frontend/`)
@@ -80,11 +121,15 @@ npm run credentials:create   # Crear credenciales externas
 # Navegar al directorio del Frontend
 cd apps/frontend
 
+# Instalar dependencias
+npm install
+
 # Iniciar servidor de desarrollo
 npm start
 
 # Construir para producción
 npm run build
+npm run build:prod
 
 # Ejecutar tests
 npm test
@@ -96,13 +141,16 @@ npm run watch
 ## 🛠️ Tecnologías Utilizadas
 
 ### Backend (API)
-- **Express.js** - Framework web para Node.js
-- **Knex.js** - Query builder para base de datos
-- **MySQL** - Base de datos principal
-- **JWT** - Autenticación
-- **Puppeteer/Playwright** - Web scraping
+- **Laravel 12** - Framework PHP para la API principal
+- **PHP 8.2+** - Lenguaje de programación del backend
+- **MySQL/PostgreSQL** - Base de datos principal
+- **Eloquent ORM** - ORM de Laravel
+- **JWT Auth** - Autenticación con JWT
+- **Laravel Sanctum** - Autenticación API
+- **Laravel Queue** - Procesamiento en cola
+- **Node.js CLI** - Herramientas de scraping con Playwright
+- **Playwright** - Web scraping y automatización
 - **OpenAI** - Integración con IA
-- **Web Push** - Notificaciones push
 
 ### Frontend
 - **Angular 19** - Framework de frontend
@@ -111,6 +159,7 @@ npm run watch
 - **Transloco** - Internacionalización
 - **ApexCharts** - Gráficos y visualizaciones
 - **Quill** - Editor de texto rico
+- **Fuse Template** - Template base
 
 ## 📦 Gestión de Dependencias
 
@@ -124,9 +173,12 @@ Este monorepo utiliza **NPM Workspaces** para gestionar las dependencias de mane
 ## 🔧 Configuración del Entorno
 
 ### Requisitos Previos
-- Node.js (versión recomendada: 18+)
-- npm (incluido con Node.js)
-- MySQL (para la base de datos)
+- **PHP 8.2+** con extensiones requeridas
+- **Composer** - Gestor de dependencias PHP
+- **Node.js 18+** - Para el CLI de scraping
+- **npm** - Gestor de paquetes Node.js
+- **MySQL/PostgreSQL** - Base de datos
+- **Redis** (opcional) - Para colas y cache
 
 ### Instalación
 
@@ -136,22 +188,30 @@ Este monorepo utiliza **NPM Workspaces** para gestionar las dependencias de mane
    cd freelance-notifications-monorepo
    ```
 
-2. **Instalar dependencias**
+2. **Instalar dependencias del monorepo**
    ```bash
    npm install
    ```
 
-3. **Configurar variables de entorno**
+3. **Configurar API Laravel**
    ```bash
-   # Crear archivo .env en apps/api/
-   cp apps/api/.env.example apps/api/.env
-   # Editar con tus configuraciones
+   cd apps/api
+   composer install
+   cp .env.example .env
+   php artisan key:generate
    ```
 
 4. **Configurar base de datos**
    ```bash
-   # Ejecutar migraciones
-   npm run migrate
+   # Editar .env con configuración de BD
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+5. **Instalar dependencias Node.js CLI**
+   ```bash
+   cd apps/api
+   npm install
    ```
 
 ## 🚀 Desarrollo
@@ -161,19 +221,28 @@ Este monorepo utiliza **NPM Workspaces** para gestionar las dependencias de mane
 npm start
 ```
 Esto iniciará:
-- **API**: En el puerto configurado (por defecto 3000)
+- **API Laravel**: En el puerto configurado (por defecto 8000)
 - **Frontend**: En http://localhost:4200
 
 ### Desarrollo Individual
 
-**Solo API:**
+**Solo API Laravel:**
 ```bash
 npm run start:api
+# o
+cd apps/api
+composer run dev
 ```
 
 **Solo Frontend:**
 ```bash
 npm run start:frontend
+```
+
+**CLI de Scraping:**
+```bash
+cd apps/api
+npm run scrape
 ```
 
 ## 🏗️ Construcción y Despliegue
@@ -186,67 +255,89 @@ Los archivos se generarán en `apps/frontend/dist/`
 
 ### Despliegue
 - **Frontend**: Construir y servir los archivos estáticos
-- **API**: Usar PM2 o similar para el servidor Node.js
+- **API Laravel**: Usar Laravel Forge, Vapor o similar
+- **CLI Node.js**: Instalar en servidor de scraping
 
 ## 📁 Estructura Detallada
 
-### API (`apps/api/`)
+### API Laravel (`apps/api/`)
 ```
 api/
-├── index.js              # Servidor principal
-├── start-server.js       # Script de inicio
-├── knexfile.js          # Configuración de BD
-├── lib/                 # Librerías compartidas
-│   ├── database.js      # Conexión a BD
-│   ├── auth.js          # Autenticación
-│   └── utils.js         # Utilidades
-├── database/            # Base de datos
-│   ├── migrations/      # Migraciones
-│   └── seeds/          # Datos iniciales
-├── scripts/            # Scripts de utilidad
-├── public/             # Archivos estáticos
-└── logs/               # Archivos de log
+├── app/                    # Código principal
+│   ├── Http/              # Controladores y middleware
+│   ├── Models/            # Modelos Eloquent
+│   ├── Services/          # Servicios de negocio
+│   └── Console/           # Comandos Artisan
+├── routes/                # Definición de rutas
+│   ├── api.php           # Rutas de API
+│   └── web.php           # Rutas web
+├── database/             # Base de datos
+│   ├── migrations/       # Migraciones
+│   └── seeders/         # Datos iniciales
+├── config/               # Configuración
+├── resources/            # Vistas y assets
+├── storage/              # Logs y archivos
+├── tests/                # Tests
+├── cli.js               # CLI Node.js
+├── artisan              # Comando Artisan
+├── composer.json        # Dependencias PHP
+└── package.json         # Dependencias Node.js
 ```
 
 ### Frontend (`apps/frontend/`)
 ```
 frontend/
-├── src/                # Código fuente
-│   ├── app/           # Componentes principales
-│   ├── assets/        # Recursos estáticos
-│   └── styles/        # Estilos globales
-├── angular.json       # Configuración Angular
-├── tailwind.config.js # Configuración Tailwind
-└── tsconfig.json      # Configuración TypeScript
+├── src/                 # Código fuente
+│   ├── app/            # Componentes principales
+│   ├── assets/         # Recursos estáticos
+│   └── styles/         # Estilos globales
+├── angular.json        # Configuración Angular
+├── tailwind.config.js  # Configuración Tailwind
+└── tsconfig.json       # Configuración TypeScript
 ```
 
 ## 🔍 Troubleshooting
 
 ### Problemas Comunes
 
-1. **Error de dependencias**
+1. **Error de dependencias PHP**
+   ```bash
+   cd apps/api
+   composer install --no-dev
+   composer dump-autoload
+   ```
+
+2. **Error de dependencias Node.js**
    ```bash
    rm -rf node_modules package-lock.json
    npm install
    ```
 
-2. **Puerto ocupado**
-   - Cambiar puerto en configuración de la API
+3. **Puerto ocupado**
+   - Cambiar puerto en configuración de Laravel
    - Verificar que no haya otros servicios corriendo
 
-3. **Problemas de migración**
+4. **Problemas de migración**
    ```bash
-   npm run migrate:status
-   npm run migrate:rollback
-   npm run migrate
+   cd apps/api
+   php artisan migrate:status
+   php artisan migrate:rollback
+   php artisan migrate
+   ```
+
+5. **Problemas con el CLI de scraping**
+   ```bash
+   cd apps/api
+   npm install playwright
+   npx playwright install
    ```
 
 ## 📝 Notas de Desarrollo
 
-- **Convenciones**: Seguir las convenciones de Angular y Express.js
+- **Convenciones**: Seguir las convenciones de Laravel y Angular
 - **Commits**: Usar mensajes descriptivos y seguir conventional commits
 - **Testing**: Ejecutar tests antes de hacer commit
-- **Linting**: Usar ESLint y Prettier para consistencia de código
+- **Linting**: Usar Laravel Pint para PHP y Prettier para TypeScript
 
 ## 🤝 Contribución
 
@@ -258,7 +349,7 @@ frontend/
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia ISC.
+Este proyecto está bajo la licencia MIT.
 
 ---
 
