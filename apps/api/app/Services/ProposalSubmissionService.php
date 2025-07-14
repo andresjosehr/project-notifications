@@ -49,27 +49,27 @@ class ProposalSubmissionService
             $projectLink
         );
 
-        if ($result['success']) {
-            // Guardar el registro en user_proposal
-            $this->saveProposalRecord($userId, $projectId, $platform, $proposalContent);
-
-            // Log removido - información innecesaria en producción
-
-            return [
-                'success' => true,
-                'message' => 'Propuesta enviada correctamente',
-                'data' => [
-                    'projectId' => $projectId,
-                    'userId' => $userId,
-                    'platform' => $platform,
-                    'proposalSent' => true,
-                    'fallback' => $result['fallback'] ?? false
-                ]
-            ];
+        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
+        if (!$result['success']) {
+            $this->handleProposalError($result);
         }
 
-        // Crear una excepción que preserve la información estructurada del error
-        $this->handleProposalError($result);
+        // Guardar el registro en user_proposal
+        $this->saveProposalRecord($userId, $projectId, $platform, $proposalContent);
+
+        // Log removido - información innecesaria en producción
+
+        return [
+            'success' => true,
+            'message' => 'Propuesta enviada correctamente',
+            'data' => [
+                'projectId' => $projectId,
+                'userId' => $userId,
+                'platform' => $platform,
+                'proposalSent' => true,
+                'fallback' => $result['fallback'] ?? false
+            ]
+        ];
     }
 
     private function validateProject(string $projectId): Project
@@ -102,16 +102,7 @@ class ProposalSubmissionService
             // Log removido - información innecesaria en producción
             $loginResult = $this->attemptLogin($userId, $platform);
             
-            if (!$loginResult['success']) {
-                // Extraer mensaje específico del error de login
-                $specificError = $this->extractSpecificErrorMessage($loginResult['error']);
-                $errorMessage = $specificError ?: $loginResult['error'];
-                
-                throw new \Exception(
-                    'No se encontraron datos de sesión válidos. ' . $errorMessage
-                );
-            }
-            
+            // attemptLogin ya lanza excepción si falla, así que si llegamos aquí fue exitoso
             $sessionData = $loginResult['sessionData'];
 
             $sessionData = $this->credentialService->getUserSessionData($userId, $platform);
@@ -123,19 +114,24 @@ class ProposalSubmissionService
     private function attemptLogin(int $userId, string $platform): array
     {
         if (!$this->credentialService->hasValidCredentials($userId, $platform)) {
-            return [
-                'success' => false,
-                'error' => 'No se encontraron credenciales de ' . $platform . ' para el usuario'
-            ];
+            throw new \Exception('No se encontraron credenciales de ' . $platform . ' para el usuario');
         }
 
         $credentials = $this->credentialService->getUserCredentials($userId, $platform);
         
-        return $this->commandService->executeLogin(
+        $result = $this->commandService->executeLogin(
             $userId,
             $credentials->email,
             $credentials->password
         );
+
+        // CAMBIO CRÍTICO: Si login falla, lanzar excepción inmediatamente
+        if (!$result['success']) {
+            $errorMessage = $this->extractSpecificErrorMessage($result['error']) ?: $result['error'];
+            throw new \Exception('Error en login: ' . $errorMessage);
+        }
+
+        return $result;
     }
 
     private function formatProjectLink(string $originalLink, string $platform): string

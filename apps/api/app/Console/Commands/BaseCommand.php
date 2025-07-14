@@ -121,7 +121,48 @@ abstract class BaseCommand extends Command
             throw new Exception("Respuesta inválida del comando Node.js - falta campo 'success' - Context: " . json_encode($exceptionContext));
         }
 
+        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
+        if (!$result['success']) {
+            $errorMessage = $this->extractErrorMessage($result);
+            throw new Exception($errorMessage);
+        }
+
         return $result;
+    }
+
+    /**
+     * Extrae el mensaje de error del resultado del comando Node.js
+     */
+    private function extractErrorMessage(array $result): string
+    {
+        // Intentar extraer mensaje específico del error
+        if (isset($result['error'])) {
+            $error = $result['error'];
+            
+            // Si el error es un array con estructura específica
+            if (is_array($error)) {
+                if (isset($error['message'])) {
+                    return $error['message'];
+                }
+                if (isset($error['type']) && isset($error['message'])) {
+                    return $error['type'] . ': ' . $error['message'];
+                }
+                return json_encode($error);
+            }
+            
+            // Si el error es una cadena
+            if (is_string($error)) {
+                return $error;
+            }
+        }
+        
+        // Si hay un mensaje general
+        if (isset($result['message'])) {
+            return $result['message'];
+        }
+        
+        // Fallback
+        return 'Error desconocido en comando Node.js: ' . json_encode($result);
     }
 
     /**

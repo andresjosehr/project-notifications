@@ -19,79 +19,38 @@ class ScraperController extends Controller
 
     public function scrapeWorkana(ScrapingRequest $request): JsonResponse
     {
-        try {
-            $options = $request->getOptions();
+        $options = $request->getOptions();
 
-            // Log removido - información innecesaria en producción
+        // Log removido - información innecesaria en producción
 
-            $result = $this->scraperService->scrapeWorkana($options);
+        $result = $this->scraperService->scrapeWorkana($options);
 
-            return ApiResponse::success($result, 'Scraping de Workana completado exitosamente');
-
-        } catch (\Exception $e) {
-            Log::error('Error en scraping de Workana', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return ApiResponse::error('Error ejecutando scraping de Workana: ' . $e->getMessage());
-        }
+        return ApiResponse::success($result, 'Scraping de Workana completado exitosamente');
     }
 
     public function executeScrapingCommand(ScrapingRequest $request): JsonResponse
     {
-        try {
-            $platform = $request->getPlatform();
-            $options = $request->getOptions();
+        $platform = $request->getPlatform();
+        $options = $request->getOptions();
 
-            Log::info("Solicitud de comando de scraping para {$platform}", $options);
+        Log::info("Solicitud de comando de scraping para {$platform}", $options);
 
-            $result = $this->scraperService->executeScrapingCommand($platform, $options);
+        $result = $this->scraperService->executeScrapingCommand($platform, $options);
 
-            return ApiResponse::success($result, "Comando de scraping para {$platform} ejecutado exitosamente");
-
-        } catch (\Exception $e) {
-            Log::error('Error ejecutando comando de scraping', [
-                'platform' => $request->getPlatform(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return ApiResponse::error('Error ejecutando comando de scraping: ' . $e->getMessage());
-        }
+        return ApiResponse::success($result, "Comando de scraping para {$platform} ejecutado exitosamente");
     }
 
     public function healthCheck(): JsonResponse
     {
-        try {
-            $health = $this->scraperService->healthCheck();
+        $health = $this->scraperService->healthCheck();
 
-            return ApiResponse::success($health, 'Health check completado');
-
-        } catch (\Exception $e) {
-            Log::error('Error en health check de scraping', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return ApiResponse::error('Error en health check de scraping: ' . $e->getMessage());
-        }
+        return ApiResponse::success($health, 'Health check completado');
     }
 
     public function getStats(): JsonResponse
     {
-        try {
-            $stats = $this->scraperService->getScrapingStats();
+        $stats = $this->scraperService->getScrapingStats();
 
-            return ApiResponse::success($stats, 'Estadísticas obtenidas exitosamente');
-
-        } catch (\Exception $e) {
-            Log::error('Error obteniendo estadísticas de scraping', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return ApiResponse::error('Error obteniendo estadísticas de scraping: ' . $e->getMessage());
-        }
+        return ApiResponse::success($stats, 'Estadísticas obtenidas exitosamente');
     }
 }

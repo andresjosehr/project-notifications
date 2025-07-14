@@ -8,53 +8,49 @@ class PlatformCommandService
 {
     public function executeLogin(int $userId, string $email, string $password): array
     {
-        try {
-            $command = "cd " . base_path() . " && php artisan workana:login " .
-                escapeshellarg($userId) . " " .
-                escapeshellarg($email) . " " .
-                escapeshellarg($password) . " 2>&1";
-            
-            // Log removido - información innecesaria en producción
-            $output = shell_exec($command);
-            // Log removido - información innecesaria en producción
-            
-            $response = json_decode($output, true);
-            
-            if (!$response || !$response['success']) {
-                Log::error('Error en comando de login', [
-                    'output' => $output,
-                    'response' => $response
-                ]);
-                $errorMessage = $response['error'] ?? 'Error ejecutando comando de login: ' . $output;
-                if (is_array($errorMessage)) {
-                    $errorMessage = json_encode($errorMessage);
-                }
-                return [
-                    'success' => false,
-                    'error' => $errorMessage
-                ];
-            }
-            
-            return [
-                'success' => true,
-                'sessionData' => $response['data']['sessionData']
-            ];
-            
-        } catch (\Exception $e) {
-            Log::error('Excepción al ejecutar login', ['error' => $e->getMessage()]);
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
+        $command = "cd " . base_path() . " && php artisan workana:login " .
+            escapeshellarg($userId) . " " .
+            escapeshellarg($email) . " " .
+            escapeshellarg($password) . " 2>&1";
+        
+        // Log removido - información innecesaria en producción
+        $output = shell_exec($command);
+        // Log removido - información innecesaria en producción
+        
+        $response = json_decode($output, true);
+        
+        if (!$response) {
+            Log::error('Error parseando respuesta de comando de login', [
+                'output' => $output
+            ]);
+            throw new \Exception('Error parseando respuesta del comando de login: ' . $output);
         }
+
+        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
+        if (!$response['success']) {
+            Log::error('Error en comando de login', [
+                'output' => $output,
+                'response' => $response
+            ]);
+            $errorMessage = $response['error'] ?? 'Error ejecutando comando de login: ' . $output;
+            if (is_array($errorMessage)) {
+                $errorMessage = json_encode($errorMessage);
+            }
+            throw new \Exception($errorMessage);
+        }
+        
+        return [
+            'success' => true,
+            'sessionData' => $response['data']['sessionData']
+        ];
     }
 
     public function executeSendProposal(string $sessionData, string $proposalContent, string $projectLink): array
     {
+        $sessionFileName = 'session_' . uniqid() . '.json';
+        $sessionFilePath = storage_path('app/sessions/' . $sessionFileName);
+        
         try {
-            $sessionFileName = 'session_' . uniqid() . '.json';
-            $sessionFilePath = storage_path('app/sessions/' . $sessionFileName);
-            
             $this->ensureSessionDirectoryExists();
             
             file_put_contents($sessionFilePath, $sessionData);
@@ -79,10 +75,8 @@ class PlatformCommandService
             
             Log::error('Excepción en envío de propuesta', ['error' => $e->getMessage()]);
             
-            return [
-                'success' => false,
-                'error' => 'Excepción durante el envío de propuesta: ' . $e->getMessage()
-            ];
+            // CAMBIO CRÍTICO: Re-lanzar la excepción en lugar de devolver array de error
+            throw $e;
         }
     }
 
@@ -109,32 +103,27 @@ class PlatformCommandService
         
         $jsonResponse = json_decode($lastLine, true);
         
-        if ($jsonResponse && isset($jsonResponse['success'])) {
-            if ($jsonResponse['success']) {
-                return [
-                    'success' => true,
-                    'output' => $jsonResponse['message'] ?? 'Propuesta enviada exitosamente'
-                ];
-            } else {
-                Log::error('Error en envío de propuesta', [
-                    'error' => $jsonResponse['error'] ?? 'Error desconocido'
-                ]);
-                
-                return [
-                    'success' => false,
-                    'error' => $jsonResponse['error'] ?? 'Error desconocido en el envío de propuesta'
-                ];
-            }
+        if (!$jsonResponse || !isset($jsonResponse['success'])) {
+            Log::error('Output no es JSON válido', [
+                'output' => $output,
+                'lastLine' => $lastLine
+            ]);
+            throw new \Exception('Respuesta inválida del comando: ' . $output);
+        }
+
+        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
+        if (!$jsonResponse['success']) {
+            Log::error('Error en envío de propuesta', [
+                'error' => $jsonResponse['error'] ?? 'Error desconocido'
+            ]);
+            
+            $errorMessage = $jsonResponse['error'] ?? 'Error desconocido en el envío de propuesta';
+            throw new \Exception($errorMessage);
         }
         
-        Log::error('Output no es JSON válido', [
-            'output' => $output,
-            'lastLine' => $lastLine
-        ]);
-        
         return [
-            'success' => false,
-            'error' => 'Respuesta inválida del comando: ' . $output
+            'success' => true,
+            'output' => $jsonResponse['message'] ?? 'Propuesta enviada exitosamente'
         ];
     }
 }
