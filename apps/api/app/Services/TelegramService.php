@@ -227,23 +227,8 @@ class TelegramService
         if ($project->id) {
             $frontendUrl = config('app.frontend_url', config('app.url'));
             
-            // Construir URL del frontend Angular con parámetros de query
-            $proposalUrl = $frontendUrl . '/proposal-review';
-            $queryParams = http_build_query([
-                'projectId' => $project->id,
-                'platform' => $project->platform
-            ]);
-            
-            // Si hay un usuario específico, incluir su ID en la URL
-            if ($user && $user->id) {
-                $queryParams = http_build_query([
-                    'projectId' => $project->id,
-                    'platform' => $project->platform,
-                    'userId' => $user->id
-                ]);
-            }
-            
-            $proposalUrl .= '?' . $queryParams;
+            // Construir URL del frontend Angular con path parameter
+            $proposalUrl = $frontendUrl . '/proposal-review/' . $project->id;
             
             $message .= "📄 *Generar propuesta:*\n{$proposalUrl}";
         }
