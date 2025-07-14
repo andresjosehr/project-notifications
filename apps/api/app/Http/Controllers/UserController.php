@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterWithTokenRequest;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\AdminRequest;
+use App\Http\Requests\UserAccessRequest;
 use App\Http\Requests\TokenIndexRequest;
 use App\Http\Requests\TokenCleanupRequest;
 use App\Http\Responses\ApiResponse;
@@ -195,7 +196,7 @@ class UserController extends Controller
         }
     }
 
-    public function show(AdminRequest $request, User $user)
+    public function show(UserAccessRequest $request, User $user)
     {
         try {
             $userData = $this->userService->formatUserData($user);

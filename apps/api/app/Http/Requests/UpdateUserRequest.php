@@ -9,7 +9,25 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth()->check() && auth()->user()->role === 'ADMIN';
+        $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+
+        // Los administradores pueden actualizar cualquier usuario
+        if ($user->role === 'ADMIN') {
+            return true;
+        }
+
+        // Los usuarios regulares solo pueden actualizar su propia información
+        $requestedUserId = $this->route('user')->id ?? null;
+        
+        if (!$requestedUserId) {
+            return false;
+        }
+
+        return $user->id == $requestedUserId;
     }
 
     public function rules()
@@ -82,7 +100,7 @@ class UpdateUserRequest extends FormRequest
         throw new \Illuminate\Http\Exceptions\HttpResponseException(
             response()->json([
                 'success' => false,
-                'error' => 'No autorizado'
+                'error' => 'No autorizado para actualizar esta información de usuario'
             ], 403)
         );
     }

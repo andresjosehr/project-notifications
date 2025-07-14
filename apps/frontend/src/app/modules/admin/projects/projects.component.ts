@@ -49,8 +49,6 @@ interface ProjectStats {
         MatMenuModule,
         MatCheckboxModule,
         MatTooltipModule,
-        ProposalReviewComponent,
-        ProposalDetailsDialogComponent,
         FuseCardComponent,
     ],
 })
