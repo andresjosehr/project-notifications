@@ -25,9 +25,13 @@ class PlatformCommandService
                     'output' => $output,
                     'response' => $response
                 ]);
+                $errorMessage = $response['error'] ?? 'Error ejecutando comando de login: ' . $output;
+                if (is_array($errorMessage)) {
+                    $errorMessage = json_encode($errorMessage);
+                }
                 return [
                     'success' => false,
-                    'error' => $response['error'] ?? 'Error ejecutando comando de login: ' . $output
+                    'error' => $errorMessage
                 ];
             }
             

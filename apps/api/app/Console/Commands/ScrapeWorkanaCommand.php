@@ -51,6 +51,8 @@ class ScrapeWorkanaCommand extends BaseCommand
             
             $insertedCount = $this->processProjects($projects);
             
+            $duration = microtime(true) - $startTime;
+            
             return $this->handleSuccess([
                 'operation' => 'scrape',
                 'message' => 'Scraping y procesamiento completado',
