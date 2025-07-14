@@ -93,6 +93,22 @@ return [
     */
 
     'middleware' => [
+        'web',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Telescope API Middleware
+    |--------------------------------------------------------------------------
+    |
+    | These middleware will be assigned to telescope API routes, giving you
+    | the chance to add your own middleware to this list or change any of
+    | the existing middleware. Or, you can simply stick with this list.
+    |
+    */
+
+    'api_middleware' => [
+        'web',
         Authorize::class,
     ],
 
