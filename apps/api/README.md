@@ -60,9 +60,9 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-# API2 - Sistema de Scraping y Propuestas
+# API - Sistema de Scraping y Propuestas con Laravel
 
-Sistema moderno de scraping y envío de propuestas para plataformas freelance, diseñado para integrarse con Laravel.
+Sistema Laravel para scraping y envío de propuestas en plataformas freelance, con integración CLI para Node.js.
 
 ## Características
 
@@ -75,12 +75,54 @@ Sistema moderno de scraping y envío de propuestas para plataformas freelance, d
 
 ## Instalación
 
+### Laravel
 ```bash
-cd apps/api2
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+```
+
+### Node.js CLI (opcional)
+```bash
 npm install
 ```
 
-## Uso del CLI
+## Comandos Laravel
+
+### Desarrollo
+```bash
+# Servidor de desarrollo con queue, logs y vite
+composer run dev
+
+# Solo el servidor
+php artisan serve
+
+# Queue worker
+php artisan queue:work
+
+# Tests
+composer run test
+# o
+php artisan test
+```
+
+### Comandos de producción
+```bash
+# Optimización
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Migraciones
+php artisan migrate --force
+
+# Clear cache
+php artisan cache:clear
+php artisan config:clear
+```
+
+## Uso del CLI Node.js
 
 ### Scraping de proyectos
 
@@ -105,11 +147,17 @@ npm run send-proposal -- --project-id "12345" --user-id 1 --session-data '{"cook
 npm run sendProposal '{"cookies":[...]}' "Texto de la propuesta"
 ```
 
-### Comando Artisan
+### Comandos Artisan disponibles
 
 ```bash
 # Envío de propuesta usando comando Artisan
 php artisan workana:send-proposal '{"cookies":[...]}' "Texto de la propuesta"
+
+# Scraping de proyectos
+php artisan workana:scrape
+
+# Otros comandos disponibles
+php artisan list
 ```
 
 ## Endpoints de la API

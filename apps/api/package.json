@@ -17,7 +17,7 @@
   ],
   "author": "Sistema de Notificaciones Freelance",
   "license": "ISC",
-  "description": "Scraper de Workana para Laravel",
+  "description": "CLI Node.js para integraci\u00f3n con Laravel - Sistema de scraping Workana",
   "dependencies": {
     "commander": "^14.0.0",
     "dotenv": "^16.0.2",
