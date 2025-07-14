@@ -68,8 +68,8 @@ class ProposalSubmissionService
             ];
         }
 
-        $errorMessage = is_array($result['error']) ? $result['error']['message'] : $result['error'];
-        throw new \Exception('Error enviando propuesta: ' . $errorMessage);
+        // Crear una excepción que preserve la información estructurada del error
+        $this->handleProposalError($result);
     }
 
     private function validateProject(string $projectId): Project
@@ -103,8 +103,12 @@ class ProposalSubmissionService
             $loginResult = $this->attemptLogin($userId, $platform);
             
             if (!$loginResult['success']) {
+                // Extraer mensaje específico del error de login
+                $specificError = $this->extractSpecificErrorMessage($loginResult['error']);
+                $errorMessage = $specificError ?: $loginResult['error'];
+                
                 throw new \Exception(
-                    'No se encontraron datos de sesión y falló el login: ' . $loginResult['error']
+                    'No se encontraron datos de sesión válidos. ' . $errorMessage
                 );
             }
             
@@ -271,5 +275,106 @@ class ProposalSubmissionService
             'offset' => $offset,
             'has_more' => ($offset + $limit) < $total
         ];
+    }
+
+    /**
+     * Maneja errores de propuestas preservando información estructurada
+     */
+    private function handleProposalError(array $result): void
+    {
+        $error = $result['error'] ?? null;
+        $data = $result['data'] ?? [];
+
+        // Si tenemos información estructurada del error (nueva implementación)
+        if (is_array($error) && isset($data['errorType'])) {
+            $errorType = $data['errorType'];
+            $userMessage = $data['userMessage'] ?? $error['message'] ?? 'Error desconocido';
+            $category = $data['category'] ?? 'unknown';
+            $suggestions = $data['suggestions'] ?? [];
+
+            // Crear mensaje de error específico según el tipo
+            switch ($errorType) {
+                case 'INVALID_CREDENTIALS':
+                    $message = "Credenciales inválidas para Workana. {$userMessage}";
+                    break;
+                case 'CAPTCHA_REQUIRED':
+                    $message = "CAPTCHA requerido en Workana. {$userMessage}";
+                    break;
+                case 'ACCOUNT_BLOCKED':
+                    $message = "Cuenta bloqueada en Workana. {$userMessage}";
+                    break;
+                case 'EMAIL_NOT_VERIFIED':
+                    $message = "Email no verificado en Workana. {$userMessage}";
+                    break;
+                case 'RATE_LIMITED':
+                    $message = "Límite de intentos excedido en Workana. {$userMessage}";
+                    break;
+                case 'SERVER_ERROR':
+                    $message = "Error del servidor de Workana. {$userMessage}";
+                    break;
+                default:
+                    $message = "Error en Workana: {$userMessage}";
+            }
+
+            // Si hay sugerencias, agregar la primera como contexto adicional
+            if (!empty($suggestions)) {
+                $message .= " Sugerencia: " . $suggestions[0];
+            }
+
+            throw new \Exception($message);
+        }
+
+        // Intentar extraer mensaje específico de error JSON escapado
+        $errorMessage = is_array($error) ? ($error['message'] ?? 'Error desconocido') : $error;
+        
+        // Si el error contiene JSON escapado, intentar extraer el mensaje específico
+        if (is_string($errorMessage) && str_contains($errorMessage, '{"type"')) {
+            $extractedMessage = $this->extractSpecificErrorMessage($errorMessage);
+            if ($extractedMessage) {
+                $errorMessage = $extractedMessage;
+            }
+        }
+
+        throw new \Exception($errorMessage);
+    }
+
+    /**
+     * Extrae mensaje específico de error desde JSON escapado
+     */
+    private function extractSpecificErrorMessage(string $errorMessage): ?string
+    {
+        // Intentar decodificar JSON si está presente
+        if (preg_match('/\{.*\}/', $errorMessage, $matches)) {
+            $jsonString = $matches[0];
+            
+            // Desescapar caracteres
+            $jsonString = str_replace('\\"', '"', $jsonString);
+            $jsonString = str_replace('\\/', '/', $jsonString);
+            
+            $decoded = json_decode($jsonString, true);
+            if (json_last_error() === JSON_ERROR_NONE && isset($decoded['message'])) {
+                $extractedMessage = $decoded['message'];
+                
+                // Determinar tipo de error específico y crear mensaje amigable
+                if (str_contains($extractedMessage, 'CAPTCHA')) {
+                    return 'Se requiere completar CAPTCHA en Workana debido a demasiados intentos fallidos';
+                } elseif (str_contains($extractedMessage, 'credenciales') || str_contains($extractedMessage, 'contraseña')) {
+                    return 'Credenciales de Workana incorrectas. Verifica tu email y contraseña';
+                } elseif (str_contains($extractedMessage, 'bloqueada') || str_contains($extractedMessage, 'blocked')) {
+                    return 'Cuenta de Workana bloqueada temporalmente por seguridad';
+                } elseif (str_contains($extractedMessage, 'verificar') || str_contains($extractedMessage, 'verify')) {
+                    return 'Cuenta de Workana no verificada. Revisa tu correo electrónico';
+                } else {
+                    return $extractedMessage;
+                }
+            }
+        }
+
+        // Fallback: buscar mensaje directo con regex simple
+        if (preg_match('/"message":\s*"([^"]*(?:\\.[^"]*)*)"/', $errorMessage, $matches)) {
+            return stripslashes($matches[1]);
+        }
+
+        return null;
     }
 }

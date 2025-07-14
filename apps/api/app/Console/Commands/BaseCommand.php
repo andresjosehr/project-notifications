@@ -88,17 +88,26 @@ abstract class BaseCommand extends Command
             throw new Exception("No se recibió output del comando: {$command} - Context: " . json_encode($exceptionContext));
         }
 
-        $result = json_decode($output, true);
+        // Extraer JSON del output - el CLI puede tener mensajes de error antes del JSON
+        $cleanedOutput = $this->extractJsonFromOutput($output);
+        
+        $result = json_decode($cleanedOutput, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $exceptionContext = [
-                'json_error' => json_last_error_msg(),
-                'output' => $output,
-                'command' => $command,
-                'context' => $context,
-                'timestamp' => now()->toISOString()
-            ];
-            throw new Exception("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
+            // Si falla el parsing del JSON limpio, intentar parsear línea por línea
+            $result = $this->parseOutputByLines($output);
+            
+            if (!$result) {
+                $exceptionContext = [
+                    'json_error' => json_last_error_msg(),
+                    'output' => $output,
+                    'cleaned_output' => $cleanedOutput,
+                    'command' => $command,
+                    'context' => $context,
+                    'timestamp' => now()->toISOString()
+                ];
+                throw new Exception("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
+            }
         }
 
         // Validar formato estándar de respuesta
@@ -113,6 +122,96 @@ abstract class BaseCommand extends Command
         }
 
         return $result;
+    }
+
+    /**
+     * Extraer JSON válido del output del CLI
+     */
+    private function extractJsonFromOutput(string $output): string
+    {
+        $lines = explode("\n", trim($output));
+        
+        // Buscar líneas que empiecen con { o [ (inicio de JSON)
+        foreach ($lines as $line) {
+            $trimmedLine = trim($line);
+            if (str_starts_with($trimmedLine, '{') || str_starts_with($trimmedLine, '[')) {
+                // Encontrar el JSON completo (puede ser multilinea)
+                $jsonStart = strpos($output, $trimmedLine);
+                $jsonContent = substr($output, $jsonStart);
+                
+                // Intentar encontrar el final del JSON
+                $braceCount = 0;
+                $inString = false;
+                $escaped = false;
+                $jsonEnd = 0;
+                
+                for ($i = 0; $i < strlen($jsonContent); $i++) {
+                    $char = $jsonContent[$i];
+                    
+                    if (!$inString) {
+                        if ($char === '{') {
+                            $braceCount++;
+                        } elseif ($char === '}') {
+                            $braceCount--;
+                            if ($braceCount === 0) {
+                                $jsonEnd = $i + 1;
+                                break;
+                            }
+                        } elseif ($char === '"') {
+                            $inString = true;
+                        }
+                    } else {
+                        if ($char === '"' && !$escaped) {
+                            $inString = false;
+                        }
+                        $escaped = ($char === '\\' && !$escaped);
+                    }
+                }
+                
+                if ($jsonEnd > 0) {
+                    return substr($jsonContent, 0, $jsonEnd);
+                } else {
+                    return $jsonContent; // Fallback si no podemos determinar el final
+                }
+            }
+        }
+        
+        return $output; // Fallback: devolver output original
+    }
+
+    /**
+     * Parsear output línea por línea buscando JSON válido
+     */
+    private function parseOutputByLines(string $output): ?array
+    {
+        $lines = explode("\n", trim($output));
+        
+        foreach ($lines as $line) {
+            $trimmedLine = trim($line);
+            if (str_starts_with($trimmedLine, '{')) {
+                $result = json_decode($trimmedLine, true);
+                if (json_last_error() === JSON_ERROR_NONE && isset($result['success'])) {
+                    return $result;
+                }
+            }
+        }
+        
+        // Intentar con el output completo sin las primeras líneas de error
+        $filteredLines = array_filter($lines, function($line) {
+            $trimmed = trim($line);
+            return !str_starts_with($trimmed, '❌') && 
+                   !str_starts_with($trimmed, 'Error:') && 
+                   !empty($trimmed);
+        });
+        
+        $filteredOutput = implode("\n", $filteredLines);
+        $result = json_decode($filteredOutput, true);
+        
+        if (json_last_error() === JSON_ERROR_NONE && isset($result['success'])) {
+            return $result;
+        }
+        
+        return null;
     }
 
     /**

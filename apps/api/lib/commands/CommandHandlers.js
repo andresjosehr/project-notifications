@@ -43,9 +43,7 @@ class CommandHandlers {
         }
       });
       
-      if (!options.quiet) {
-        console.error(`❌ Error: ${error.message}`);
-      }
+      // Quiet mode handling - error details in structured response
       
       ResponseHandler.exit(errorResponse);
     }
@@ -122,7 +120,7 @@ class CommandHandlers {
 
       // Create WorkanaService instance
       const workanaService = new WorkanaService({
-        headless: true, // options.headless === 'true' || options.headless === true,
+        headless: false, // options.headless === 'true' || options.headless === true,
         debug: options.debug
       });
 
@@ -165,9 +163,8 @@ class CommandHandlers {
       // Create enhanced error response with specific error information
       const errorResponse = CommandHandlers._createLoginErrorResponse(error);
 
-      if (options.debug) {
-        console.error(`❌ Error: ${error.message}`);
-      }
+      // Debug messages removed to prevent JSON parsing issues
+      // Error details are included in the structured response
 
       ResponseHandler.exit(errorResponse);
     }

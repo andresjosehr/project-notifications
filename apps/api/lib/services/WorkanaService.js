@@ -121,7 +121,7 @@ class WorkanaService extends BaseScraper {
     this.loginUrl = WorkanaService.URLS.LOGIN;
     
     this.browserConfig = {
-      headless:  true, // options.headless !== false,
+      headless:  false, // options.headless !== false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
