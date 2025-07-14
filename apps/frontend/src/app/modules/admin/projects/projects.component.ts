@@ -293,54 +293,7 @@ export class ProjectsComponent implements OnInit {
         });
     }
 
-    async showScrapingModal(): Promise<void> {
-        // Implementation for scraping modal
-        // You can create a separate component for this
-        console.log('Show scraping modal');
-    }
 
-    async exportProjects(): Promise<void> {
-        if (this.projects.length === 0) {
-            // Error('No hay proyectos para exportar');
-            return;
-        }
-
-        const csvData = this.projects.map(project => ({
-            'ID': project.id,
-            'Título': project.title,
-            'Plataforma': project.platform,
-            'Presupuesto': project.price || '',
-            'Categoría': project.category || '',
-            'Publicado': project.publishedAt,
-            'Detectado': project.createdAt,
-            'URL': project.link,
-        }));
-
-        const csvContent = this.convertToCSV(csvData);
-        const timestamp = new Date().toISOString().split('T')[0];
-        this.downloadFile(csvContent, `proyectos_${timestamp}.csv`, 'text/csv');
-        // Success('Proyectos exportados correctamente');
-    }
-
-    private convertToCSV(data: any[]): string {
-        const headers = Object.keys(data[0]).join(',');
-        const rows = data.map(row =>
-            Object.values(row).map(value =>
-                `"${String(value).replace(/"/g, '""')}"`
-            ).join(',')
-        );
-        return [headers, ...rows].join('\n');
-    }
-
-    private downloadFile(content: string, fileName: string, contentType: string): void {
-        const blob = new Blob([content], { type: contentType });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        window.URL.revokeObjectURL(url);
-    }
 
     getPlatformBadgeClass(platform: string): string {
         return platform === 'workana' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
