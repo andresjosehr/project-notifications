@@ -14,6 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ProposalReviewComponent } from './proposal-review/proposal-review.component';
+import { ProposalDetailsDialogComponent } from './proposal-details-dialog/proposal-details-dialog.component';
 import { FuseCardComponent } from '@fuse/components/card';
 import { ApiService, Project, ProjectFilters } from 'app/core/services/api.service';
 import { AuthService } from 'app/core/auth/auth.service';
@@ -49,6 +50,7 @@ interface ProjectStats {
         MatCheckboxModule,
         MatTooltipModule,
         ProposalReviewComponent,
+        ProposalDetailsDialogComponent,
         FuseCardComponent,
     ],
 })
@@ -73,7 +75,7 @@ export class ProjectsComponent implements OnInit {
     totalProjects = 0;
 
     // Table columns
-    displayedColumns: string[] = ['title', 'platform', 'budget', 'publishedAt', 'actions'];
+    displayedColumns: string[] = ['title', 'platform', 'budget', 'publishedAt', 'proposalStatus', 'actions'];
 
     // User info
     currentUser: any;
@@ -103,6 +105,7 @@ export class ProjectsComponent implements OnInit {
             date: [''],
             sortBy: ['publishedAt'],
             sortOrder: ['desc'],
+            proposalStatus: [''],
         });
 
         // Subscribe to form changes
@@ -150,7 +153,9 @@ export class ProjectsComponent implements OnInit {
             if (result?.success) {
                 this.projects = result.data.projects || [];
                 this.totalProjects = result.data.total || 0;
-                this.filteredProjects = this.projects;
+                
+                // Aplicar filtros locales
+                this.applyLocalFilters();
             } else {
                 // Error(result?.error || 'Error cargando proyectos');
             }
@@ -160,6 +165,32 @@ export class ProjectsComponent implements OnInit {
             this.isLoading = false;
         }
     }
+
+    /**
+     * Aplica filtros locales después de cargar los proyectos
+     */
+    private applyLocalFilters(): void {
+        const proposalStatusFilter = this.filtersForm.get('proposalStatus')?.value;
+        
+        this.filteredProjects = this.projects.filter(project => {
+            if (!proposalStatusFilter) return true;
+            
+            switch (proposalStatusFilter) {
+                case 'not_sent':
+                    return !project.proposal_sent;
+                case 'sent':
+                    return project.proposal_sent && project.proposal_status === 'sent';
+                case 'accepted':
+                    return project.proposal_sent && project.proposal_status === 'accepted';
+                case 'rejected':
+                    return project.proposal_sent && project.proposal_status === 'rejected';
+                default:
+                    return true;
+            }
+        });
+    }
+
+
 
     async loadStats(): Promise<void> {
         try {
@@ -191,6 +222,7 @@ export class ProjectsComponent implements OnInit {
             date: '',
             sortBy: 'publishedAt',
             sortOrder: 'desc',
+            proposalStatus: '',
         });
         this.currentPage = 0;
         this.loadProjects();
@@ -200,6 +232,37 @@ export class ProjectsComponent implements OnInit {
         // Implementation for viewing project details
         console.log('View project:', project);
         // You can implement a dialog or navigate to a detail page
+    }
+
+    async viewProposalDetails(project: Project): Promise<void> {
+        // Crear objeto de propuesta con la información que ya viene en el proyecto
+        const proposal = {
+            id: 0, // No tenemos el ID específico, pero no es crítico para mostrar
+            project_id: project.id,
+            project_platform: project.platform,
+            proposal_sent_at: project.proposal_sent_at,
+            proposal_content: project.proposal_content,
+            status: project.proposal_status
+        };
+
+        // Mostrar detalles de la propuesta en un diálogo
+        this.showProposalDetailsDialog(proposal, project);
+    }
+
+    private showProposalDetailsDialog(proposal: any, project: Project): void {
+        const dialogRef = this.dialog.open(ProposalDetailsDialogComponent, {
+            width: '600px',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            data: {
+                proposal: proposal,
+                project: project
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            console.log('Dialog closed:', result);
+        });
     }
 
     async generateProposal(project: Project): Promise<void> {
@@ -281,6 +344,58 @@ export class ProjectsComponent implements OnInit {
 
     getPlatformBadgeClass(platform: string): string {
         return platform === 'workana' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
+    }
+
+    getProposalStatusBadgeClass(status: string): string {
+        switch (status) {
+            case 'sent':
+                return 'bg-blue-100 text-blue-800';
+            case 'accepted':
+                return 'bg-green-100 text-green-800';
+            case 'rejected':
+                return 'bg-red-100 text-red-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    getProposalStatusText(status: string): string {
+        switch (status) {
+            case 'sent':
+                return 'Enviada';
+            case 'accepted':
+                return 'Aceptada';
+            case 'rejected':
+                return 'Rechazada';
+            case 'pending':
+                return 'Pendiente';
+            default:
+                return 'Desconocido';
+        }
+    }
+
+    getProposalStats(): { total: number; sent: number; accepted: number; rejected: number } {
+        const stats = {
+            total: this.filteredProjects.length,
+            sent: 0,
+            accepted: 0,
+            rejected: 0
+        };
+
+        this.filteredProjects.forEach(project => {
+            if (project.proposal_sent) {
+                stats.sent++;
+                if (project.proposal_status === 'accepted') {
+                    stats.accepted++;
+                } else if (project.proposal_status === 'rejected') {
+                    stats.rejected++;
+                }
+            }
+        });
+
+        return stats;
     }
 
     formatRelativeTime(dateString: string): string {

@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.api' => \App\Http\Middleware\AuthMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'check.proposal.duplicate' => \App\Http\Middleware\CheckProposalDuplicate::class,
         ]);
         
         // Exclude telescope from CSRF verification

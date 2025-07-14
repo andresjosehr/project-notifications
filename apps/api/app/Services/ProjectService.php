@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Models\Project;
+use App\Models\UserProposal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectService
 {
     public function getAllProjects($platform = null, $options = [])
     {
+        $userId = Auth::id();
         $query = Project::query();
         
         if ($platform) {
@@ -20,22 +23,69 @@ class ProjectService
             $query->limit($options['limit']);
         }
         
-        return $query->recent()->get();
+        $projects = $query->recent()->get();
+        
+        // Si hay un usuario autenticado, agregar información de propuestas
+        if ($userId) {
+            $this->addProposalInfoToProjects($projects, $userId);
+        }
+        
+        return $projects;
+    }
+
+    /**
+     * Agrega información de propuestas a los proyectos
+     */
+    private function addProposalInfoToProjects($projects, $userId)
+    {
+        // Obtener todas las propuestas del usuario en una sola consulta
+        $userProposals = UserProposal::where('user_id', $userId)
+            ->select('project_id', 'project_platform', 'proposal_sent_at', 'proposal_content', 'status')
+            ->get()
+            ->keyBy(function($proposal) {
+                return $proposal->project_id . '_' . $proposal->project_platform;
+            });
+
+        // Agregar información de propuestas a cada proyecto
+        foreach ($projects as $project) {
+            $proposalKey = $project->id . '_' . $project->platform;
+            $proposal = $userProposals->get($proposalKey);
+
+            if ($proposal) {
+                $project->proposal_sent = true;
+                $project->proposal_sent_at = $proposal->proposal_sent_at;
+                $project->proposal_content = $proposal->proposal_content;
+                $project->proposal_status = $proposal->status;
+                $project->can_send_proposal = false;
+            } else {
+                $project->proposal_sent = false;
+                $project->can_send_proposal = true;
+            }
+        }
     }
 
     public function getProjectById($id, $platform = null)
     {
+        $userId = Auth::id();
         $query = Project::where('id', $id);
         
         if ($platform) {
             $query->where('platform', $platform);
         }
         
-        return $query->first();
+        $project = $query->first();
+        
+        // Si hay un usuario autenticado y se encontró el proyecto, agregar información de propuestas
+        if ($userId && $project) {
+            $this->addProposalInfoToProjects(collect([$project]), $userId);
+        }
+        
+        return $project;
     }
 
     public function searchProjects($searchTerm, $platform = null, $options = [])
     {
+        $userId = Auth::id();
         $query = Project::search($searchTerm);
         
         if ($platform) {
@@ -46,7 +96,14 @@ class ProjectService
             $query->limit($options['limit']);
         }
         
-        return $query->recent()->get();
+        $projects = $query->recent()->get();
+        
+        // Si hay un usuario autenticado, agregar información de propuestas
+        if ($userId) {
+            $this->addProposalInfoToProjects($projects, $userId);
+        }
+        
+        return $projects;
     }
 
     public function getProjectStats($platform = null)

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Project;
+use App\Models\UserProposal;
 use Illuminate\Support\Facades\Log;
 
 class ProposalSubmissionService
@@ -38,6 +39,11 @@ class ProposalSubmissionService
             'platform' => $platform
         ]);
 
+        // Validar si ya existe una propuesta para este usuario y proyecto
+        if ($this->proposalAlreadyExists($userId, $projectId, $platform)) {
+            throw new \Exception('Ya se ha enviado una propuesta para este proyecto');
+        }
+
         $user = $this->validateUser($userId);
         $sessionData = $this->getOrCreateSessionData($userId, $platform);
         $projectLink = $this->formatProjectLink($project->link, $platform);
@@ -49,6 +55,9 @@ class ProposalSubmissionService
         );
 
         if ($result['success']) {
+            // Guardar el registro en user_proposal
+            $this->saveProposalRecord($userId, $projectId, $platform, $proposalContent);
+
             Log::info('Propuesta enviada exitosamente', [
                 'projectId' => $projectId,
                 'userId' => $userId,
@@ -149,5 +158,137 @@ class ProposalSubmissionService
         $projectLink .= '/?tab=message&ref=project_view';
 
         return $projectLink;
+    }
+
+    /**
+     * Verifica si ya existe una propuesta para el usuario y proyecto
+     */
+    private function proposalAlreadyExists(int $userId, string $projectId, string $platform): bool
+    {
+        return UserProposal::where('user_id', $userId)
+            ->where('project_id', $projectId)
+            ->where('project_platform', $platform)
+            ->exists();
+    }
+
+    /**
+     * Guarda el registro de la propuesta enviada
+     */
+    private function saveProposalRecord(int $userId, string $projectId, string $platform, string $proposalContent): void
+    {
+        try {
+            UserProposal::create([
+                'user_id' => $userId,
+                'project_id' => $projectId,
+                'project_platform' => $platform,
+                'proposal_sent_at' => now(),
+                'proposal_content' => $proposalContent,
+                'status' => 'sent'
+            ]);
+
+            Log::info('Registro de propuesta guardado exitosamente', [
+                'userId' => $userId,
+                'projectId' => $projectId,
+                'platform' => $platform
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error guardando registro de propuesta', [
+                'error' => $e->getMessage(),
+                'userId' => $userId,
+                'projectId' => $projectId,
+                'platform' => $platform
+            ]);
+            
+            // No lanzar excepción aquí para no afectar el flujo principal
+            // Solo loggear el error
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de propuestas para un usuario
+     */
+    public function getUserProposalStats(int $userId, ?string $platform = null): array
+    {
+        $query = UserProposal::where('user_id', $userId);
+        
+        if ($platform) {
+            $query->where('project_platform', $platform);
+        }
+
+        $totalProposals = $query->count();
+        $recentProposals = $query->where('proposal_sent_at', '>=', now()->subDays(7))->count();
+        
+        $statusStats = $query->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $platformStats = UserProposal::where('user_id', $userId)
+            ->selectRaw('project_platform, COUNT(*) as count')
+            ->groupBy('project_platform')
+            ->pluck('count', 'project_platform')
+            ->toArray();
+
+        return [
+            'total_proposals' => $totalProposals,
+            'recent_proposals' => $recentProposals,
+            'status_distribution' => $statusStats,
+            'platform_distribution' => $platformStats,
+            'user_id' => $userId,
+            'platform' => $platform ?? 'all'
+        ];
+    }
+
+    /**
+     * Verifica si un usuario puede enviar propuesta a un proyecto específico
+     */
+    public function canSendProposal(int $userId, string $projectId, string $platform): array
+    {
+        $exists = $this->proposalAlreadyExists($userId, $projectId, $platform);
+        
+        return [
+            'can_send' => !$exists,
+            'already_sent' => $exists,
+            'user_id' => $userId,
+            'project_id' => $projectId,
+            'platform' => $platform
+        ];
+    }
+
+    /**
+     * Obtiene el historial de propuestas de un usuario con paginación
+     */
+    public function getUserProposalHistory(int $userId, array $options = []): array
+    {
+        $platform = $options['platform'] ?? null;
+        $limit = $options['limit'] ?? 20;
+        $offset = $options['offset'] ?? 0;
+        $status = $options['status'] ?? null;
+
+        $query = UserProposal::with(['project', 'user'])
+            ->where('user_id', $userId);
+
+        if ($platform) {
+            $query->where('project_platform', $platform);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $proposals = $query->orderBy('proposal_sent_at', 'desc')
+            ->skip($offset)
+            ->take($limit)
+            ->get();
+
+        $total = $query->count();
+
+        return [
+            'proposals' => $proposals,
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset,
+            'has_more' => ($offset + $limit) < $total
+        ];
     }
 }

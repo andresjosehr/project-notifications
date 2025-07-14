@@ -45,10 +45,10 @@ export class ProposalReviewComponent implements OnInit {
     isLoading = false;
     isGenerating = false;
     isSending = false;
+    isInitialLoading = false; // Nuevo estado para carga inicial
 
     // URL parameters
     projectId: string | null = null;
-    userId: string | null = null;
     platform = 'workana';
 
     // Statistics
@@ -72,14 +72,12 @@ export class ProposalReviewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Get URL parameters
-        this.route.queryParams.subscribe(params => {
+        // Get URL parameters from path
+        this.route.params.subscribe(params => {
             this.projectId = params['projectId'];
-            this.userId = params['userId'];
-            this.platform = params['platform'] || 'workana';
 
-            if (!this.projectId || !this.userId) {
-                // Error('❌ Faltan parámetros requeridos (projectId, userId)');
+            if (!this.projectId) {
+                // Error('❌ Falta el parámetro projectId');
                 setTimeout(() => {
                     this.router.navigate(['/admin/projects']);
                 }, 3000);
@@ -92,13 +90,10 @@ export class ProposalReviewComponent implements OnInit {
 
     private async initializeProposalReview(): Promise<void> {
         try {
-            this.showLoadingState();
+            this.showInitialLoadingState();
 
-            // Load project data and user data in parallel
-            await Promise.all([
-                this.loadProjectData(),
-                this.loadUserData()
-            ]);
+            // Load project data
+            await this.loadProjectData();
 
             // Generate initial proposal
             await this.generateInitialProposal();
@@ -118,6 +113,7 @@ export class ProposalReviewComponent implements OnInit {
             
             if (result?.success && result.data) {
                 this.currentProject = result.data;
+                this.platform = this.currentProject.platform;
             } else {
                 throw new Error(result?.error || 'Proyecto no encontrado');
             }
@@ -127,30 +123,13 @@ export class ProposalReviewComponent implements OnInit {
         }
     }
 
-    private async loadUserData(): Promise<void> {
-        try {
-            const result = await this.apiService.getUserById(Number(this.userId)).toPromise();
-            
-            if (result?.success && result.data) {
-                this.currentUser = result.data;
-            } else {
-                throw new Error(result?.error || 'Usuario no encontrado');
-            }
-        } catch (error: any) {
-            console.error('Error loading user data:', error);
-            throw error;
-        }
-    }
-
     private async generateInitialProposal(): Promise<void> {
         try {
             this.isGenerating = true;
             
-            const result = await this.apiService.generateProposal({
-                projectId: this.projectId,
-                userId: this.userId,
-                platform: this.platform
-            }).toPromise();
+            const result = await this.apiService.generateProposalByProjectId(
+                this.projectId!
+            ).toPromise();
             
             if (result?.success && result.data) {
                 this.originalProposal = result.data.proposal || result.data.content || '';
@@ -254,11 +233,9 @@ export class ProposalReviewComponent implements OnInit {
             this.isSending = true;
             this.showSendingState();
             
-            const result = await this.apiService.sendProposalWithCustomContent(
+            const result = await this.apiService.sendProposalByProjectId(
                 this.projectId!,
-                Number(this.userId),
-                this.proposalContent.trim(),
-                { platform: this.platform }
+                this.proposalContent.trim()
             ).toPromise();
             
             if (result?.success) {
@@ -281,17 +258,19 @@ export class ProposalReviewComponent implements OnInit {
     }
 
     // State management methods
-    private showLoadingState(): void {
-        this.isLoading = true;
+    private showInitialLoadingState(): void {
+        this.isInitialLoading = true;
+        this.isLoading = false;
+        this.isSending = false;
     }
 
     private showProposalReview(): void {
+        this.isInitialLoading = false;
         this.isLoading = false;
         this.isSending = false;
     }
 
     private showSendingState(): void {
-        this.isLoading = false;
         this.isSending = true;
     }
 

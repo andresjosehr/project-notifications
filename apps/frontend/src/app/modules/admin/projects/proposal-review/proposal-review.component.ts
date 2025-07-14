@@ -150,11 +150,9 @@ export class ProposalReviewComponent implements OnInit {
         this.isLoading = true;
 
         try {
-            const result = await this.apiService.generateProposal({
-                projectId: this.project.id.toString(),
-                userId: this.currentUser?.id?.toString() || '',
-                platform: this.project.platform,
-            }).toPromise();
+            const result = await this.apiService.generateProposalByProjectId(
+                this.project.id.toString()
+            ).toPromise();
             
             if (result?.success) {
                 this.originalProposal = result.data.proposal || '';
@@ -177,11 +175,9 @@ export class ProposalReviewComponent implements OnInit {
         this.isLoading = true;
 
         try {
-            const result = await this.apiService.generateProposal({
-                projectId: this.project.id.toString(),
-                userId: this.currentUser?.id?.toString() || '',
-                platform: this.project.platform,
-            }).toPromise();
+            const result = await this.apiService.generateProposalByProjectId(
+                this.project.id.toString()
+            ).toPromise();
             
             if (result?.success) {
                 this.originalProposal = result.data.proposal || '';
@@ -220,11 +216,9 @@ export class ProposalReviewComponent implements OnInit {
         this.sendingDetails = '';
 
         try {
-            const result = await this.apiService.sendProposalWithCustomContent(
+            const result = await this.apiService.sendProposalByProjectId(
                 this.project.id.toString(),
-                this.currentUser?.id || 0,
-                content,
-                { platform: this.project.platform }
+                content
             ).toPromise();
             
             if (result?.success) {

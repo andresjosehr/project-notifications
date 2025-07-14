@@ -30,6 +30,12 @@ export interface Project {
     publishedAt?: string;
     createdAt: string;
     updatedAt: string;
+    // Propiedades relacionadas con propuestas (nombres del backend)
+    proposal_sent?: boolean;
+    proposal_sent_at?: string;
+    proposal_content?: string;
+    proposal_status?: 'sent' | 'accepted' | 'rejected' | 'pending';
+    can_send_proposal?: boolean;
 }
 
 export interface User {
@@ -196,6 +202,68 @@ export class ApiService {
     }
 
     // =============================
+    // Proposals
+    // =============================
+
+    getUserProposals(platform?: string, limit?: number, offset?: number): Observable<ApiResponse> {
+        let params = new HttpParams();
+        if (platform) params = params.set('platform', platform);
+        if (limit) params = params.set('limit', limit.toString());
+        if (offset) params = params.set('offset', offset.toString());
+
+        return this.http.get<ApiResponse>(`${this.baseUrl}/api/proposal/user`, { params })
+            .pipe(catchError(this.handleError));
+    }
+
+    getProposalById(proposalId: number): Observable<ApiResponse> {
+        return this.http.get<ApiResponse>(`${this.baseUrl}/api/proposal/user/${proposalId}`)
+            .pipe(catchError(this.handleError));
+    }
+
+    getUserProposalStats(platform?: string): Observable<ApiResponse> {
+        let params = new HttpParams();
+        if (platform) params = params.set('platform', platform);
+
+        return this.http.get<ApiResponse>(`${this.baseUrl}/api/proposal/stats`, { params })
+            .pipe(catchError(this.handleError));
+    }
+
+    checkCanSendProposal(projectId: string, platform?: string): Observable<ApiResponse> {
+        let params = new HttpParams();
+        if (platform) params = params.set('platform', platform);
+
+        return this.http.get<ApiResponse>(`${this.baseUrl}/api/proposal/check/${projectId}`, { params })
+            .pipe(catchError(this.handleError));
+    }
+
+    getUserProposalHistory(platform?: string, status?: string, limit?: number, offset?: number): Observable<ApiResponse> {
+        let params = new HttpParams();
+        if (platform) params = params.set('platform', platform);
+        if (status) params = params.set('status', status);
+        if (limit) params = params.set('limit', limit.toString());
+        if (offset) params = params.set('offset', offset.toString());
+
+        return this.http.get<ApiResponse>(`${this.baseUrl}/api/proposal/history`, { params })
+            .pipe(catchError(this.handleError));
+    }
+
+    generateProposalByProjectId(projectId: string, options: any = {}): Observable<ApiResponse> {
+        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/generate/${projectId}`, options)
+            .pipe(catchError(this.handleError));
+    }
+
+    sendWorkanaProposal(data: { projectId: string; userId: number; autoLogin?: boolean; proposalContent?: string }): Observable<ApiResponse> {
+        return this.http.post<ApiResponse>(`${this.baseUrl}/api/workana/proposal`, data)
+            .pipe(catchError(this.handleError));
+    }
+
+    sendProposalByProjectId(projectId: string, proposalContent: string): Observable<ApiResponse> {
+        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/send/${projectId}`, {
+            proposalContent
+        }).pipe(catchError(this.handleError));
+    }
+
+    // =============================
     // Scraping
     // =============================
 
@@ -212,29 +280,6 @@ export class ApiService {
     scrapeUpwork(options: { notifications?: boolean } = {}): Observable<ApiResponse> {
         return this.http.post<ApiResponse>(`${this.baseUrl}/api/upwork/scrape`, options)
             .pipe(catchError(this.handleError));
-    }
-
-    // =============================
-    // Proposals
-    // =============================
-
-    generateProposal(data: { projectId: string; userId: string; platform?: string }): Observable<ApiResponse> {
-        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/generate`, data)
-            .pipe(catchError(this.handleError));
-    }
-
-    sendWorkanaProposal(data: { projectId: string; userId: number; autoLogin?: boolean; proposalContent?: string }): Observable<ApiResponse> {
-        return this.http.post<ApiResponse>(`${this.baseUrl}/api/workana/proposal`, data)
-            .pipe(catchError(this.handleError));
-    }
-
-    sendProposalWithCustomContent(projectId: string, userId: number, proposalContent: string, options: { platform?: string } = {}): Observable<ApiResponse> {
-        return this.http.post<ApiResponse>(`${this.baseUrl}/api/proposal/send`, {
-            projectId,
-            userId,
-            proposalContent,
-            ...options
-        }).pipe(catchError(this.handleError));
     }
 
     // =============================

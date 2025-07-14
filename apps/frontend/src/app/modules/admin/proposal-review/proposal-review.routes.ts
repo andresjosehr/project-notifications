@@ -3,7 +3,7 @@ import { ProposalReviewComponent } from './proposal-review.component';
 
 export default [
     {
-        path: '',
+        path: ':projectId',
         component: ProposalReviewComponent,
     },
 ] as Routes;

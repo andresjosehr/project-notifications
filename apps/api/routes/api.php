@@ -55,7 +55,12 @@ Route::prefix('scrape')->group(function () {
 // AI and proposal routes
 Route::prefix('proposal')->middleware(['auth.api'])->group(function () {
     Route::post('/generate/{projectId}', [ProjectController::class, 'buildProposalByProjectId']);
-    Route::post('/send/{projectId}', [ProposalController::class, 'sendByProjectId']);
+    Route::post('/send/{projectId}', [ProposalController::class, 'sendByProjectId'])->middleware('check.proposal.duplicate');
+    Route::get('/user', [ProposalController::class, 'getUserProposals']);
+    Route::get('/user/{proposalId}', [ProposalController::class, 'getProposalById']);
+    Route::get('/stats', [ProposalController::class, 'getUserProposalStats']);
+    Route::get('/check/{projectId}', [ProposalController::class, 'checkCanSendProposal']);
+    Route::get('/history', [ProposalController::class, 'getUserProposalHistory']);
 });
 
 // Workana specific routes (communication with Node.js)

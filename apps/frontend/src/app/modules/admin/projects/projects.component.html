@@ -137,6 +137,18 @@
                         <mat-option value="platform">Plataforma</mat-option>
                     </mat-select>
                 </mat-form-field>
+
+                <!-- Proposal Status Filter -->
+                <mat-form-field class="w-full">
+                    <mat-label>Estado de Propuesta</mat-label>
+                    <mat-select formControlName="proposalStatus">
+                        <mat-option value="">Todos</mat-option>
+                        <mat-option value="not_sent">Sin propuesta</mat-option>
+                        <mat-option value="sent">Con propuesta enviada</mat-option>
+                        <mat-option value="accepted">Propuesta aceptada</mat-option>
+                        <mat-option value="rejected">Propuesta rechazada</mat-option>
+                    </mat-select>
+                </mat-form-field>
             </form>
         </fuse-card>
 
@@ -144,15 +156,29 @@
         <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold">Proyectos</h3>
-                <div class="flex items-center space-x-2">
-                    <button mat-stroked-button (click)="exportProjects()">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
-                        <span class="ml-2">Exportar CSV</span>
-                    </button>
-                    <button mat-flat-button [color]="'primary'" (click)="showScrapingModal()">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
-                        <span class="ml-2">Scraping Manual</span>
-                    </button>
+                <div class="flex items-center space-x-4">
+                    <!-- Proposal Stats -->
+                    <div class="flex items-center space-x-2 text-sm text-gray-600">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ getProposalStats().total }} total
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ getProposalStats().sent }} enviadas
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{ getProposalStats().accepted }} aceptadas
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button mat-stroked-button (click)="exportProjects()">
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                            <span class="ml-2">Exportar CSV</span>
+                        </button>
+                        <button mat-flat-button [color]="'primary'" (click)="showScrapingModal()">
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                            <span class="ml-2">Scraping Manual</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -204,6 +230,30 @@
                             </td>
                         </ng-container>
 
+                        <!-- Proposal Status Column -->
+                        <ng-container matColumnDef="proposalStatus">
+                            <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Propuesta</th>
+                            <td mat-cell *matCellDef="let project">
+                                @if (project.proposal_sent) {
+                                    <div class="flex flex-col items-start">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              [ngClass]="getProposalStatusBadgeClass(project.proposal_status || 'sent')">
+                                            {{ getProposalStatusText(project.proposal_status || 'sent') }}
+                                        </span>
+                                        @if (project.proposal_sent_at) {
+                                            <span class="text-xs text-gray-500 mt-1">
+                                                {{ formatRelativeTime(project.proposal_sent_at) }}
+                                            </span>
+                                        }
+                                    </div>
+                                } @else {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        No enviada
+                                    </span>
+                                }
+                            </td>
+                        </ng-container>
+
                         <!-- Actions Column -->
                         <ng-container matColumnDef="actions">
                             <th mat-header-cell *matHeaderCellDef class="font-semibold text-secondary">Acciones</th>
@@ -212,9 +262,17 @@
                                     <button mat-icon-button (click)="viewProject(project)" matTooltip="Ver detalles">
                                         <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
                                     </button>
-                                    <button mat-icon-button (click)="generateProposal(project)" matTooltip="Generar propuesta">
-                                        <mat-icon [svgIcon]="'heroicons_outline:light-bulb'"></mat-icon>
-                                    </button>
+                                    
+                                    @if (project.proposal_sent) {
+                                        <button mat-icon-button (click)="viewProposalDetails(project)" matTooltip="Ver propuesta enviada">
+                                            <mat-icon [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                        </button>
+                                    } @else {
+                                        <button mat-icon-button (click)="generateProposal(project)" matTooltip="Generar propuesta">
+                                            <mat-icon [svgIcon]="'heroicons_outline:light-bulb'"></mat-icon>
+                                        </button>
+                                    }
+                                    
                                     <button mat-icon-button (click)="copyProjectUrl(project)" matTooltip="Copiar URL">
                                         <mat-icon [svgIcon]="'heroicons_outline:link'"></mat-icon>
                                     </button>

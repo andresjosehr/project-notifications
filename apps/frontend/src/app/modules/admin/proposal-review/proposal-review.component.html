@@ -1,126 +1,148 @@
 <div class="flex flex-col w-full">
 
-
-    <!-- Loading State -->
-    @if (isLoading) {
-        <div class="flex flex-col items-center justify-center min-h-96 space-y-4">
-            <mat-progress-spinner [diameter]="40" mode="indeterminate"></mat-progress-spinner>
-            <p class="text-lg text-gray-600">Generando propuesta con IA...</p>
-        </div>
-    }
-
-    <!-- Sending State -->
-    @if (isSending) {
-        <div class="flex flex-col items-center justify-center min-h-96 space-y-4">
-            <mat-progress-spinner [diameter]="40" mode="indeterminate"></mat-progress-spinner>
-            <div class="text-center">
-                <p class="text-lg font-medium text-gray-900">Enviando propuesta a {{ platform | titlecase }}...</p>
-                <p class="text-sm text-gray-600 mt-2">Conectando con la plataforma</p>
-            </div>
-        </div>
-    }
-
     <!-- Main Content -->
-    @if (!isLoading && !isSending) {
-        <div class="flex flex-col w-full p-6">
-            
-            <!-- Header Section -->
-            <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mb-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-900">📝 Revisar Propuesta</h3>
-                        <p class="mt-1 text-gray-600">Revisa y edita la propuesta antes de enviarla a {{ platform | titlecase }}</p>
-                    </div>
-                    <div class="flex space-x-3">
-                        <button 
-                            mat-stroked-button
-                            color="primary"
-                            (click)="goToProjects()">
-                            <mat-icon>arrow_back</mat-icon>
-                            Volver a Proyectos
-                        </button>
-                        <button 
-                            mat-stroked-button
-                            (click)="logout()">
-                            <mat-icon>logout</mat-icon>
-                            Cerrar Sesión
-                        </button>
-                    </div>
+    <div class="flex flex-col w-full p-6">
+        
+        <!-- Header Section -->
+        <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900">📝 Revisar Propuesta</h3>
+                    <p class="mt-1 text-gray-600">Revisa y edita la propuesta antes de enviarla a {{ platform | titlecase }}</p>
                 </div>
-            </fuse-card>
+                <div class="flex space-x-3">
+                    <button 
+                        mat-stroked-button
+                        color="primary"
+                        (click)="goToProjects()">
+                        <mat-icon>arrow_back</mat-icon>
+                        Volver a Proyectos
+                    </button>
+                    <button 
+                        mat-stroked-button
+                        (click)="logout()">
+                        <mat-icon>logout</mat-icon>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </fuse-card>
 
-            <!-- Main Content Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                <!-- Project Information Column -->
-                <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">📋 Información del Proyecto</h3>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Project Information Column -->
+            <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">📋 Información del Proyecto</h3>
+                    @if (!isInitialLoading) {
                         <span 
                             class="px-3 py-1 text-xs font-medium rounded-full"
                             [ngClass]="getPlatformBadgeClass(currentProject?.platform || 'workana')">
                             {{ currentProject?.platform | titlecase }}
                         </span>
+                    }
+                </div>
+
+                @if (isInitialLoading) {
+                    <!-- Skeleton for Project Information -->
+                    <div class="space-y-4">
+                        <!-- Project Title Skeleton -->
+                        <div>
+                            <div class="h-6 bg-gray-200 rounded animate-pulse mb-2"></div>
+                            <div class="flex items-center space-x-4">
+                                <div class="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                                <div class="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                            </div>
+                        </div>
+
+                        <!-- Project Description Skeleton -->
+                        <div>
+                            <div class="h-4 bg-gray-200 rounded animate-pulse mb-2 w-24"></div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="space-y-2">
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Details Skeleton -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="h-3 bg-gray-200 rounded animate-pulse mb-1 w-16"></div>
+                                <div class="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                            </div>
+                            <div>
+                                <div class="h-3 bg-gray-200 rounded animate-pulse mb-1 w-20"></div>
+                                <div class="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                            </div>
+                        </div>
                     </div>
-
-                    @if (currentProject) {
-                        <div class="space-y-4">
-                            <!-- Project Title -->
-                            <div>
-                                <h4 class="text-lg font-medium text-gray-900 mb-2">{{ currentProject.title }}</h4>
-                                <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                    <span>📅 {{ formatDate(currentProject.createdAt) }}</span>
-                                    @if (currentProject.price) {
-                                        <span>💰 {{ currentProject.price }}</span>
-                                    }
-                                </div>
-                            </div>
-
-                            <!-- Project Description -->
-                            <div>
-                                <h5 class="text-sm font-medium text-gray-700 mb-2">Descripción:</h5>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ currentProject.description }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Project Details -->
-                            <div class="grid grid-cols-2 gap-4">
-                                @if (currentProject.category) {
-                                    <div>
-                                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Categoría</h5>
-                                        <p class="text-sm text-gray-900">{{ currentProject.category }}</p>
-                                    </div>
-                                }
-                                @if (currentProject.skills) {
-                                    <div>
-                                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Habilidades</h5>
-                                        <p class="text-sm text-gray-900">{{ currentProject.skills }}</p>
-                                    </div>
-                                }
-                                @if (currentUser) {
-                                    <div>
-                                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Usuario Asignado</h5>
-                                        <p class="text-sm text-gray-900">{{ currentUser.email }}</p>
-                                    </div>
+                } @else if (currentProject) {
+                    <div class="space-y-4">
+                        <!-- Project Title -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">{{ currentProject.title }}</h4>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span>📅 {{ formatDate(currentProject.createdAt) }}</span>
+                                @if (currentProject.price) {
+                                    <span>💰 {{ currentProject.price }}</span>
                                 }
                             </div>
                         </div>
-                    }
-                </fuse-card>
 
-                <!-- Proposal Editor Column -->
-                <div class="space-y-6">
-                    <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">✏️ Editar Propuesta</h3>
+                        <!-- Project Description -->
+                        <div>
+                            <h5 class="text-sm font-medium text-gray-700 mb-2">Descripción:</h5>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ currentProject.description }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Project Details -->
+                        <div class="grid grid-cols-2 gap-4">
+                            @if (currentProject.category) {
+                                <div>
+                                    <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Categoría</h5>
+                                    <p class="text-sm text-gray-900">{{ currentProject.category }}</p>
+                                </div>
+                            }
+                            @if (currentProject.skills) {
+                                <div>
+                                    <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Habilidades</h5>
+                                    <p class="text-sm text-gray-900">{{ currentProject.skills }}</p>
+                                </div>
+                            }
+                            @if (currentUser) {
+                                <div>
+                                    <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wide">Usuario Asignado</h5>
+                                    <p class="text-sm text-gray-900">{{ currentUser.email }}</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </fuse-card>
+
+            <!-- Proposal Editor Column -->
+            <div class="space-y-6">
+                <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">✏️ Editar Propuesta</h3>
+                        @if (!isInitialLoading) {
                             <div class="flex space-x-2">
                                 <button 
                                     mat-stroked-button
                                     color="accent"
                                     [disabled]="isGenerating"
                                     (click)="regenerateProposal()">
-                                    <mat-icon>refresh</mat-icon>
+                                    @if (isGenerating) {
+                                        <mat-progress-spinner [diameter]="16" mode="indeterminate"></mat-progress-spinner>
+                                    } @else {
+                                        <mat-icon>refresh</mat-icon>
+                                    }
                                     {{ isGenerating ? 'Generando...' : 'Regenerar' }}
                                 </button>
                                 <button 
@@ -131,8 +153,43 @@
                                     Restaurar
                                 </button>
                             </div>
-                        </div>
+                        }
+                    </div>
 
+                    @if (isInitialLoading) {
+                        <!-- Skeleton for Proposal Editor -->
+                        <div class="space-y-4">
+                            <div class="h-4 bg-gray-200 rounded animate-pulse mb-2 w-32"></div>
+                            <div class="bg-gray-100 border rounded-lg p-4 min-h-96">
+                                <div class="space-y-3">
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-4/5"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-2/3"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-4/5"></div>
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Statistics Skeleton -->
+                            <div class="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <div class="h-8 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                    <div class="h-3 bg-gray-200 rounded animate-pulse w-16 mx-auto"></div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="h-8 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                    <div class="h-3 bg-gray-200 rounded animate-pulse w-12 mx-auto"></div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="h-8 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                    <div class="h-3 bg-gray-200 rounded animate-pulse w-10 mx-auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                    } @else {
                         <!-- Proposal Editor -->
                         <mat-form-field appearance="outline" class="w-full">
                             <mat-label>📝 Contenido de la Propuesta</mat-label>
@@ -162,9 +219,11 @@
                                 <div class="text-xs text-gray-500">Líneas</div>
                             </div>
                         </div>
-                    </fuse-card>
+                    }
+                </fuse-card>
 
-                    <!-- Action Buttons -->
+                <!-- Action Buttons -->
+                @if (!isInitialLoading) {
                     <fuse-card class="flex flex-col flex-auto p-6 bg-card shadow rounded-2xl overflow-hidden">
                         <div class="flex justify-center">
                             <button 
@@ -174,13 +233,18 @@
                                 [disabled]="!proposalContent.trim() || isSending"
                                 (click)="sendProposal()"
                                 class="px-8 py-3">
-                                <mat-icon>send</mat-icon>
-                                📤 Enviar Propuesta
+                                @if (isSending) {
+                                    <mat-progress-spinner [diameter]="20" mode="indeterminate" class="mr-2"></mat-progress-spinner>
+                                    Enviando...
+                                } @else {
+                                    <mat-icon>send</mat-icon>
+                                    📤 Enviar Propuesta
+                                }
                             </button>
                         </div>
                     </fuse-card>
-                </div>
+                }
             </div>
         </div>
-    }
+    </div>
 </div>
