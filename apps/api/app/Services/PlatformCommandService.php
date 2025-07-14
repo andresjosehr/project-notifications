@@ -37,7 +37,7 @@ class PlatformCommandService
             
             return [
                 'success' => true,
-                'sessionData' => $response['sessionData']
+                'sessionData' => $response['data']['sessionData']
             ];
             
         } catch (\Exception $e) {
@@ -103,7 +103,11 @@ class PlatformCommandService
 
     private function parseCommandOutput(string $output): array
     {
-        $jsonResponse = json_decode($output, true);
+        // Extraer la última línea que debería contener el JSON
+        $lines = explode("\n", trim($output));
+        $lastLine = end($lines);
+        
+        $jsonResponse = json_decode($lastLine, true);
         
         if ($jsonResponse && isset($jsonResponse['success'])) {
             if ($jsonResponse['success']) {
@@ -124,7 +128,8 @@ class PlatformCommandService
         }
         
         Log::error('Output no es JSON válido', [
-            'output' => $output
+            'output' => $output,
+            'lastLine' => $lastLine
         ]);
         
         return [
