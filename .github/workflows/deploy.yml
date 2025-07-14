@@ -86,5 +86,5 @@ jobs:
           php artisan view:cache
           php artisan migrate --force
           php artisan queue:restart
-          sudo systemctl restart nginx
+          sudo service apache2 restart
           sudo systemctl restart php8.2-fpm
