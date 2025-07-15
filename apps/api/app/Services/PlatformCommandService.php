@@ -27,7 +27,7 @@ class PlatformCommandService
             throw new GenericException('Error parseando respuesta del comando de login: ' . $output);
         }
 
-        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
+        // CAMBIO CRÍTICO: PlatformCommandService decide si lanzar excepción basándose en success
         if (!$response['success']) {
             Log::error('Error en comando de login', [
                 'output' => $output,
@@ -48,15 +48,34 @@ class PlatformCommandService
 
     public function executeSendProposal(string $sessionData, string $proposalContent, string $projectLink): array
     {
-
         $command = "cd " . base_path() . " && php artisan workana:send-proposal " .
             escapeshellarg($sessionData) . " " .
             escapeshellarg($proposalContent) . " " .
             escapeshellarg($projectLink);
         
         $output = shell_exec($command . " 2>&1");
+
+        Log::error('Queremos mostrar el output', [
+            'output' => $output
+        ]);
+
+        $result = json_decode($output, true);
+
         
-        return $this->parseCommandOutput($output);
+        // CAMBIO CRÍTICO: PlatformCommandService decide si lanzar excepción basándose en success
+        if (!$result['success']) {
+            Log::error('Error en envío de propuesta', [
+                'error' => $result
+            ]);
+
+            $errorMessage = $result['error']['message'] ?? 'Error desconocido en el envío de propuesta';
+            throw new GenericException($errorMessage);
+        }
+        
+        return [
+            'success' => true,
+            'output' => $result['message'] ?? 'Propuesta enviada exitosamente'
+        ];
     }
 
     private function ensureSessionDirectoryExists(): void
@@ -65,43 +84,5 @@ class PlatformCommandService
         if (!file_exists($sessionDir)) {
             mkdir($sessionDir, 0755, true);
         }
-    }
-
-    private function parseCommandOutput(string $output): array
-    {
-        // Extraer la última línea que debería contener el JSON
-        $lines = explode("\n", trim($output));
-        $lastLine = end($lines);
-        
-        $jsonResponse = json_decode($lastLine, true);
-        
-        if (!$jsonResponse || !isset($jsonResponse['success'])) {
-            Log::error('Output no es JSON válido', [
-                'output' => $output,
-                'lastLine' => $lastLine
-            ]);
-            throw new GenericException('Respuesta inválida del comando: ' . $output);
-        }
-
-        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
-        if (!$jsonResponse['success']) {
-            Log::error('Error en envío de propuesta', [
-                'error' => $jsonResponse['error'] ?? 'Error desconocido'
-            ]);
-            
-            $errorMessage = $jsonResponse['error'] ?? 'Error desconocido en el envío de propuesta';
-            if (is_array($errorMessage)) {
-                $errorMessage = json_encode($errorMessage);
-            }
-
-            Log::info('Respuesta de jsonResponse:');
-            Log::info($errorMessage);
-            throw new GenericException($errorMessage);
-        }
-        
-        return [
-            'success' => true,
-            'output' => $jsonResponse['message'] ?? 'Propuesta enviada exitosamente'
-        ];
     }
 }

@@ -72,7 +72,8 @@ abstract class BaseCommand extends Command
     }
 
     /**
-     * Ejecutar comando externo de Node.js con manejo de errores estandarizado
+     * Ejecutar comando externo de Node.js y retornar resultado en crudo
+     * CAMBIO CRÍTICO: NO lanza excepciones, retorna valores en crudo
      */
     protected function executeNodeCommand(string $command, array $context = []): array
     {
@@ -81,12 +82,16 @@ abstract class BaseCommand extends Command
         $output = shell_exec($command);
         
         if (empty($output)) {
-            $exceptionContext = [
+            // Retornar error en formato estándar en lugar de lanzar excepción
+            return [
+                'success' => false,
+                'error' => [
+                    'type' => 'no_output',
+                    'message' => "No se recibió output del comando: {$command}"
+                ],
                 'context' => $context,
-                'command' => $command,
                 'timestamp' => now()->toISOString()
             ];
-            throw new GenericException("No se recibió output del comando: {$command} - Context: " . json_encode($exceptionContext));
         }
 
         // Extraer JSON del output - el CLI puede tener mensajes de error antes del JSON
@@ -99,38 +104,19 @@ abstract class BaseCommand extends Command
             $result = $this->parseOutputByLines($output);
             
             if (!$result) {
-                $exceptionContext = [
-                    'json_error' => json_last_error_msg(),
+                // Retornar error en formato estándar en lugar de lanzar excepción
+                return [
+                    'success' => false,
+                    'error' => [
+                        'type' => 'json_parse_error',
+                        'message' => "Error parseando JSON: " . json_last_error_msg()
+                    ],
+                    'context' => $context,
                     'output' => $output,
                     'cleaned_output' => $cleanedOutput,
-                    'command' => $command,
-                    'context' => $context,
                     'timestamp' => now()->toISOString()
                 ];
-                throw new GenericException("Error parseando JSON: " . json_last_error_msg() . " - Context: " . json_encode($exceptionContext));
             }
-        }
-
-        // Validar formato estándar de respuesta
-        if (!isset($result['success'])) {
-            $exceptionContext = [
-                'result' => $result,
-                'command' => $command,
-                'context' => $context,
-                'timestamp' => now()->toISOString()
-            ];
-            throw new GenericException("Respuesta inválida del comando Node.js - falta campo 'success' - Context: " . json_encode($exceptionContext));
-        }
-
-        // CAMBIO CRÍTICO: Si success es false, lanzar excepción inmediatamente
-        if (!$result['success']) {
-            Log::error("Error en comando {$this->getName()}", [
-                'result' => $result,
-                'command' => $command,
-                'context' => $context,
-                'timestamp' => now()->toISOString()
-            ]);
-            throw new GenericException($result['error']['message'] ?? 'Error desconocido');
         }
 
         return $result;

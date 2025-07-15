@@ -1059,7 +1059,7 @@ class WorkanaService extends BaseScraper {
       
       if (error.message.includes('deshabilitado')) {
         errorType = 'VALIDATION_ERROR';
-        userMessage = 'El botón de envío está deshabilitado. Verifique que el texto de la propuesta cumpla con los requisitos mínimos.';
+        userMessage = 'Parece ser que hay un error de validación en el formulario de la propuesta. Visita el proyecto manualmente para verificar que esta pasando.';
       } else if (error.message.includes('No se encontró')) {
         errorType = 'ELEMENT_NOT_FOUND';
         userMessage = 'No se pudo encontrar el formulario de propuesta. Verifique que el enlace del proyecto sea válido.';
