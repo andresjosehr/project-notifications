@@ -12,37 +12,30 @@ class PlatformCommandService
         $command = "cd " . base_path() . " && php artisan workana:login " .
             escapeshellarg($userId) . " " .
             escapeshellarg($email) . " " .
-            escapeshellarg($password) . " 2>&1";
+            escapeshellarg($password);
         
-        // Log removido - información innecesaria en producción
-        $output = shell_exec($command);
-        // Log removido - información innecesaria en producción
-        
-        $response = json_decode($output, true);
-        
-        if (!$response) {
-            Log::error('Error parseando respuesta de comando de login', [
-                'output' => $output
-            ]);
-            throw new GenericException('Error parseando respuesta del comando de login: ' . $output);
-        }
+        $output = shell_exec($command . " 2>&1");
 
+        Log::error('Queremos mostrar el output', [
+            'output' => $output
+        ]);
+
+        $result = json_decode($output, true);
+
+        
         // CAMBIO CRÍTICO: PlatformCommandService decide si lanzar excepción basándose en success
-        if (!$response['success']) {
+        if (!$result['success']) {
             Log::error('Error en comando de login', [
-                'output' => $output,
-                'response' => $response
+                'error' => $result
             ]);
-            $errorMessage = $response['error'] ?? 'Error ejecutando comando de login: ' . $output;
-            if (is_array($errorMessage)) {
-                $errorMessage = json_encode($errorMessage);
-            }
+
+            $errorMessage = $result['error']['message'] ?? 'Error desconocido en el comando de login';
             throw new GenericException($errorMessage);
         }
         
         return [
             'success' => true,
-            'sessionData' => $response['data']['sessionData']
+            'sessionData' => $result['data']['sessionData']
         ];
     }
 

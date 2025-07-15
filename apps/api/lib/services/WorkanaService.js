@@ -1062,7 +1062,7 @@ class WorkanaService extends BaseScraper {
         userMessage = 'Parece ser que hay un error de validación en el formulario de la propuesta. Visita el proyecto manualmente para verificar que esta pasando.';
       } else if (error.message.includes('No se encontró')) {
         errorType = 'ELEMENT_NOT_FOUND';
-        userMessage = 'No se pudo encontrar el formulario de propuesta. Verifique que el enlace del proyecto sea válido.';
+        userMessage = 'No se pudo encontrar el formulario de propuesta. Por favor, revisa el link del proyecto con la sesion con la que estas intentando enviar la propuesta y verifica que esta pasando';
       } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
         errorType = 'TIMEOUT_ERROR';
         userMessage = 'La operación tardó demasiado tiempo. Intente nuevamente.';
