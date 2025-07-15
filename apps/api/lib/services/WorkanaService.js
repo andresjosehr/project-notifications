@@ -1052,9 +1052,30 @@ class WorkanaService extends BaseScraper {
       };
     } catch (error) {
       logger.errorWithStack('Error enviando propuesta', error);
+      
+      // Determinar el tipo de error para un mejor manejo
+      let errorType = 'UNKNOWN';
+      let userMessage = error.message;
+      
+      if (error.message.includes('deshabilitado')) {
+        errorType = 'VALIDATION_ERROR';
+        userMessage = 'El botón de envío está deshabilitado. Verifique que el texto de la propuesta cumpla con los requisitos mínimos.';
+      } else if (error.message.includes('No se encontró')) {
+        errorType = 'ELEMENT_NOT_FOUND';
+        userMessage = 'No se pudo encontrar el formulario de propuesta. Verifique que el enlace del proyecto sea válido.';
+      } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+        errorType = 'TIMEOUT_ERROR';
+        userMessage = 'La operación tardó demasiado tiempo. Intente nuevamente.';
+      } else if (error.message.includes('Sesión inválida')) {
+        errorType = 'SESSION_ERROR';
+        userMessage = 'La sesión ha expirado. Inicie sesión nuevamente.';
+      }
+      
       return {
         success: false,
-        error: error.message
+        error: userMessage,
+        errorType: errorType,
+        originalError: error.message
       };
     }
   }
@@ -1075,6 +1096,18 @@ class WorkanaService extends BaseScraper {
       throw new Error('No se encontró el botón de envío de propuesta');
     }
 
+    // Verificar si el botón está habilitado antes de intentar hacer click
+    const isDisabled = await sendButton.isDisabled();
+    if (isDisabled) {
+      // Verificar si hay algún mensaje de error o validación visible
+      const errorMessages = await this._checkForValidationErrors();
+      if (errorMessages.length > 0) {
+        throw new Error(`El botón de envío está deshabilitado: ${errorMessages.join(', ')}`);
+      } else {
+        throw new Error('El botón de envío está deshabilitado. Verifique que el texto de la propuesta cumpla con los requisitos mínimos.');
+      }
+    }
+
     await sendButton.click();
     await this.page.waitForTimeout(WorkanaService.TIMEOUTS.PROPOSAL_SUBMIT);
     
@@ -1084,6 +1117,52 @@ class WorkanaService extends BaseScraper {
   _getSubmitProposalButtonLocator() {
     const button = this.page.locator(WorkanaService.SELECTORS.PROPOSAL_SUBMIT_BUTTON).filter({ hasNotText: 'Buscar' }).filter({ hasNotText: 'Search' }).first();
     return button;
+  }
+
+  async _checkForValidationErrors() {
+    const errorMessages = [];
+    
+    // Selectores comunes para mensajes de error de validación
+    const errorSelectors = [
+      '.error-message',
+      '.alert-danger',
+      '.alert-error',
+      '.validation-error',
+      '[data-testid="error-message"]',
+      '.form-error',
+      '.help-block',
+      'text=El texto de la propuesta es muy corto',
+      'text=The proposal text is too short',
+      'text=Debe tener al menos',
+      'text=Must have at least',
+      'text=requerido',
+      'text=required',
+      'text=obligatorio',
+      'text=mandatory'
+    ];
+
+    for (const selector of errorSelectors) {
+      try {
+        const elements = this.page.locator(selector);
+        const count = await elements.count();
+        
+        for (let i = 0; i < count; i++) {
+          const element = elements.nth(i);
+          const isVisible = await element.isVisible();
+          if (isVisible) {
+            const text = await element.textContent();
+            if (text && text.trim()) {
+              errorMessages.push(text.trim());
+            }
+          }
+        }
+      } catch (error) {
+        // Ignorar errores de selectores que no existen
+        continue;
+      }
+    }
+
+    return errorMessages;
   }
 
   async _verifySubmissionSuccess() {

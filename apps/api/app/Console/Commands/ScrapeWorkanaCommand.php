@@ -76,8 +76,6 @@ class ScrapeWorkanaCommand extends BaseCommand
         
         $command = "cd " . base_path() . " && {$nodePath} {$scriptPath} scrape-workana {$quietFlag} 2>&1";
         
-        $this->info("Ejecutando: {$command}");
-        
         return $this->executeNodeCommand($command, ['operation' => 'scrape']);
     }
     
