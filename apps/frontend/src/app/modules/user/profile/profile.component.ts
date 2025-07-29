@@ -75,7 +75,6 @@ export class ProfileComponent implements OnInit {
             workanaEmail: ['', [Validators.required, Validators.email]],
             workanaPassword: [''],
             proposalDirectives: ['', Validators.required],
-            professionalProfile: ['', Validators.required],
         });
 
         // Change password form
@@ -128,7 +127,6 @@ export class ProfileComponent implements OnInit {
             workanaEmail: this.userProfile.credentials?.find((cred: any) => cred.platform === 'workana')?.email || '',
             workanaPassword: '', // Don't prefill password
             proposalDirectives: this.userProfile.proposalDirectives || this.userProfile.proposal_directives || '',
-            professionalProfile: this.userProfile.professionalProfile || this.userProfile.professional_profile || '',
         });
     }
 
@@ -140,7 +138,6 @@ export class ProfileComponent implements OnInit {
                 workanaEmail: this.profileForm.get('workanaEmail')?.value,
                 workanaPassword: this.profileForm.get('workanaPassword')?.value,
                 proposalDirectives: this.profileForm.get('proposalDirectives')?.value,
-                professionalProfile: this.profileForm.get('professionalProfile')?.value,
             };
 
             const result = await this.apiService.updateUser(this.currentUser.id, formData).toPromise();
@@ -150,7 +147,6 @@ export class ProfileComponent implements OnInit {
                 if (this.userProfile) {
                     this.userProfile.telegramUser = formData.telegramUser;
                     this.userProfile.proposalDirectives = formData.proposalDirectives;
-                    this.userProfile.professionalProfile = formData.professionalProfile;
                     
                     // Actualizar credenciales de Workana
                     if (this.userProfile.credentials) {

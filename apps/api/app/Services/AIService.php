@@ -21,10 +21,9 @@ class AIService
 
     public function buildProposal($projectDescription, $options = [])
     {
-        $professionalProfile = $options['professional_profile'] ?? $this->getDefaultProfessionalProfile();
         $proposalDirectives = $options['proposal_directives'] ?? $this->getDefaultProposalDirectives();
 
-        $prompt = $this->buildPrompt($projectDescription, $professionalProfile, $proposalDirectives);
+        $prompt = $this->buildPrompt($projectDescription, $proposalDirectives);
 
         // Log removido - información innecesaria en producción
         
@@ -61,7 +60,6 @@ class AIService
                 'api_url' => $this->apiUrl,
                 'model' => $this->model,
                 'project_description_length' => strlen($projectDescription),
-                'professional_profile_length' => strlen($professionalProfile),
                 'proposal_directives_length' => strlen($proposalDirectives),
                 'timestamp' => now()->toISOString()
             ];
@@ -69,26 +67,19 @@ class AIService
         }
     }
 
-    protected function buildPrompt($projectDescription, $professionalProfile, $proposalDirectives)
+    protected function buildPrompt($projectDescription, $proposalDirectives)
     {
         return "
 Descripción del proyecto:
 {$projectDescription}
 
-Mi perfil profesional:
-{$professionalProfile}
-
 Directivas para la propuesta:
 {$proposalDirectives}
 
-Por favor, genera una propuesta profesional y personalizada para este proyecto basada en mi perfil y las directivas proporcionadas.
+Por favor, genera una propuesta profesional y personalizada para este proyecto basada en las directivas proporcionadas.
 ";
     }
 
-    protected function getDefaultProfessionalProfile()
-    {
-        return "Desarrollador Full Stack con experiencia en tecnologías web modernas, especializado en crear soluciones escalables y eficientes.";
-    }
 
     protected function getDefaultProposalDirectives()
     {

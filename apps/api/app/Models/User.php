@@ -20,7 +20,6 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $fillable = [
         'proposal_directives',
-        'professional_profile',
         'telegram_user',
         'password',
         'role',

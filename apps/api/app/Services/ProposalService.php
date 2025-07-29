@@ -70,11 +70,11 @@ class ProposalService
 
     protected function generateProposal($project, User $user, array $options): string
     {
-        if ($user->professional_profile && $user->proposal_directives) {
+        if ($user->proposal_directives) {
             return $this->aiService->generateProposalWithUserProfile(
                 $project->title,
                 $project->description,
-                $user->professional_profile,
+                $user->proposal_directives,
                 $user->proposal_directives,
                 array_merge($options, ['language' => $project->language ?? 'es'])
             );

@@ -33,7 +33,6 @@ class AuthenticationService
             throw new GenericException('El sistema ya está inicializado. No se puede registrar un administrador adicional. - Context: ' . json_encode($context));
         }
 
-        $professionalProfile = $this->readContentFile('profesional-profile.txt');
         $proposalDirectives = $this->readContentFile('proposal-directives.txt');
 
         $user = User::create([

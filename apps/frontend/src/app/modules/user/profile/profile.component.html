@@ -121,22 +121,7 @@
                                 <div class="border-b border-gray-200 pb-6">
                                     <h4 class="text-md font-medium mb-4 text-gray-700">Información Profesional</h4>
                                     
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <!-- Professional Profile -->
-                                        <mat-form-field class="w-full">
-                                            <mat-label>Experiencia y Habilidades *</mat-label>
-                                            <textarea 
-                                                matInput 
-                                                formControlName="professionalProfile"
-                                                rows="20"
-                                                placeholder="Describe tu experiencia profesional, habilidades técnicas, logros principales, certificaciones, años de experiencia, etc.">
-                                            </textarea>
-                                            <mat-hint>Información que se utilizará en las propuestas</mat-hint>
-                                            @if (profileForm.get('professionalProfile')?.hasError('required')) {
-                                                <mat-error>Perfil profesional requerido</mat-error>
-                                            }
-                                        </mat-form-field>
-
+                                    <div class="grid grid-cols-1 gap-6">
                                         <!-- Proposal Directives -->
                                         <mat-form-field class="w-full">
                                             <mat-label>Directrices para la IA *</mat-label>
@@ -144,9 +129,9 @@
                                                 matInput 
                                                 formControlName="proposalDirectives"
                                                 rows="20"
-                                                placeholder="Ejemplo: Enfócate en mi experiencia en React y Node.js, menciona mi disponibilidad inmediata, destaca mi capacidad para trabajar en proyectos a largo plazo...">
+                                                placeholder="Ejemplo: Enfócate en mi experiencia en React y Node.js, menciona mi disponibilidad inmediata, destaca mi capacidad para trabajar en proyectos a largo plazo, incluye mi perfil profesional y habilidades técnicas...">
                                             </textarea>
-                                            <mat-hint>Instrucciones para generar propuestas personalizadas</mat-hint>
+                                            <mat-hint>Instrucciones para generar propuestas personalizadas. Incluye aquí tu perfil profesional, experiencia y habilidades</mat-hint>
                                             @if (profileForm.get('proposalDirectives')?.hasError('required')) {
                                                 <mat-error>Directrices requeridas</mat-error>
                                             }

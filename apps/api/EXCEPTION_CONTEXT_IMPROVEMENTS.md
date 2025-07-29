@@ -127,7 +127,6 @@ $context = [
     'api_url' => $this->apiUrl,
     'model' => $this->model,
     'project_description_length' => strlen($projectDescription),
-    'professional_profile_length' => strlen($professionalProfile),
     'proposal_directives_length' => strlen($proposalDirectives),
     'timestamp' => now()->toISOString()
 ];

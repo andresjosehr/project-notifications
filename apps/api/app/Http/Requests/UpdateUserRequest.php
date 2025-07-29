@@ -71,11 +71,6 @@ class UpdateUserRequest extends FormRequest
                 'string',
                 'max:5000'
             ],
-            'professionalProfile' => [
-                'sometimes',
-                'string',
-                'max:5000'
-            ]
         ];
     }
 
@@ -90,8 +85,7 @@ class UpdateUserRequest extends FormRequest
             'role.in' => 'El rol debe ser USER o ADMIN',
             'workanaEmail.email' => 'El email de Workana debe tener un formato válido',
             'workanaEmail.max' => 'El email de Workana no puede exceder los 255 caracteres',
-            'proposalDirectives.max' => 'Las directivas de propuesta no pueden exceder los 5000 caracteres',
-            'professionalProfile.max' => 'El perfil profesional no puede exceder los 5000 caracteres'
+            'proposalDirectives.max' => 'Las directivas de propuesta no pueden exceder los 5000 caracteres'
         ];
     }
 
@@ -127,7 +121,6 @@ class UpdateUserRequest extends FormRequest
         if (isset($validated['telegramUser'])) $data['telegram_user'] = $validated['telegramUser'];
         if (isset($validated['role'])) $data['role'] = $validated['role'];
         if (isset($validated['proposalDirectives'])) $data['proposal_directives'] = $validated['proposalDirectives'];
-        if (isset($validated['professionalProfile'])) $data['professional_profile'] = $validated['professionalProfile'];
         
         return $data;
     }
